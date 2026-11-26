@@ -31,5 +31,6 @@ export const replaceSelectedPetTag = ({
 }): string[] => {
   const petTagIds = new Set(getPetTagIds(tags));
   const otherTagIds = tagIds.filter((id) => !petTagIds.has(id));
-  return selectedTagId ? [...otherTagIds, selectedTagId] : otherTagIds;
+  const validSelectedTagId = selectedTagId && petTagIds.has(selectedTagId) ? selectedTagId : null;
+  return validSelectedTagId ? [...otherTagIds, validSelectedTagId] : otherTagIds;
 };
