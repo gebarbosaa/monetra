@@ -42,14 +42,7 @@ module.exports = {
     `);
   },
 
-  down: async (queryInterface: QueryInterface): Promise<void> => {
-    await queryInterface.sequelize.query(`
-      DELETE FROM "Categories"
-       WHERE "key" IN ('food', 'veterinary', 'medication', 'hygiene', 'accessories', 'grooming')
-         AND "parentId" IN (
-           SELECT "id" FROM "Categories" WHERE "key" = 'pets' AND "parentId" IS NULL
-         );
-      DELETE FROM "Categories" WHERE "key" = 'pets' AND "parentId" IS NULL;
-    `);
-  },
+  // Intentionally non-reversible: users may have already attached transactions to
+  // these categories, so deleting them during rollback would destroy user data.
+  down: async (): Promise<void> => {},
 };
