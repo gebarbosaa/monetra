@@ -1,9 +1,9 @@
 {
-  "name": "budget-tracker",
+  "name": "monetra",
   "private": true,
-  "description": "",
+  "description": "MONETRA — Family Finance OS. Gestão financeira familiar consolidada, em português do Brasil.",
   "license": "AGPL-3.0-only",
-  "author": "letehaha",
+  "author": "Based on MoneyMatter by letehaha; see upstream notices",
   "workspaces": [
     "packages/backend",
     "packages/frontend",
