@@ -1,4 +1,4 @@
-import { ACCOUNT_CATEGORIES } from '@bt/shared/types';
+import { ACCOUNT_CATEGORIES, ACCOUNT_TYPES } from '@bt/shared/types';
 import { roundToCurrency } from '@common/lib/currency-precision';
 import { Money } from '@common/types/money';
 import { calculateRefAmount } from '@services/calculate-ref-amount.service';
@@ -51,7 +51,7 @@ export async function createInstallmentPlan(input: {
   }
   const account = await Accounts.findOne({ where: { id: input.accountId, userId: input.userId } });
   if (!account) throw new NotFoundError({ message: 'Credit card account not found.' });
-  if (account.accountCategory !== ACCOUNT_CATEGORIES.credit_card) {
+  if (account.accountCategory !== ACCOUNT_CATEGORIES.creditCard) {
     throw new ValidationError({ message: 'Installment plans can only be created for credit card accounts.' });
   }
   if (account.currencyCode !== input.currencyCode) {
@@ -189,7 +189,7 @@ export async function getCreditCardInstallmentExposure({ userId, accountId }: { 
   );
   // Match the existing credit-utilization widget semantics: manual cards track debt as
   // a negative balance; provider-synced accounts already include the credit limit.
-  const balanceIncludesCreditLimit = account.type !== 'system';
+  const balanceIncludesCreditLimit = account.type !== ACCOUNT_TYPES.system;
   const used = balanceIncludesCreditLimit
     ? account.creditLimit.subtract(account.currentBalance).isPositive()
       ? account.creditLimit.subtract(account.currentBalance)
