@@ -308,6 +308,38 @@
           "cancelSuccess": "Convite cancelado",
           "cancelError": "Não foi possível cancelar o convite."
         }
+      },
+      "installments": {
+        "tab": "Parcelamentos",
+        "title": "Parcelamentos do cartão",
+        "description": "Acompanhe compras parceladas e o limite reservado para as próximas parcelas.",
+        "limit": "Limite",
+        "used": "Utilizado",
+        "reserved": "Reservado",
+        "available": "Disponível",
+        "exposureUnavailable": "Não foi possível consultar a exposição do limite agora.",
+        "newPlan": "Cadastrar compra parcelada",
+        "purchaseDescription": "Descrição da compra",
+        "purchaseDate": "Data da compra",
+        "firstDueDate": "Vencimento da primeira parcela",
+        "totalAmount": "Valor total da compra",
+        "count": "Quantidade de parcelas",
+        "create": "Criar parcelamento",
+        "created": "Parcelamento criado.",
+        "createError": "Não foi possível criar o parcelamento.",
+        "history": "Parcelamentos",
+        "loading": "Carregando parcelamentos…",
+        "loadError": "Não foi possível carregar os parcelamentos.",
+        "empty": "Nenhum parcelamento cadastrado.",
+        "installments": "parcelas",
+        "cancel": "Cancelar plano",
+        "cancelled": "Parcelamento cancelado.",
+        "cancelError": "Não foi possível cancelar este parcelamento.",
+        "status": {
+          "planned": "Prevista",
+          "posted": "Lançada",
+          "cancelled": "Cancelada"
+        }
       }
     },
     "vehicleDetails": {
