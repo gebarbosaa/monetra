@@ -24,6 +24,7 @@ describe('Credit card installment plans', () => {
       payload: {
         accountId: account.id,
         description: 'Manual reconciliation',
+        categoryId: global.DEFAULT_CATEGORY_ID,
         purchaseDate: dateOnly(new Date()),
         firstDueDate: dateOnly(addMonths(new Date(), 1)),
         currencyCode: account.currencyCode,
@@ -81,6 +82,7 @@ describe('Credit card installment plans', () => {
       payload: {
         accountId: account.id,
         description: 'Test purchase',
+        categoryId: global.DEFAULT_CATEGORY_ID,
         purchaseDate,
         firstDueDate,
         currencyCode: account.currencyCode,
