@@ -86,7 +86,7 @@
             :projected-total="projectedTotal"
           />
 
-          <AccountsSection v-if="manualItems.length" :title="$t('accounts.sections.all')" :count="manualCount">
+          <AccountsSection v-if="manualItems.length" :title="$t('accounts.sections.manual')" :count="manualCount">
             <div class="border-border/60 bg-card divide-border/60 divide-y overflow-hidden rounded-xl border">
               <template v-for="item in manualItems" :key="item.id">
                 <AccountGroupRow v-if="item.kind === 'group'" :group="item.group" />
