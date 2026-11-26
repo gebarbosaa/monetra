@@ -332,6 +332,22 @@ export const updateAccount = withTransaction(
       message: t({ key: 'accounts.accountNotFound' }),
     });
 
+    if (
+      accountData.accountCategory === ACCOUNT_CATEGORIES.creditCard &&
+      payload.accountCategory !== undefined &&
+      payload.accountCategory !== ACCOUNT_CATEGORIES.creditCard
+    ) {
+      const activeInstallmentPlans = await CreditCardInstallmentPlans.count({
+        where: { accountId: accountData.id, userId: payload.userId, status: 'active' },
+      });
+      if (activeInstallmentPlans > 0) {
+        throw new ValidationError({
+          message:
+            'This credit card has active installment plans. Settle or cancel those plans before changing the account category.',
+        });
+      }
+    }
+
     // loan and vehicle require a sidecar row that only the /loans and /vehicles endpoints create.
     if (
       payload.accountCategory !== undefined &&
