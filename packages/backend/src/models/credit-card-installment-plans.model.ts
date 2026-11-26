@@ -3,6 +3,7 @@ import { IdColumn } from '@common/types/id-column';
 import { Money } from '@common/types/money';
 import { MoneyField } from '@common/types/money-column';
 import Accounts from '@models/accounts.model';
+import Categories from '@models/categories.model';
 import Users from '@models/users.model';
 import { Table, Column, Model, ForeignKey, BelongsTo, HasMany, DataType } from 'sequelize-typescript';
 
@@ -31,6 +32,10 @@ export default class CreditCardInstallmentPlans extends Model {
   @Column({ type: DataType.STRING(200), allowNull: false })
   description!: string;
 
+  @ForeignKey(() => Categories)
+  @Column({ type: DataType.UUID, allowNull: true })
+  categoryId!: string | null;
+
   @Column({ type: DataType.DATEONLY, allowNull: false })
   purchaseDate!: string;
 
@@ -54,6 +59,9 @@ export default class CreditCardInstallmentPlans extends Model {
 
   @BelongsTo(() => Accounts, { foreignKey: 'accountId' })
   account!: Accounts;
+
+  @BelongsTo(() => Categories, { foreignKey: 'categoryId' })
+  category!: Categories | null;
 
   @HasMany(() => CreditCardInstallments, { foreignKey: 'planId' })
   installments!: CreditCardInstallments[];
