@@ -1,16 +1,18 @@
 <script lang="ts" setup>
 import { computeCreditUsed } from '@/common/utils/account-balance';
+import { loadCreditCardInstallmentExposure } from '@/api/credit-card-installments';
 import AccountLogo from '@/components/common/account-logo.vue';
 import ResponsiveTooltip from '@/components/common/responsive-tooltip.vue';
 import { DesktopOnlyTooltip } from '@/components/lib/ui/tooltip';
 import { ScrollArea } from '@/components/lib/ui/scroll-area';
 import { useUserSettings } from '@/composable/data-queries/user-settings';
+import { useQuery } from '@tanstack/vue-query';
 import { useFormatCurrency } from '@/composable/formatters';
 import { useAnimatedNumber } from '@/composable/use-animated-number';
 import { formatCompactUIAmount } from '@/js/helpers';
 import { ROUTES_NAMES } from '@/routes/constants';
 import { useAccountsStore, useCurrenciesStore } from '@/stores';
-import { ACCOUNT_STATUSES, ACCOUNT_TYPES } from '@bt/shared/types';
+import { ACCOUNT_CATEGORIES, ACCOUNT_STATUSES, ACCOUNT_TYPES } from '@bt/shared/types';
 import { CircleCheckIcon, InfoIcon } from '@lucide/vue';
 import { storeToRefs } from 'pinia';
 import { computed } from 'vue';
@@ -31,6 +33,28 @@ const baseCurrencyCode = computed(() => baseCurrency.value?.currency?.code ?? ''
 const { formatBaseCurrency, formatAccountAmount, formatCompactAmount } = useFormatCurrency();
 const { data: userSettings } = useUserSettings();
 
+const creditCardAccountIds = computed(() =>
+  (accounts.value ?? [])
+    .filter((account) =>
+      account.status === ACCOUNT_STATUSES.active &&
+      !account.excludeFromStats &&
+      account.creditLimit > 0 &&
+      account.accountCategory === ACCOUNT_CATEGORIES.creditCard,
+    )
+    .map((account) => account.id),
+);
+const installmentExposureQuery = useQuery({
+  queryKey: computed(() => ['credit-card-installment-exposure-dashboard', ...creditCardAccountIds.value]),
+  queryFn: async () => Promise.all(
+    creditCardAccountIds.value.map((accountId) => loadCreditCardInstallmentExposure({ accountId })),
+  ),
+  enabled: computed(() => creditCardAccountIds.value.length > 0),
+  staleTime: 30_000,
+});
+const installmentExposureByAccount = computed(() =>
+  new Map((installmentExposureQuery.data.value ?? []).map((exposure) => [exposure.accountId, exposure])),
+);
+
 const creditAccounts = computed(() => {
   if (!accounts.value) return [];
 
@@ -42,12 +66,15 @@ const creditAccounts = computed(() => {
       const balanceIncludesCreditLimit = a.type !== ACCOUNT_TYPES.system;
       // With the setting off, manual cards track debt, so a positive balance is an overpayment.
       const balanceIsAvailableCredit = !!userSettings.value?.includeCreditLimitInStats;
-      const used = computeCreditUsed({
+      const baseUsed = computeCreditUsed({
         balance: a.currentBalance,
         creditLimit: a.creditLimit,
         balanceIncludesCreditLimit,
         balanceIsAvailableCredit,
       });
+      const exposure = installmentExposureByAccount.value.get(a.id);
+      // Future planned installments reserve available credit without affecting the live balance.
+      const used = baseUsed + (exposure?.reservedInstallments ?? 0);
       const limit = a.creditLimit;
       const utilization = limit > 0 ? Math.round((used / limit) * 100) : 0;
 
@@ -59,12 +86,13 @@ const creditAccounts = computed(() => {
         used,
         limit,
         utilization: Math.min(utilization, 100),
-        refUsed: computeCreditUsed({
-          balance: a.refCurrentBalance,
-          creditLimit: a.refCreditLimit,
-          balanceIncludesCreditLimit,
-          balanceIsAvailableCredit,
-        }),
+        refUsed:
+          computeCreditUsed({
+            balance: a.refCurrentBalance,
+            creditLimit: a.refCreditLimit,
+            balanceIncludesCreditLimit,
+            balanceIsAvailableCredit,
+          }) + (exposure?.refReservedInstallments ?? 0),
         refLimit: a.refCreditLimit,
       };
     })
