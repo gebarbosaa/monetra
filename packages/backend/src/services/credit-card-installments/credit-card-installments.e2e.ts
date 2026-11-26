@@ -134,6 +134,13 @@ describe('Credit card installment plans', () => {
     });
     expect(editAfterReconciliation.statusCode).toBe(ERROR_CODES.ValidationError);
 
+    const cancelAfterReconciliation = await helpers.makeRequest({
+      method: 'delete',
+      url: `/credit-card-installments/${plan.id}`,
+      raw: false,
+    });
+    expect(cancelAfterReconciliation.statusCode).toBe(ERROR_CODES.ValidationError);
+
     const persistedPlan = await helpers.makeRequest<{
       id: string;
       description: string;
