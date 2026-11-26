@@ -146,6 +146,8 @@ export const accountSyncWorker = new Worker<AccountSyncJobData>(
     connection: connectionOptions,
     concurrency: 5,
     maxStalledCount: 2,
+    // Keep persisted jobs dormant unless bank integrations are explicitly enabled.
+    autorun: process.env.BANK_PROVIDERS_ENABLED === 'true',
   },
 );
 
