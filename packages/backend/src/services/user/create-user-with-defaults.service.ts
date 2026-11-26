@@ -8,6 +8,7 @@ import { ValidationError } from '@js/errors';
 import { logger } from '@js/utils/logger';
 import * as categoriesService from '@services/categories.service';
 import * as tagsService from '@services/tags';
+import { ensureUserBaseCurrency } from '@services/currencies/ensure-base-currency.service';
 import { patchUserSettings } from '@services/user-settings/patch-settings';
 import * as userService from '@services/user.service';
 import { forgetSignup, recordSignup } from '@services/user/signups-open.service';
@@ -247,11 +248,7 @@ export async function seedUserDefaults({ userId, locale: providedLocale }: { use
     await patchUserSettings({ userId, patch: { incomeCategoryIds: [incomeCategory.id] } });
   }
 
-  // MONETRA is Brazil-first: new accounts start with BRL as their reporting
-  // currency. Keep an existing user's chosen base currency untouched when
-  // this seed is reused for recovery or maintenance.
-  const existingBaseCurrency = await userService.getUserBaseCurrency({ userId });
-  if (!existingBaseCurrency) {
-    await userService.setBaseUserCurrency({ userId, currencyCode: 'BRL' });
-  }
+  // MONETRA is Brazil-first: new users with no existing account/currency context
+  // start with BRL. Legacy users without a base keep their oldest account currency.
+  await ensureUserBaseCurrency({ userId, fallbackCurrencyCode: 'BRL' });
 }
