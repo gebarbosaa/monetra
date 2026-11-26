@@ -27,6 +27,24 @@ describe('pet tag selection', () => {
     ).toEqual(['need', 'thor']);
   });
 
+  it('does not add a non-pet or unknown tag as an animal selection', () => {
+    expect(
+      replaceSelectedPetTag({
+        tagIds: ['need', 'luna'],
+        tags,
+        selectedTagId: 'need',
+      }),
+    ).toEqual(['need']);
+
+    expect(
+      replaceSelectedPetTag({
+        tagIds: ['need', 'luna'],
+        tags,
+        selectedTagId: 'unknown',
+      }),
+    ).toEqual(['need']);
+  });
+
   it('clears only the pet selection', () => {
     expect(
       replaceSelectedPetTag({
