@@ -19,8 +19,8 @@ export const ALL_LOGO_TABS: LogoTab[] = ['brand', 'letters', 'icon', 'custom'];
 /** Non-tracker endpoints drop `logoImage`, so the custom tab is opt-in. */
 export const DEFAULT_LOGO_TABS: LogoTab[] = ['brand', 'letters'];
 
-/** Default swatch of the Letters tab – the app's primary violet. */
-export const DEFAULT_MONOGRAM_COLOR = '#7355be';
+/** Default swatch of the Letters tab – the MONETRA orange. */
+export const DEFAULT_MONOGRAM_COLOR = '#FF7900';
 
 /**
  * Builds a selection from an entity's stored logo fields. Null means nothing
