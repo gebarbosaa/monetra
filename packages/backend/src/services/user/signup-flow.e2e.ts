@@ -21,6 +21,26 @@ import { asUser, extractCookies, makeAuthRequest, makeRequest, withSelfHost } fr
  * the mock now persists `ba_user` rows so rollback paths are exercised.
  */
 describe('Signup flow', () => {
+  it('sets BRL as the base currency for a new signup', async () => {
+    const res = await makeAuthRequest({
+      method: 'post',
+      url: '/auth/sign-up/email',
+      payload: {
+        email: 'brl-default@test.local',
+        password: 'password123',
+        name: 'BRL Default',
+      },
+    });
+
+    expect(res.statusCode).toEqual(200);
+    const appUser = await Users.findOne({ where: { authUserId: res.body.user.id }, raw: true });
+    expect(appUser).not.toBeNull();
+
+    const baseCurrency = await userService.getUserBaseCurrency({ userId: appUser!.id });
+    expect(baseCurrency?.currencyCode).toEqual('BRL');
+    expect(baseCurrency?.isDefaultCurrency).toBe(true);
+  });
+
   describe('Username uniqueness', () => {
     it('should persist a different username when colliding with an existing one', async () => {
       // Default test user is 'test1'. A new signup using the same name must
