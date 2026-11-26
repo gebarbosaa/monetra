@@ -101,6 +101,12 @@ describe('Credit card installment plans', () => {
     });
     expect(rejectedAmountEdit.statusCode).toBe(ERROR_CODES.ValidationError);
 
+    const rejectedBulkReportingEdit = await helpers.bulkUpdateTransactions({
+      payload: { transactionIds: [transactionId], excludeFromStats: true },
+      raw: false,
+    });
+    expect(rejectedBulkReportingEdit.statusCode).toBe(ERROR_CODES.ValidationError);
+
     await helpers.updateTransaction({
       id: transactionId,
       payload: { note: 'Description remains editable' },
