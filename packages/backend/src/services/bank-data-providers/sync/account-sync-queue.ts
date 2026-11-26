@@ -72,6 +72,17 @@ async function processAccountSync({
   providerType,
   accountIds,
 }: AccountSyncJobData): Promise<void> {
+  // MONETRA is manual-entry only. Do not contact external bank providers,
+  // including for jobs that were already waiting in Redis before deployment.
+  if (process.env.BANK_PROVIDERS_ENABLED !== 'true') {
+    await markAccountsFailed({
+      accountIds,
+      message: 'Bank integrations are disabled for this deployment.',
+      userId,
+    });
+    return;
+  }
+
   const [accountId, ...restAccountIds] = accountIds;
   if (!accountId) return;
 
