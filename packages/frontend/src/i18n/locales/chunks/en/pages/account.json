@@ -339,7 +339,9 @@
           "planned": "Planned",
           "posted": "Posted",
           "cancelled": "Cancelled"
-        }
+        },
+        "category": "Expense category",
+        "categoryPlaceholder": "Choose a category"
       }
     },
     "vehicleDetails": {
