@@ -74,7 +74,7 @@ Criar índices por `accountId/status/dueDate`, `planId/installmentNumber` e índ
 - Ao confirmar uma parcela, atualizar a transação planejada existente — não criar uma segunda transação.
 - Ao conciliar uma importação bancária, reutilizar o mecanismo de planned matching existente e manter a associação com a parcela.
 - Impedir que uma linha planejada vinculada a parcela seja convertida em real por um caminho que não atualize a parcela correspondente.
-- Usar valores monetários com a precisão/unidade já adotada pelo projeto; distribuir eventual resto de arredondamento na última parcela para que a soma seja exatamente igual ao total da compra.
+- Usar valores monetários com a precisão/unidade já adotada pelo projeto; distribuir eventual resto de arredondamento na última parcela para que a soma seja exatamente igual ao total da compra; rejeitar valores cujo total de unidades mínimas da moeda não comporte ao menos uma unidade positiva por parcela.
 
 ## Cálculo de utilização — endpoint inicial
 
@@ -122,4 +122,4 @@ O limite disponível será `max(limite total - utilização, 0)`. O valor de uti
 
 ## Limites e pendências da implementação
 
-A edição permite alterar descrição, categoria, data da compra e primeiro vencimento somente enquanto todas as parcelas e transações vinculadas continuarem planejadas; valores e quantidade de parcelas permanecem imutáveis nessa edição. A conciliação manual de lançamentos importados está disponível no painel, e o planned matching automático atualiza o estado da parcela dentro do savepoint da conciliação. A migration ainda não foi executada em banco real e não há confirmação de CI, lint ou typecheck. O fluxo de estorno de parcelas lançadas e a cobertura completa de permissões/compartilhamento precisam ser validados antes de habilitar o recurso em produção.
+A edição permite alterar descrição, categoria, data da compra e primeiro vencimento somente enquanto todas as parcelas e transações vinculadas continuarem planejadas; valores e quantidade de parcelas permanecem imutáveis nessa edição. A criação também rejeita totais menores que o número de parcelas em unidades mínimas da moeda, evitando linhas planejadas com valor zero. A conciliação manual de lançamentos importados está disponível no painel, e o planned matching automático atualiza o estado da parcela dentro do savepoint da conciliação. A migration ainda não foi executada em banco real e não há confirmação de CI, lint ou typecheck. O fluxo de estorno de parcelas lançadas e a cobertura completa de permissões/compartilhamento precisam ser validados antes de habilitar o recurso em produção.
