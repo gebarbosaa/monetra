@@ -1266,6 +1266,13 @@ describe('Data backup restore (POST /user/backup/restore)', () => {
         raw: true,
       });
 
+      const seededInstallments = await CreditCardInstallments.findAll({
+        where: { planId: plan.id },
+        order: [['installmentNumber', 'ASC']],
+      });
+      await CreditCardInstallments.update({ status: 'posted' }, { where: { id: seededInstallments[0]!.id } });
+      await Transactions.update({ isPlanned: false }, { where: { id: seededInstallments[0]!.transactionId } });
+
       const exported = await exportArchive();
       const archive = helpers.parseBackupArchive({ buffer: exported.buffer });
       const archivedPlans = archive.readData({ name: 'credit-card-installment-plans' }) as Row[];
@@ -1276,6 +1283,11 @@ describe('Data backup restore (POST /user/backup/restore)', () => {
         installmentCount: 3,
       }));
       expect(archivedInstallments.filter((row) => row.planId === plan.id)).toHaveLength(3);
+      expect(archivedInstallments.filter((row) => row.planId === plan.id).map((row) => row.status)).toEqual([
+        'posted',
+        'planned',
+        'planned',
+      ]);
 
       await helpers.restoreBackupAndWait({ fileContent: exported.base64 });
 
