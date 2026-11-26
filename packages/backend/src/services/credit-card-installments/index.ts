@@ -4,6 +4,7 @@ import { Money } from '@common/types/money';
 import { calculateRefAmount } from '@services/calculate-ref-amount.service';
 import { NotFoundError, ValidationError } from '@js/errors';
 import Accounts from '@models/accounts.model';
+import Categories from '@models/categories.model';
 import CreditCardInstallmentPlans, {
   CREDIT_CARD_INSTALLMENT_PLAN_STATUSES,
 } from '@models/credit-card-installment-plans.model';
@@ -41,6 +42,7 @@ export async function createInstallmentPlan(input: {
   userId: number;
   accountId: string;
   description: string;
+  categoryId: string;
   purchaseDate: string;
   firstDueDate: string;
   currencyCode: string;
@@ -67,6 +69,9 @@ export async function createInstallmentPlan(input: {
   if (account.currencyCode !== input.currencyCode) {
     throw new ValidationError({ message: 'The installment currency must match the credit card currency.' });
   }
+  const category = await Categories.findOne({ where: { id: input.categoryId, userId: input.userId } });
+  if (!category) throw new ValidationError({ message: 'Choose a valid expense category.' });
+
   dateParts(input.purchaseDate);
   dateParts(input.firstDueDate);
   if (input.firstDueDate < input.purchaseDate) {
@@ -111,6 +116,7 @@ export async function createInstallmentPlan(input: {
         userId: input.userId,
         accountId: account.id,
         description: input.description.trim(),
+        categoryId: category.id,
         purchaseDate: input.purchaseDate,
         currencyCode: input.currencyCode,
         totalAmount: total,
@@ -157,6 +163,7 @@ export async function createInstallmentPlan(input: {
         currencyCode: account.currencyCode,
         refCurrencyCode: baseCurrency.currency.code,
         transferNature: TRANSACTION_TRANSFER_NATURE.not_transfer,
+        categoryId: category.id,
         note: input.description.trim() + ' — parcela ' + installment.installmentNumber + '/' + input.installmentCount,
         time: new Date(installment.dueDate + 'T12:00:00.000Z'),
         isPlanned: true,
