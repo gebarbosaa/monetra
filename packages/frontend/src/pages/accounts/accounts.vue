@@ -195,7 +195,7 @@ import { useAccountGroupsQuery } from '@/composable/data-queries/account-groups'
 import { useBaseBalanceTotals } from '@/composable/use-base-balance-totals';
 import { useProjectedBalance } from '@/composable/use-projected-balance';
 import { useAccountsStore } from '@/stores';
-import { ACCOUNT_CATEGORIES, ACCOUNT_STATUSES, AccountModel } from '@bt/shared/types';
+import { ACCOUNT_CATEGORIES, ACCOUNT_STATUSES } from '@bt/shared/types';
 import { useQuery } from '@tanstack/vue-query';
 import { CarIcon, ChevronDownIcon, EllipsisVerticalIcon, LandmarkIcon, PlusIcon } from '@lucide/vue';
 import { storeToRefs } from 'pinia';
