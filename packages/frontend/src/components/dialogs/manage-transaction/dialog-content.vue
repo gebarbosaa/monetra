@@ -99,7 +99,6 @@ import TypeSelector from './components/type-selector.vue';
 import TemplateFormDialog from './components/templates/template-form-dialog.vue';
 import {
   PET_TAG_DESCRIPTION_PREFIX,
-  getPetTagIds,
   getSelectedPetTagId,
   replaceSelectedPetTag,
 } from './utils/pet-tag-selection';
@@ -265,7 +264,6 @@ const form = ref<UI_FORM_STRUCT>({
 
 type PetTagOption = { id: string; label: string };
 
-const petTagIds = computed(() => getPetTagIds(tagsStore.tags));
 const petTagOptions = computed<PetTagOption[]>(() =>
   tagsStore.tags
     .filter((tag) => tag.description?.startsWith(PET_TAG_DESCRIPTION_PREFIX))
