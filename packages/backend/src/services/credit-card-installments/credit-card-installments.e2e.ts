@@ -135,6 +135,7 @@ describe('Credit card installment plans', () => {
     expect(editAfterReconciliation.statusCode).toBe(ERROR_CODES.ValidationError);
 
     const persistedPlan = await helpers.makeRequest<{
+      id: string;
       description: string;
       installments: { status: string; transactionId: string }[];
     }, true>({
