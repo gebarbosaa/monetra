@@ -22,7 +22,7 @@ const ISLANDS = [
     key: 'accounts',
     label: 'Accounts',
     text: 'Every bank, card and cash account, in any currency.',
-    items: ['Bank sync via 6 providers', 'Manual and cash accounts', 'CSV, OFX, statement import', 'iOS SMS tracking'],
+    items: ['Manual accounts and cash tracking', 'Manual and cash accounts', 'CSV, OFX, statement import', 'iOS SMS tracking'],
   },
   {
     key: 'investments',
@@ -132,7 +132,7 @@ const ISLANDS = [
           ))
         }
       </div>
-      <div class="iso-legend" role="group" aria-label={t('What MoneyMatter tracks')}>
+      <div class="iso-legend" role="group" aria-label={t('What MONETRA tracks')}>
         {
           ISLANDS.map(({ key, label, soon }) => (
             <button type="button" class="chip" data-chip={key} aria-pressed={key === FIRST_ISLAND ? 'true' : 'false'}>
