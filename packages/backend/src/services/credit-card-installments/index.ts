@@ -10,6 +10,7 @@ import CreditCardInstallmentPlans, {
 import Transactions from '@models/transactions.model';
 import * as TransactionModel from '@models/transactions.model';
 import * as UsersCurrencies from '@models/users-currencies.model';
+import { getUserSettings } from '@services/user-settings/get-user-settings';
 import CreditCardInstallments, {
   CREDIT_CARD_INSTALLMENT_STATUSES,
 } from '@models/credit-card-installments.model';
@@ -295,13 +296,16 @@ export async function getCreditCardInstallmentExposure({ userId, accountId }: { 
   // Match the existing credit-utilization widget semantics: manual cards track debt as
   // a negative balance; provider-synced accounts already include the credit limit.
   const balanceIncludesCreditLimit = account.type !== ACCOUNT_TYPES.system;
+  const userSettings = await getUserSettings({ userId });
+  const balanceIsAvailableCredit = !!userSettings.includeCreditLimitInStats;
+  const creditLimitMinusBalance = account.creditLimit.subtract(account.currentBalance);
   const used = balanceIncludesCreditLimit
-    ? account.creditLimit.subtract(account.currentBalance).isPositive()
-      ? account.creditLimit.subtract(account.currentBalance)
-      : Money.zero()
+    ? creditLimitMinusBalance.isPositive() ? creditLimitMinusBalance : Money.zero()
     : account.currentBalance.isNegative()
       ? account.currentBalance.abs()
-      : Money.zero();
+      : balanceIsAvailableCredit && creditLimitMinusBalance.isPositive()
+        ? creditLimitMinusBalance
+        : Money.zero();
   const available = account.creditLimit.subtract(used).subtract(reserved);
   return {
     accountId,
