@@ -9,6 +9,7 @@ import { NotFoundError, ValidationError } from '@js/errors';
 import { logger } from '@js/utils/logger';
 import Accounts from '@models/accounts.model';
 import TransactionSplits from '@models/transaction-splits.model';
+import CreditCardInstallments from '@models/credit-card-installments.model';
 import { findTransactions, updateTransactions } from '@models/transactions-query';
 import * as Transactions from '@models/transactions.model';
 import { withTransaction } from '@root/services/common/with-transaction';
@@ -104,6 +105,16 @@ export const linkTransactions = withTransaction(
         // 404 so existence is masked.
         for (const tx of [base, opposite]) {
           await assertTxWriteAccess({ userId, tx, notFoundKey: 'transactions.linkCannotFind' });
+        }
+
+        const linkedInstallmentCount = await CreditCardInstallments.count({
+          where: { transactionId: { [Op.in]: [baseTxId, oppositeTxId] } },
+        });
+        if (linkedInstallmentCount > 0) {
+          throw new ValidationError({
+            message:
+              'A transaction linked to a credit-card installment cannot be linked as a transfer. Manage it through the installment plan.',
+          });
         }
 
         validateTransactionLinking({
