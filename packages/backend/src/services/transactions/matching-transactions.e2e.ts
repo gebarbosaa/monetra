@@ -1,4 +1,4 @@
-import { type RecordId, TRANSACTION_TRANSFER_NATURE, TRANSACTION_TYPES } from '@bt/shared/types';
+import { ACCOUNT_CATEGORIES, type RecordId, TRANSACTION_TRANSFER_NATURE, TRANSACTION_TYPES } from '@bt/shared/types';
 import { describe, expect, it } from '@jest/globals';
 import { ERROR_CODES } from '@js/errors';
 import * as helpers from '@tests/helpers';
@@ -66,6 +66,47 @@ describe('GET /transactions/summary', () => {
     // Only the income leg matches, so it is the row the list shows.
     const destinationOnly = await helpers.getTransactionsSummary({ accountIds: [accountB.id], raw: true });
     expect(destinationOnly).toEqual({ count: 1, income: 0, expense: 0, net: 0, transfers: 500 });
+  });
+
+  it('does not count a credit-card bill payment as a second expense', async () => {
+    const bank = await helpers.createAccount({ raw: true });
+    const card = await helpers.createAccount({
+      payload: helpers.buildAccountPayload({ accountCategory: ACCOUNT_CATEGORIES.creditCard }),
+      raw: true,
+    });
+
+    // The purchase is the expense. Paying the card bill moves money between
+    // tracked accounts and must appear under transfers, not as another expense.
+    await createTx({ accountId: card.id, amount: 500 });
+    await helpers.createTransaction({
+      payload: {
+        ...helpers.buildTransactionPayload({ accountId: bank.id, amount: 500 }),
+        transferNature: TRANSACTION_TRANSFER_NATURE.common_transfer,
+        destinationAmount: 500,
+        destinationAccountId: card.id,
+      },
+      raw: true,
+    });
+
+    const summary = await helpers.getTransactionsSummary({ raw: true });
+    expect(summary).toEqual({
+      count: 2,
+      income: 0,
+      expense: 500,
+      net: -500,
+      transfers: 500,
+    });
+
+    // Scoping the report to the card still shows the purchase and the transfer,
+    // without turning the card-side payment leg into income.
+    const cardSummary = await helpers.getTransactionsSummary({ accountIds: [card.id], raw: true });
+    expect(cardSummary).toEqual({
+      count: 2,
+      income: 0,
+      expense: 500,
+      net: -500,
+      transfers: 500,
+    });
   });
 
   it('counts a transaction once when it carries several of the filtered tags', async () => {
