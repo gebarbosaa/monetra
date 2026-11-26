@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import type { AccountGroups } from '@/common/types/models';
 import AccountGroupName from '@/components/common/account-group-name.vue';
-import ResponsiveTooltip from '@/components/common/responsive-tooltip.vue';
 import Button from '@/components/lib/ui/button/Button.vue';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/lib/ui/collapsible';
 import { useBaseBalanceTotals } from '@/composable/use-base-balance-totals';
-import { useSyncStatus } from '@/composable/use-sync-status';
-import { AlertTriangleIcon, ChevronRightIcon } from '@lucide/vue';
+import { ChevronRightIcon } from '@lucide/vue';
 import { computed, inject } from 'vue';
 
 import AccountGroupsList from './account-groups-list.vue';
@@ -26,9 +24,6 @@ const isOpen = computed({
   set: (val) => accountGroupsContext!.setGroupOpen(props.group.id, val),
 });
 
-const { groupHasReauthAccount } = useSyncStatus();
-
-const needsReauth = computed(() => groupHasReauthAccount(props.group));
 
 const { baseCurrencyCode, sumBaseBalance } = useBaseBalanceTotals();
 
@@ -44,13 +39,6 @@ const groupTotal = computed(() => sumBaseBalance({ accounts: collectGroupAccount
         <div class="flex w-full items-center gap-2">
           <ChevronRightIcon :class="['size-4 shrink-0 transition-transform duration-200', { 'rotate-90': isOpen }]" />
           <AccountGroupName :group="group" class="min-w-0 text-sm" />
-          <ResponsiveTooltip
-            v-if="needsReauth"
-            :content="$t('sidebar.accountsView.needsReauthTooltip')"
-            content-class-name="max-w-64"
-          >
-            <AlertTriangleIcon class="text-destructive-text size-4 shrink-0" />
-          </ResponsiveTooltip>
           <span class="ml-auto shrink-0">
             <!-- Collapsed row is a summary (show the roll-up); expanded row is detail, so its
                  own accounts carry the numbers and repeating the total here would just be noise. -->
