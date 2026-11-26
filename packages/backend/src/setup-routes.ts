@@ -20,6 +20,7 @@ import billingRoutes from './routes/billing.route';
 import brandLogosRoutes from './routes/brand-logos.route';
 import budgetPlansRoutes from './routes/budget-plans.route';
 import categoriesRoutes from './routes/categories.route';
+import creditCardInstallmentsRoutes from './routes/credit-card-installments.route';
 import clientLogsRoutes from './routes/client-logs.route';
 import modelsCurrenciesRoutes from './routes/currencies.route';
 import demoRoutes from './routes/demo.route';
@@ -192,6 +193,7 @@ export function setupRoutes(app: Express) {
   app.use(`${API_PREFIX}/trackers`, trackersRoutes);
   app.use(`${API_PREFIX}/budget-plans`, budgetPlansRoutes);
   app.use(`${API_PREFIX}/goals`, goalsRoutes);
+  app.use(`${API_PREFIX}/credit-card-installments`, creditCardInstallmentsRoutes);
   app.use(`${API_PREFIX}/subscriptions`, subscriptionsRoutes);
   app.use(`${API_PREFIX}/tags`, tagsRoutes);
   app.use(`${API_PREFIX}/tag-reminders`, tagRemindersRoutes);
