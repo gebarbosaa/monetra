@@ -1,6 +1,7 @@
 import { ACCOUNT_CATEGORIES } from '@bt/shared/types';
 import { roundToCurrency } from '@common/lib/currency-precision';
 import { Money } from '@common/types/money';
+import { calculateRefAmount } from '@services/calculate-ref-amount.service';
 import { NotFoundError, ValidationError } from '@js/errors';
 import Accounts from '@models/accounts.model';
 import CreditCardInstallmentPlans, {
@@ -31,7 +32,6 @@ export async function createInstallmentPlan(input: {
   firstDueDate: string;
   currencyCode: string;
   totalAmount: number;
-  refTotalAmount: number;
   installmentCount: number;
 }) {
   const account = await Accounts.findOne({ where: { id: input.accountId, userId: input.userId } });
@@ -54,9 +54,16 @@ export async function createInstallmentPlan(input: {
   if (!total.isPositive()) throw new ValidationError({ message: 'Total amount must be greater than zero.' });
 
   const precision = await import('@common/lib/currency-precision');
-  const baseDecimals = await precision.getBaseCurrencyDecimals({ userId: input.userId });
-  const refTotal = Money.fromDecimal(input.refTotalAmount).roundHalfEven(baseDecimals);
+  const refTotal = await calculateRefAmount({
+    amount: total,
+    userId: input.userId,
+    definitionOwnerUserId: input.userId,
+    date: input.purchaseDate,
+    baseCode: input.currencyCode,
+  });
   if (!refTotal.isPositive()) throw new ValidationError({ message: 'Reference amount must be greater than zero.' });
+  const baseDecimals = await precision.getBaseCurrencyDecimals({ userId: input.userId });
+  const roundedRefTotal = refTotal.roundHalfEven(baseDecimals);
 
   const amountPerInstallment = total.divide(input.installmentCount).round(
     await precision.getCurrencyDecimals({
@@ -64,7 +71,7 @@ export async function createInstallmentPlan(input: {
       code: input.currencyCode,
     }),
   );
-  const refPerInstallment = refTotal.divide(input.installmentCount).round(baseDecimals);
+  const refPerInstallment = roundedRefTotal.divide(input.installmentCount).round(baseDecimals);
 
   const sequelize = CreditCardInstallmentPlans.sequelize;
   if (!sequelize) throw new Error('Credit card installment models are not initialized.');
@@ -78,7 +85,7 @@ export async function createInstallmentPlan(input: {
         purchaseDate: input.purchaseDate,
         currencyCode: input.currencyCode,
         totalAmount: total,
-        refTotalAmount: refTotal,
+        refTotalAmount: roundedRefTotal,
         installmentCount: input.installmentCount,
         status: CREDIT_CARD_INSTALLMENT_PLAN_STATUSES.active,
       },
@@ -91,7 +98,7 @@ export async function createInstallmentPlan(input: {
     for (let index = 1; index <= input.installmentCount; index += 1) {
       const isLast = index === input.installmentCount;
       const amount = isLast ? total.subtract(allocated) : amountPerInstallment;
-      const refAmount = isLast ? refTotal.subtract(allocatedRef) : refPerInstallment;
+      const refAmount = isLast ? roundedRefTotal.subtract(allocatedRef) : refPerInstallment;
       allocated = allocated.add(amount);
       allocatedRef = allocatedRef.add(refAmount);
       rows.push({
