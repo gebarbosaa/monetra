@@ -24,11 +24,10 @@ const isOpen = computed({
   set: (val) => accountGroupsContext!.setGroupOpen(props.group.id, val),
 });
 
-
 const { baseCurrencyCode, sumBaseBalance } = useBaseBalanceTotals();
 
 // The whole subtree rolls up here: direct accounts plus every nested child group,
-// so a collapsed bank shows its full worth without expanding.
+// so a collapsed group shows its full worth without expanding.
 const groupTotal = computed(() => sumBaseBalance({ accounts: collectGroupAccounts({ group: props.group }) }));
 </script>
 
