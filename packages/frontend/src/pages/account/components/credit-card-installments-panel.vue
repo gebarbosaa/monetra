@@ -81,7 +81,7 @@ const linkedTransactionIds = computed(() =>
 const matchingTransactions = (installment: CreditCardInstallment) =>
   (candidateTransactionsQuery.data.value ?? []).filter((transaction: TransactionModel) =>
     !linkedTransactionIds.value.has(transaction.id) &&
-    Math.abs(Number(transaction.amount) - Number(installment.amount)) < 1e-8,
+    Math.abs(Math.abs(Number(transaction.amount)) - Number(installment.amount)) < 1e-8,
   );
 const createMutation = useMutation({
   mutationFn: createCreditCardInstallmentPlan,
