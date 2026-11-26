@@ -14,6 +14,12 @@ import { WalutomatProvider } from './walutomat';
  * Should be called at application startup
  */
 export function initializeBankProviders(): void {
+  // MONETRA is manual-entry only; do not register providers or recover old jobs unless explicitly enabled.
+  if (process.env.BANK_PROVIDERS_ENABLED !== 'true') {
+    logger.info('[Bank Data Providers] Disabled by BANK_PROVIDERS_ENABLED; skipping provider initialization and queue recovery');
+    return;
+  }
+
   try {
     // Register Monobank provider
     bankProviderRegistry.register(new MonobankProvider());
