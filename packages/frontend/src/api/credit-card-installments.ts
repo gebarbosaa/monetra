@@ -19,6 +19,7 @@ export interface CreditCardInstallmentPlan {
   userId: number;
   accountId: string;
   description: string;
+  categoryId: string;
   purchaseDate: string;
   currencyCode: string;
   totalAmount: number;
