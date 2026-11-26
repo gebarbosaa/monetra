@@ -1,5 +1,7 @@
 import type { DeleteTrashResponse } from '@bt/shared/types';
 import TransactionGroupItems from '@models/transaction-group-items.model';
+import CreditCardInstallments from '@models/credit-card-installments.model';
+import { ValidationError } from '@js/errors';
 import { dissolveUndersizedGroups } from '@models/transaction-groups.model';
 import { destroyTransactions } from '@models/transactions-query';
 import { trashedWhere } from '@models/transactions-query/deletion-where';
@@ -14,6 +16,18 @@ import { loadTrashedLegs } from './load-trashed-legs';
  */
 export const destroyTrashedRows = async ({ transactionIds }: { transactionIds: string[] }) => {
   if (!transactionIds.length) return;
+
+  const linkedInstallments = await CreditCardInstallments.findAll({
+    where: { transactionId: { [Op.in]: transactionIds } },
+    attributes: ['transactionId'],
+  });
+  if (linkedInstallments.length) {
+    throw new ValidationError({
+      message:
+        'Transactions linked to credit-card installments cannot be permanently deleted from Trash. Manage them through the installment plan.',
+      details: { transactionIds: linkedInstallments.map((link) => link.transactionId) },
+    });
+  }
 
   const groupItems = await TransactionGroupItems.findAll({
     where: { transactionId: { [Op.in]: transactionIds } },
