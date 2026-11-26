@@ -141,6 +141,8 @@
           }
         },
         "tagsLabel": "Tags",
+        "animalLabel": "Animal",
+        "animalPlaceholder": "Selecione Luna, Thor ou ambos",
         "originalAmountLabel": "Valor original",
         "originalAmountPlaceholder": "Valor em moeda estrangeira",
         "originalAmountTooltip": "Quando a transação foi feita em uma moeda diferente da conta, este é o valor realmente pago nessa moeda. O valor principal continua na moeda da conta. Não afeta as estatísticas.",
