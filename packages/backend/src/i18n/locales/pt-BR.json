@@ -691,6 +691,7 @@
       "housing": "Moradia",
       "transportation": "Transporte",
       "vehicle": "Veículo",
+      "pets": "Pets",
       "life": "Vida e lazer",
       "communication": "Comunicação e informática",
       "financial-expenses": "Despesas financeiras",
@@ -737,6 +738,14 @@
         "rentals": "Aluguel de veículos",
         "vehicle-insurance": "Seguro do veículo",
         "leasing": "Leasing"
+      },
+      "pets": {
+        "food": "Alimentação",
+        "veterinary": "Veterinário",
+        "medication": "Medicamentos",
+        "hygiene": "Higiene",
+        "accessories": "Acessórios",
+        "grooming": "Banho e tosa"
       },
       "life": {
         "health-care-doctor": "Saúde, médico",
