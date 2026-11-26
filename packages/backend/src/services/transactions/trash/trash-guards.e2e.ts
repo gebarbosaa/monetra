@@ -140,6 +140,9 @@ describe('Transactions Trash: rows that must be unlinked first', () => {
       raw: true,
     });
     const ids = plan.installments.map((row) => row.transactionId);
+    const postedInstallment = await CreditCardInstallments.findOne({ where: { transactionId: ids[0] } });
+    await postedInstallment!.update({ status: 'posted' });
+    await Transactions.update({ isPlanned: false }, { where: { id: ids[0] } });
 
     const result = await helpers.bulkDeleteTransactions({
       payload: { transactionIds: ids },
