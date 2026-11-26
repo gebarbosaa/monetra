@@ -36,6 +36,11 @@ export interface CreditCardInstallmentExposure {
   reservedInstallments: number;
   availableCredit: number;
   overLimit: boolean;
+  refCreditLimit: number;
+  refUsedCredit: number;
+  refReservedInstallments: number;
+  refAvailableCredit: number;
+  refOverLimit: boolean;
 }
 
 export interface CreateCreditCardInstallmentPlanPayload {
