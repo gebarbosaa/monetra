@@ -341,7 +341,13 @@
           "cancelled": "Cancelada"
         },
         "category": "Categoria da despesa",
-        "categoryPlaceholder": "Selecione uma categoria"
+        "categoryPlaceholder": "Selecione uma categoria",
+        "link": "Vincular",
+        "linked": "Parcela conciliada com o lançamento.",
+        "linkError": "Não foi possível vincular este lançamento.",
+        "selectTransaction": "Selecione um lançamento importado",
+        "unnamedTransaction": "Lançamento",
+        "noMatchingTransactions": "Nenhuma despesa não vinculada com este valor foi encontrada neste cartão."
       }
     },
     "vehicleDetails": {
