@@ -1,5 +1,6 @@
 import { ACCOUNT_CATEGORIES, asDecimal } from '@bt/shared/types';
 import { describe, expect, it } from '@jest/globals';
+import { ERROR_CODES } from '@js/errors';
 import Transactions from '@models/transactions.model';
 import * as helpers from '@tests/helpers';
 import { addMonths, format } from 'date-fns';
@@ -117,6 +118,34 @@ describe('Credit card installment plans', () => {
     expect(linked.status).toBe('posted');
     expect(await Transactions.findByPk(generatedPlannedTransactionId)).toBeNull();
     expect(await Transactions.findByPk(importedTransaction.id)).not.toBeNull();
+
+    // A reconciled installment is historical financial data: editing its parent
+    // plan must fail rather than silently moving or renaming the posted entry.
+    const editAfterReconciliation = await helpers.makeRequest({
+      method: 'patch',
+      url: `/credit-card-installments/${plan.id}`,
+      payload: {
+        description: 'Must remain unchanged',
+        categoryId: global.DEFAULT_CATEGORY_ID,
+        purchaseDate: dateOnly(new Date()),
+        firstDueDate: dateOnly(addMonths(new Date(), 2)),
+      },
+      raw: false,
+    });
+    expect(editAfterReconciliation.statusCode).toBe(ERROR_CODES.ValidationError);
+
+    const persistedPlan = await helpers.makeRequest<{
+      description: string;
+      installments: { status: string; transactionId: string }[];
+    }, true>({
+      method: 'get',
+      url: '/credit-card-installments',
+      raw: true,
+    });
+    const persisted = persistedPlan.find((item) => item.id === plan.id);
+    expect(persisted?.description).toBe('Manual reconciliation');
+    expect(persisted?.installments[0]?.status).toBe('posted');
+    expect(persisted?.installments[0]?.transactionId).toBe(importedTransaction.id);
   });
 
   it('creates planned ledger rows, reserves the limit and removes reservations on cancellation', async () => {
