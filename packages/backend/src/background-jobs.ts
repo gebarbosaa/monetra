@@ -1,6 +1,5 @@
 import { logger } from '@js/utils/logger';
 import { shutdownPostHog } from '@js/utils/posthog';
-import { accountSyncWorker } from '@services/bank-data-providers/sync/account-sync-queue';
 
 import { aiUsageMonthEndCron } from './crons/ai-usage-month-end';
 import { attachmentsOrphanSweepCron } from './crons/attachments-orphan-sweep';
@@ -49,7 +48,6 @@ const prodOnlyCrons = [
   transactionsTrashPurgeCron,
   balanceRevalueSweepCron,
   attachmentsOrphanSweepCron,
-  bankAccountsSyncCron,
   trackerSmartScanCron,
   trackerRulesSyncCron,
   aiUsageMonthEndCron,
@@ -80,7 +78,6 @@ export function initializeBackgroundJobs() {
 export async function shutdownBackgroundJobs() {
   for (const cron of [...allEnvCrons, ...prodOnlyCrons]) cron.stopCron();
   loadCurrencyRatesJob.stop();
-  await accountSyncWorker.close();
   // Flush remaining PostHog events before exit
   await shutdownPostHog();
 }
