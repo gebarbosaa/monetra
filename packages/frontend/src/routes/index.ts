@@ -56,15 +56,11 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: '/accounts/integrations/:connectionId',
-        name: ROUTES_NAMES.accountIntegrationDetails,
-        component: () => import('@/pages/accounts/integrations/details.vue'),
-        meta: { navSection: 'accounts', i18nChunks: ['pages/account-integrations'] },
+        redirect: { name: ROUTES_NAMES.accounts },
       },
       {
         path: '/bank-callback',
-        name: ROUTES_NAMES.bankCallback,
-        component: () => import('@/pages/bank-callback.vue'),
-        meta: { i18nChunks: ['pages/account-integrations'] },
+        redirect: { name: ROUTES_NAMES.accounts },
       },
       {
         path: '/loans',
