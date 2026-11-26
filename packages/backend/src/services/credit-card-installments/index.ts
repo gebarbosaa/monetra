@@ -99,12 +99,17 @@ export async function createInstallmentPlan(input: {
   const baseDecimals = await precision.getBaseCurrencyDecimals({ userId: input.userId });
   const roundedRefTotal = refTotal.roundHalfEven(baseDecimals);
 
-  const amountPerInstallment = total.divide(input.installmentCount).round(
-    await precision.getCurrencyDecimals({
-      userId: input.userId,
-      code: input.currencyCode,
-    }),
-  );
+  const currencyDecimals = await precision.getCurrencyDecimals({
+    userId: input.userId,
+    code: input.currencyCode,
+  });
+  const totalMinorUnits = total.toMinorUnits({ decimals: currencyDecimals });
+  if (totalMinorUnits < input.installmentCount) {
+    throw new ValidationError({
+      message: 'The total amount is too small to create positive installments at this currency precision.',
+    });
+  }
+  const amountPerInstallment = total.divide(input.installmentCount).round(currencyDecimals);
   const refPerInstallment = roundedRefTotal.divide(input.installmentCount).round(baseDecimals);
 
   const sequelize = CreditCardInstallmentPlans.sequelize;
