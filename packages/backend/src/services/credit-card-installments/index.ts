@@ -311,13 +311,25 @@ export async function cancelInstallmentPlan({ userId, id }: { userId: number; id
       lock: transaction.LOCK.UPDATE,
     });
     for (const installment of plannedInstallments) {
-      if (installment.transactionId) {
-        await Transactions.destroy({
-          where: { id: installment.transactionId, userId, isPlanned: true },
-          transaction,
-          individualHooks: true,
+      if (!installment.transactionId) continue;
+
+      const linkedTransaction = await Transactions.findOne({
+        where: { id: installment.transactionId, userId },
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      });
+      if (!linkedTransaction) continue;
+      if (!linkedTransaction.isPlanned) {
+        throw new ValidationError({
+          message: 'A plan with confirmed transactions cannot be cancelled. Reverse those transactions first.',
         });
       }
+
+      await Transactions.destroy({
+        where: { id: linkedTransaction.id, userId, isPlanned: true },
+        transaction,
+        individualHooks: true,
+      });
     }
 
     await CreditCardInstallments.update(
