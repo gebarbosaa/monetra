@@ -31,6 +31,16 @@ const router = express.Router();
 
 router.use(authenticateSession);
 
+// MONETRA is intentionally manual-entry only. Keep the upstream provider code
+// available for a future opt-in, but deny every bank-linking and sync endpoint
+// unless the operator explicitly enables it for a separate deployment.
+router.use((req, res, next) => {
+  if (process.env.BANK_PROVIDERS_ENABLED !== 'true') {
+    return res.status(404).json({ message: 'Bank integrations are disabled.' });
+  }
+  next();
+});
+
 // Provider discovery
 router.get('/', providersController.listProviders);
 
