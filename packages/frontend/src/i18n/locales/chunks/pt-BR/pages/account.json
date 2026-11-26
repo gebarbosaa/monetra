@@ -339,7 +339,9 @@
           "planned": "Prevista",
           "posted": "Lançada",
           "cancelled": "Cancelada"
-        }
+        },
+        "category": "Categoria da despesa",
+        "categoryPlaceholder": "Selecione uma categoria"
       }
     },
     "vehicleDetails": {
