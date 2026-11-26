@@ -7,6 +7,7 @@ const createSchema = z.object({
   body: z.object({
     accountId: recordId(),
     description: z.string().trim().min(1).max(200),
+    categoryId: recordId(),
     purchaseDate: z.iso.date(),
     firstDueDate: z.iso.date(),
     currencyCode: z.string().min(1).max(20),
