@@ -1,4 +1,4 @@
-import { ACCOUNT_CATEGORIES, ACCOUNT_TYPES } from '@bt/shared/types';
+import { ACCOUNT_CATEGORIES, ACCOUNT_TYPES, TRANSACTION_TRANSFER_NATURE, TRANSACTION_TYPES } from '@bt/shared/types';
 import { roundToCurrency } from '@common/lib/currency-precision';
 import { Money } from '@common/types/money';
 import { calculateRefAmount } from '@services/calculate-ref-amount.service';
@@ -7,6 +7,7 @@ import Accounts from '@models/accounts.model';
 import CreditCardInstallmentPlans, {
   CREDIT_CARD_INSTALLMENT_PLAN_STATUSES,
 } from '@models/credit-card-installment-plans.model';
+import Transactions from '@models/transactions.model';
 import CreditCardInstallments, {
   CREDIT_CARD_INSTALLMENT_STATUSES,
 } from '@models/credit-card-installments.model';
@@ -141,6 +142,68 @@ export async function getInstallmentPlans({ userId, accountId }: { userId: numbe
     where,
     include: [{ model: CreditCardInstallments, as: 'installments' }],
     order: [['purchaseDate', 'DESC'], [{ model: CreditCardInstallments, as: 'installments' }, 'installmentNumber', 'ASC']],
+  });
+}
+
+export async function linkInstallmentTransaction({
+  userId,
+  planId,
+  installmentId,
+  transactionId,
+}: {
+  userId: number;
+  planId: string;
+  installmentId: string;
+  transactionId: string;
+}) {
+  const sequelize = CreditCardInstallmentPlans.sequelize;
+  if (!sequelize) throw new Error('Credit card installment models are not initialized.');
+
+  return sequelize.transaction(async (transaction) => {
+    const plan = await CreditCardInstallmentPlans.findOne({
+      where: { id: planId, userId, status: CREDIT_CARD_INSTALLMENT_PLAN_STATUSES.active },
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
+    if (!plan) throw new NotFoundError({ message: 'Active installment plan not found.' });
+
+    const installment = await CreditCardInstallments.findOne({
+      where: { id: installmentId, planId: plan.id },
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
+    if (!installment) throw new NotFoundError({ message: 'Installment not found.' });
+    if (installment.status !== CREDIT_CARD_INSTALLMENT_STATUSES.planned || installment.transactionId) {
+      throw new ValidationError({ message: 'This installment is already settled or cancelled.' });
+    }
+
+    const tx = await Transactions.findOne({
+      where: { id: transactionId, userId, accountId: plan.accountId },
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
+    if (!tx) throw new NotFoundError({ message: 'Transaction not found on this credit card.' });
+    if (
+      tx.transactionType !== TRANSACTION_TYPES.expense ||
+      tx.transferNature !== TRANSACTION_TRANSFER_NATURE.not_transfer ||
+      !Money.fromDecimal(tx.amount).equals(Money.fromDecimal(installment.amount)) ||
+      tx.currencyCode !== plan.currencyCode
+    ) {
+      throw new ValidationError({
+        message: 'The transaction must be an expense on this card with the same currency and installment amount.',
+      });
+    }
+
+    // A planned transaction has not touched the account balance yet. Turning it into
+    // a real transaction moves the amount from reserved installments into card debt.
+    if (tx.isPlanned) await tx.update({ isPlanned: false }, { transaction });
+
+    await installment.update({
+      transactionId: tx.id,
+      status: CREDIT_CARD_INSTALLMENT_STATUSES.posted,
+    }, { transaction });
+
+    return installment.reload({ transaction });
   });
 }
 
