@@ -9,7 +9,6 @@ import CreditCardInstallmentPlans, {
 import CreditCardInstallments, {
   CREDIT_CARD_INSTALLMENT_STATUSES,
 } from '@models/credit-card-installments.model';
-import { Op } from 'sequelize';
 
 const dateParts = (value: string) => {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
@@ -54,13 +53,13 @@ export async function createInstallmentPlan(input: {
   });
   if (!total.isPositive()) throw new ValidationError({ message: 'Total amount must be greater than zero.' });
 
-  const baseCurrency = await import('@common/lib/currency-precision');
-  const baseDecimals = await baseCurrency.getBaseCurrencyDecimals({ userId: input.userId });
+  const precision = await import('@common/lib/currency-precision');
+  const baseDecimals = await precision.getBaseCurrencyDecimals({ userId: input.userId });
   const refTotal = Money.fromDecimal(input.refTotalAmount).roundHalfEven(baseDecimals);
   if (!refTotal.isPositive()) throw new ValidationError({ message: 'Reference amount must be greater than zero.' });
 
   const amountPerInstallment = total.divide(input.installmentCount).round(
-    await (await import('@common/lib/currency-precision')).getCurrencyDecimals({
+    await precision.getCurrencyDecimals({
       userId: input.userId,
       code: input.currencyCode,
     }),
@@ -164,11 +163,22 @@ export async function getCreditCardInstallmentExposure({ userId, accountId }: { 
   const reserved = Money.sum(
     plans.flatMap((plan) => plan.installments ?? []).map((installment) => Money.fromDecimal(installment.amount)),
   );
-  const available = account.creditLimit.subtract(account.currentBalance.abs()).subtract(reserved);
+  // Match the existing credit-utilization widget semantics: manual cards track debt as
+  // a negative balance; provider-synced accounts already include the credit limit.
+  const balanceIncludesCreditLimit = account.type !== 'system';
+  const used = balanceIncludesCreditLimit
+    ? account.creditLimit.subtract(account.currentBalance).isPositive()
+      ? account.creditLimit.subtract(account.currentBalance)
+      : Money.zero()
+    : account.currentBalance.isNegative()
+      ? account.currentBalance.abs()
+      : Money.zero();
+  const available = account.creditLimit.subtract(used).subtract(reserved);
   return {
     accountId,
     creditLimit: account.creditLimit,
     currentBalance: account.currentBalance,
+    usedCredit: used,
     reservedInstallments: reserved,
     availableCredit: available.isNegative() ? Money.zero() : available,
     overLimit: available.isNegative(),
