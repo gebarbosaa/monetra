@@ -4,6 +4,7 @@ import { NotFoundError, UnexpectedError, ValidationError } from '@js/errors';
 import { logger } from '@js/utils/logger';
 import PortfolioTransfers from '@models/investments/portfolio-transfers.model';
 import RefundTransactions from '@models/refund-transactions.model';
+import CreditCardInstallments from '@models/credit-card-installments.model';
 import * as Transactions from '@models/transactions.model';
 import { deletePortfolioTransfer } from '@services/investments/portfolios/transfers';
 import { assertSharedWritePhase1Guards } from '@services/sharing/auth/authorize-account-write.service';
@@ -41,6 +42,18 @@ export const deleteTransaction = withTransaction(
       const { tx, ctx } = await getWritableTransactionById({ id, userId });
 
       assertPlannedWriteAllowed({ transaction: tx, callerUserId: userId });
+
+      // A posted installment is the ledger evidence for a credit-card plan.
+      // Deleting or trashing it would make the plan look settled while its
+      // transaction FK is nulled (ON DELETE SET NULL), losing the audit trail.
+      const linkedInstallment = await CreditCardInstallments.findOne({
+        where: { transactionId: tx.id, status: 'posted' },
+      });
+      if (linkedInstallment) {
+        throw new ValidationError({
+          message: 'A transaction linked to a posted credit-card installment cannot be deleted. Reverse it through the financial reversal flow.',
+        });
+      }
 
       if (!permanent) {
         assertPhase1Guards({ tx, isOwner: ctx.isOwner });
