@@ -152,6 +152,7 @@ describe('Credit card installment plans', () => {
 
     expect(plan.installments).toHaveLength(3);
     expect(plan.installments.reduce((sum, installment) => sum + Number(installment.amount), 0)).toBeCloseTo(100);
+    expect(plan.installments.every((installment) => Number(installment.amount) > 0)).toBe(true);
     expect(plan.installments.every((installment) => installment.transactionId)).toBe(true);
     expect(plan.installments.every((installment) => installment.status === 'planned')).toBe(true);
 
