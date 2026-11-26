@@ -107,6 +107,9 @@ describe('Credit card installment plans', () => {
     });
     expect(rejectedBulkReportingEdit.statusCode).toBe(ERROR_CODES.ValidationError);
 
+    const rejectedDirectDelete = await helpers.deleteTransaction({ id: transactionId });
+    expect(rejectedDirectDelete.statusCode).toBe(ERROR_CODES.ValidationError);
+
     await helpers.updateTransaction({
       id: transactionId,
       payload: { note: 'Description remains editable' },
