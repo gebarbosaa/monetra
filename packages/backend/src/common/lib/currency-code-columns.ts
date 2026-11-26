@@ -22,6 +22,7 @@ interface CurrencyCodeColumnSpec {
 
 export const CURRENCY_CODE_COLUMNS: readonly CurrencyCodeColumnSpec[] = [
   { table: 'Currencies', column: 'code' },
+  { table: 'CreditCardInstallmentPlans', column: 'currencyCode' },
   { table: 'Accounts', column: 'currencyCode' },
   { table: 'BudgetPlans', column: 'currencyCode' },
   { table: 'ExchangeRates', column: 'baseCode' },
