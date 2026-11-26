@@ -26,9 +26,6 @@
             />
           </DesktopOnlyTooltip>
           <span class="truncate text-sm font-semibold">{{ account.name }}</span>
-          <DesktopOnlyTooltip v-if="needsReauth" :content="$t('sidebar.accountsView.needsReauthTooltip')">
-            <TriangleAlertIcon class="text-destructive-text size-3.5 shrink-0" />
-          </DesktopOnlyTooltip>
         </div>
         <div class="text-muted-foreground mt-0.5 flex min-w-0 items-center gap-1 text-xs">
           <template v-if="subtitle">
@@ -76,12 +73,11 @@ import { DesktopOnlyTooltip } from '@/components/lib/ui/tooltip';
 import { useFormatCurrency } from '@/composable';
 import { useAccountAccess } from '@/composable/use-account-access';
 import { useAccountDisplayBalance } from '@/composable/use-account-display-balance';
-import { useSyncStatus } from '@/composable/use-sync-status';
 import { cn } from '@/lib/utils';
 import { ROUTES_NAMES } from '@/routes/constants';
 import { useCurrenciesStore } from '@/stores';
 import { ACCOUNT_CATEGORIES, AccountModel } from '@bt/shared/types';
-import { ChevronRightIcon, HomeIcon, TriangleAlertIcon, UsersIcon } from '@lucide/vue';
+import { ChevronRightIcon, HomeIcon, UsersIcon } from '@lucide/vue';
 import { storeToRefs } from 'pinia';
 import { computed, toRef } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -101,11 +97,9 @@ const baseCurrencyCode = computed(() => baseCurrency.value?.currency?.code);
 
 const { displayBalance, displayRefBalance } = useAccountDisplayBalance({ account: toRef(() => props.account) });
 const { isSharedWithCaller, isHouseholdGranted, ownerHandle } = useAccountAccess(toRef(() => props.account));
-const { isAccountNeedingReauth } = useSyncStatus();
 
 const category = computed(() => props.categoryOverride ?? props.account.accountCategory);
 
 const categoryLabel = computed(() => t(ACCOUNT_CATEGORIES_TRANSLATION_KEYS[category.value]));
 
-const needsReauth = computed(() => isAccountNeedingReauth(props.account));
 </script>
