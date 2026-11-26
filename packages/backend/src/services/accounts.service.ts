@@ -20,6 +20,7 @@ import * as Accounts from '@models/accounts.model';
 import Balances from '@models/balances.model';
 import BankDataProviderConnections from '@models/bank-data-provider-connections.model';
 import BudgetPlanAccounts from '@models/budget-plan-accounts.model';
+import CreditCardInstallmentPlans from '@models/credit-card-installment-plans.model';
 import { countTransactions } from '@models/transactions-query';
 import { trashedWhere } from '@models/transactions-query/deletion-where';
 import { getBaseCurrency } from '@models/users-currencies.model';
@@ -541,6 +542,19 @@ export const deleteAccountByIdInTx = withTransaction(
     const account = await Accounts.default.findOne({ where: { id, userId } });
     if (!account) {
       throw new NotFoundError({ message: t({ key: 'accounts.accountNotFound' }) });
+    }
+
+    // Active installment plans own planned reservations and posted ledger evidence.
+    // Deleting the card account would cascade into those transactions and leave the
+    // installment rows detached via ON DELETE SET NULL. Require the plan to be resolved first.
+    const activeInstallmentPlans = await CreditCardInstallmentPlans.count({
+      where: { accountId: id, userId, status: 'active' },
+    });
+    if (activeInstallmentPlans > 0) {
+      throw new ValidationError({
+        message:
+          'This account has active credit-card installment plans. Settle or cancel those plans before deleting the account.',
+      });
     }
 
     // Cascade-deleting would wipe the source legs of loan payments made from this
