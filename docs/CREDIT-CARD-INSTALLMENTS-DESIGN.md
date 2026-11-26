@@ -1,6 +1,6 @@
 # MONETRA — Projeto técnico: compras parceladas e limite disponível
 
-Status: proposta técnica para implementação  
+Status: implementação parcial — persistência e API inicial; integração de interface e automação pendentes  
 Branch de referência: `dev`  
 Data: 2026-11-26
 
@@ -32,9 +32,11 @@ Uma compra parcelada é representada por uma sequência de lançamentos de parce
 
 Essa regra evita contar a compra integral e, ao mesmo tempo, somar novamente as parcelas.
 
-## Modelo de dados proposto
+## Modelo de dados implementado na primeira etapa
 
-Criar duas entidades relacionais, sem guardar a fonte de verdade em JSON:
+As duas entidades relacionais foram criadas por migration transacional, com modelos Sequelize e registro no inventário de colunas monetárias/moeda. A migration está em `packages/backend/src/migrations/20261126120000-create-credit-card-installments.ts`.
+
+Criadas sem guardar a fonte de verdade em JSON:
 
 ### `CreditCardInstallmentPlans`
 
@@ -63,7 +65,7 @@ Criar duas entidades relacionais, sem guardar a fonte de verdade em JSON:
 
 Criar índices por `accountId/status/dueDate`, `planId/installmentNumber` e índice único parcial para `transactionId`. As FKs devem aplicar cascade na exclusão do plano e impedir órfãos. A migration deve ser transacional.
 
-## Integração com o razão existente
+## Integração com o razão existente — estado atual
 
 - Cada parcela deve possuir uma linha em `Transactions` vinculada à parcela.
 - Parcelas ainda não lançadas usam `isPlanned = true`; parcelas já lançadas usam `isPlanned = false`.
@@ -73,7 +75,7 @@ Criar índices por `accountId/status/dueDate`, `planId/installmentNumber` e índ
 - Impedir que uma linha planejada vinculada a parcela seja convertida em real por um caminho que não atualize a parcela correspondente.
 - Usar valores monetários com a precisão/unidade já adotada pelo projeto; distribuir eventual resto de arredondamento na última parcela para que a soma seja exatamente igual ao total da compra.
 
-## Cálculo de utilização
+## Cálculo de utilização — endpoint inicial
 
 Para cada conta de cartão:
 
@@ -106,7 +108,7 @@ O limite disponível será `max(limite total - utilização, 0)`. O valor de uti
 9. Pagar fatura total/parcial e confirmar que o pagamento não vira despesa nem altera parcelas futuras.
 10. Testar edição concorrente e idempotência da criação/concilição.
 
-## Sequência de implementação
+## Sequência de implementação — progresso
 
 1. Implementar modelos, migration, índices e testes de persistência.
 2. Implementar serviço transacional de criação/edição/cancelamento de plano e parcelas.
