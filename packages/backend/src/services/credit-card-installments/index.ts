@@ -1,4 +1,4 @@
-import { ACCOUNT_CATEGORIES, ACCOUNT_TYPES, TRANSACTION_TRANSFER_NATURE, TRANSACTION_TYPES } from '@bt/shared/types';
+import { ACCOUNT_CATEGORIES, ACCOUNT_TYPES, PAYMENT_TYPES, TRANSACTION_TRANSFER_NATURE, TRANSACTION_TYPES } from '@bt/shared/types';
 import { roundToCurrency } from '@common/lib/currency-precision';
 import { Money } from '@common/types/money';
 import { calculateRefAmount } from '@services/calculate-ref-amount.service';
@@ -8,6 +8,7 @@ import CreditCardInstallmentPlans, {
   CREDIT_CARD_INSTALLMENT_PLAN_STATUSES,
 } from '@models/credit-card-installment-plans.model';
 import Transactions from '@models/transactions.model';
+import * as TransactionModel from '@models/transactions.model';
 import CreditCardInstallments, {
   CREDIT_CARD_INSTALLMENT_STATUSES,
 } from '@models/credit-card-installments.model';
@@ -127,7 +128,30 @@ export async function createInstallmentPlan(input: {
         status: CREDIT_CARD_INSTALLMENT_STATUSES.planned,
       });
     }
-    await CreditCardInstallments.bulkCreate(rows, { transaction });
+    const installments = await CreditCardInstallments.bulkCreate(rows, { transaction });
+
+    // Planned ledger rows reserve future installments without changing account balances.
+    for (const installment of installments) {
+      const plannedTransaction = await TransactionModel.createTransaction({
+        userId: input.userId,
+        definitionOwnerUserId: input.userId,
+        amount: Money.fromDecimal(installment.amount),
+        refAmount: Money.fromDecimal(installment.refAmount),
+        transactionType: TRANSACTION_TYPES.expense,
+        paymentType: PAYMENT_TYPES.creditCard,
+        accountId: account.id,
+        accountType: account.type,
+        currencyCode: account.currencyCode,
+        refCurrencyCode: account.currencyCode,
+        transferNature: TRANSACTION_TRANSFER_NATURE.not_transfer,
+        note: input.description.trim() + ' — parcela ' + installment.installmentNumber + '/' + input.installmentCount,
+        time: new Date(installment.dueDate + 'T12:00:00.000Z'),
+        isPlanned: true,
+        excludeFromStats: false,
+      });
+      await installment.update({ transactionId: plannedTransaction.id }, { transaction });
+    }
+
     return CreditCardInstallmentPlans.findByPk(plan.id, {
       include: [{ model: CreditCardInstallments, as: 'installments' }],
       transaction,
