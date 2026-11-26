@@ -117,9 +117,9 @@ O limite disponível será `max(limite total - utilização, 0)`. O valor de uti
 3. Integrar confirmação e planned matching com a parcela.
 4. Implementar consulta agregada de reserva futura por cartão.
 5. **Implementado parcialmente:** endpoint retorna exposição nativa e na moeda-base, filtrando parcelas com transação ainda planejada; widget soma reservas ao crédito utilizado.
-6. **Implementado parcialmente:** painel de cadastro, listagem e cancelamento foi adicionado à aba Parcelamentos das contas manuais e às contas de cartão conectadas; exige categoria de despesa e possui traduções em inglês e pt-BR.
+6. **Implementado parcialmente:** painel de cadastro, listagem, conciliação manual e cancelamento foi adicionado às contas manuais e às contas de cartão conectadas; exige categoria de despesa e possui traduções em inglês e pt-BR.
 7. **Pendente:** executar E2E, lint e typecheck; revisar migration e fluxo de backup/restore antes de habilitar.
 
 ## Limites e pendências da implementação
 
-A interface inicial ainda não permite editar planos nem associar manualmente uma parcela a uma transação já existente (o endpoint de vínculo está implementado). A conciliação automática pelo planned matching está integrada. A migration ainda não foi executada em banco real e não há confirmação de CI, lint ou typecheck. O fluxo de estorno de parcelas lançadas e a cobertura completa de permissões/compartilhamento precisam ser validados antes de habilitar o recurso em produção.
+A interface inicial ainda não permite editar planos. A conciliação manual de lançamentos importados está disponível no painel, e o planned matching automático atualiza o estado da parcela dentro do savepoint da conciliação. A migration ainda não foi executada em banco real e não há confirmação de CI, lint ou typecheck. O fluxo de estorno de parcelas lançadas e a cobertura completa de permissões/compartilhamento precisam ser validados antes de habilitar o recurso em produção.
