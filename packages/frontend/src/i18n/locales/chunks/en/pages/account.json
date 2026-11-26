@@ -341,7 +341,13 @@
           "cancelled": "Cancelled"
         },
         "category": "Expense category",
-        "categoryPlaceholder": "Choose a category"
+        "categoryPlaceholder": "Choose a category",
+        "link": "Link",
+        "linked": "Installment reconciled with transaction.",
+        "linkError": "Could not link this transaction.",
+        "selectTransaction": "Choose an imported transaction",
+        "unnamedTransaction": "Transaction",
+        "noMatchingTransactions": "No unlinked expense with this installment amount was found on this card."
       }
     },
     "vehicleDetails": {
