@@ -28,6 +28,7 @@ export type BackupParentScope =
   | 'subscriptionPeriods'
   | 'importBatches'
   | 'budgetPlans'
+  | 'creditCardInstallmentPlans'
   | 'budgetLines'
   | 'trackerLines'
   | 'goals'
@@ -194,6 +195,13 @@ const TABLE_DEFS = [
     restoreMode: 'insert',
   },
   {
+    fileName: 'credit-card-installment-plans',
+    model: models.CreditCardInstallmentPlans,
+    tier: 3,
+    scope: { strategy: 'userColumn', column: 'userId' },
+    restoreMode: 'insert',
+  },
+  {
     fileName: 'account-groupings',
     model: models.AccountGrouping,
     tier: 3,
@@ -320,6 +328,13 @@ const TABLE_DEFS = [
     paranoid: true,
     selfRefColumns: ['mergedIntoId', 'paymentParentId'],
     selfRefOrphanValues: { paymentParentId: { paymentAmount: null, paymentLinkSnapshot: null } },
+  },
+  {
+    fileName: 'credit-card-installments',
+    model: models.CreditCardInstallments,
+    tier: 5,
+    scope: { strategy: 'viaParent', fk: 'planId', parent: 'creditCardInstallmentPlans' },
+    restoreMode: 'insert',
   },
   {
     fileName: 'balances',
