@@ -29,6 +29,18 @@ A suíte `credit-limit-in-stats.e2e.ts` cobre:
 
 **Limite da evidência:** isso valida o ajuste de limite nos indicadores, não a regra completa de limite disponível considerando compras parceladas futuras e parcelas já liquidadas.
 
+### 3. Limite disponível e compras parceladas no cartão
+
+A leitura dos modelos e serviços atuais encontrou estas distinções:
+
+- `Accounts` armazena `creditLimit` e `refCreditLimit` como valores do limite total configurado e sua conversão para a moeda-base.
+- `get-credit-limit-adjustment.ts` usa `refCreditLimit` para ajustar indicadores patrimoniais. Esse serviço não soma compras parceladas nem calcula o saldo de parcelas futuras.
+- `Transactions` armazena valores, tipo, conta, transferência e vínculo de pagamento; na definição do modelo consultada não há campos dedicados de quantidade de parcelas, valor de parcela, parcela atual ou saldo futuro parcelado.
+- `services/subscriptions/installments.ts` controla parcelas de assinaturas/compromissos recorrentes (`maxOccurrences`, períodos pagos/pulados e conclusão). Não é evidência de um razão de compras parceladas no cartão.
+
+**Conclusão desta auditoria:** não foi localizada uma implementação explícita que calcule o limite disponível do cartão subtraindo o saldo futuro de compras parceladas. Não é seguro tentar corrigir isso alterando `get-credit-limit-adjustment.ts`, pois ele serve a outro propósito (indicadores patrimoniais).
+
+**Decisão técnica:** antes de implementar o cálculo, é necessário definir/adotar uma fonte de verdade para compras parceladas (compra original, número de parcelas, valor de cada parcela, parcelas liquidadas, estornos/cancelamentos e conta/cartão associado). O cálculo deve reservar somente parcelas ainda não liquidadas e liberar o limite quando uma parcela for paga, estornada ou cancelada, sem criar uma segunda despesa no pagamento da fatura.
 ### 3. Seleção de animais nas transações
 
 O utilitário de seleção de tags foi endurecido para aceitar como animal somente IDs com marcador `MONETRA_PET:`. Tags comuns e IDs inexistentes não são mais anexados como seleção de animal. Foram adicionados casos de regressão em `pet-tag-selection.spec.ts`.
@@ -36,7 +48,7 @@ O utilitário de seleção de tags foi endurecido para aceitar como animal somen
 ## Pontos que continuam em aberto
 
 1. **Teste de regressão adicionado** em `matching-transactions.e2e.ts`: compra de R$ 500 no cartão seguida de pagamento da fatura entre contas; espera R$ 500 em despesas e R$ 500 em transferências, sem duplicar a despesa. Ainda falta executar o teste.
-2. Auditar o cálculo do limite disponível do cartão com parcelas futuras, parcelas pagas, estornos e compras canceladas.
+2. Projetar e implementar um razão explícito de compras parceladas no cartão e o cálculo do limite disponível, cobrindo parcelas futuras, liquidadas, estornos e cancelamentos; a fonte de verdade ainda não foi localizada.
 3. Validar transferências internas para garantir que não sejam somadas como receita ou despesa nos relatórios familiares.
 4. Verificar a exclusão de `GRANA EXTRA` no ranking Top 15, sem ocultar os lançamentos do razão financeiro.
 5. Revisar idempotência de lançamentos recorrentes e trilha de auditoria das alterações relevantes.
@@ -51,4 +63,4 @@ O utilitário de seleção de tags foi endurecido para aceitar como animal somen
 
 ## Próxima ação recomendada
 
-Continuar a auditoria de cartões e faturas no backend, localizar o fluxo real de liquidação e só então implementar um teste de regressão para o cenário de dupla contabilização. Não alterar regras financeiras sem confirmar o comportamento atual e os modelos envolvidos.
+Definir a modelagem de compras parceladas e limite disponível antes de alterar cálculos existentes. Em paralelo, executar os testes E2E adicionados para pagamento de fatura e verificar os fluxos de transferência/relatórios. Não alterar regras financeiras sem confirmar o comportamento atual e os modelos envolvidos.
