@@ -2,6 +2,7 @@ import { TRANSACTION_TRANSFER_NATURE } from '@bt/shared/types';
 import { t } from '@i18n/index';
 import { ValidationError } from '@js/errors';
 import { logger } from '@js/utils/logger';
+import CreditCardInstallments from '@models/credit-card-installments.model';
 import { findTransactions, updateTransactions } from '@models/transactions-query';
 import * as Transactions from '@models/transactions.model';
 import { withTransaction } from '@root/services/common/with-transaction';
@@ -27,6 +28,16 @@ export const unlinkTransferTransactions = withTransaction(
           userId: payload.userId,
           tx,
           notFoundKey: 'transactions.linkCannotFind',
+        });
+      }
+
+      const linkedInstallmentCount = await CreditCardInstallments.count({
+        where: { transactionId: { [Op.in]: transactions.map((tx) => tx.id) } },
+      });
+      if (linkedInstallmentCount > 0) {
+        throw new ValidationError({
+          message:
+            'A transaction linked to a credit-card installment cannot be unlinked from a transfer. Manage it through the installment plan.',
         });
       }
 
