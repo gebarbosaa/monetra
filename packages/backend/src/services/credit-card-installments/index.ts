@@ -201,7 +201,7 @@ export async function linkInstallmentTransaction({
       lock: transaction.LOCK.UPDATE,
     });
     if (!installment) throw new NotFoundError({ message: 'Installment not found.' });
-    if (installment.status !== CREDIT_CARD_INSTALLMENT_STATUSES.planned || installment.transactionId) {
+    if (installment.status !== CREDIT_CARD_INSTALLMENT_STATUSES.planned) {
       throw new ValidationError({ message: 'This installment is already settled or cancelled.' });
     }
 
@@ -219,6 +219,32 @@ export async function linkInstallmentTransaction({
     ) {
       throw new ValidationError({
         message: 'The transaction must be an expense on this card with the same currency and installment amount.',
+      });
+    }
+
+    // If this installment was initially represented by an auto-generated planned row,
+    // allow an owner to replace that reservation with an already-imported real transaction.
+    // Never delete a linked real transaction or silently detach it.
+    if (installment.transactionId && installment.transactionId !== tx.id) {
+      const previousPlanned = await Transactions.findOne({
+        where: {
+          id: installment.transactionId,
+          userId,
+          accountId: plan.accountId,
+          isPlanned: true,
+        },
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      });
+      if (!previousPlanned) {
+        throw new ValidationError({
+          message: 'This installment is already linked to a real transaction and cannot be replaced.',
+        });
+      }
+      await Transactions.destroy({
+        where: { id: previousPlanned.id, userId, isPlanned: true },
+        transaction,
+        individualHooks: true,
       });
     }
 
