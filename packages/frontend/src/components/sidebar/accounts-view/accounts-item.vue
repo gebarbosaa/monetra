@@ -17,7 +17,6 @@ const props = defineProps<{
 const { displayBalance } = useAccountDisplayBalance({ account: toRef(() => props.account) });
 
 const { isSharedWithCaller, ownerHandle, isHouseholdGranted } = useAccountAccess(toRef(() => props.account));
-
 </script>
 
 <template>
