@@ -189,6 +189,94 @@ export async function getInstallmentPlans({ userId, accountId }: { userId: numbe
   });
 }
 
+export async function updateInstallmentPlan(input: {
+  userId: number;
+  id: string;
+  description: string;
+  categoryId: string;
+  purchaseDate: string;
+  firstDueDate: string;
+}) {
+  if (!input.description.trim() || input.description.trim().length > 200) {
+    throw new ValidationError({ message: 'Description must contain between 1 and 200 characters.' });
+  }
+  dateParts(input.purchaseDate);
+  dateParts(input.firstDueDate);
+  if (input.firstDueDate < input.purchaseDate) {
+    throw new ValidationError({ message: 'The first installment due date cannot precede the purchase date.' });
+  }
+  const category = await Categories.findOne({ where: { id: input.categoryId, userId: input.userId } });
+  if (!category) throw new ValidationError({ message: 'Choose a valid expense category.' });
+
+  const sequelize = CreditCardInstallmentPlans.sequelize;
+  if (!sequelize) throw new Error('Credit card installment models are not initialized.');
+
+  return sequelize.transaction(async (transaction) => {
+    const plan = await CreditCardInstallmentPlans.findOne({
+      where: { id: input.id, userId: input.userId, status: CREDIT_CARD_INSTALLMENT_PLAN_STATUSES.active },
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
+    if (!plan) throw new NotFoundError({ message: 'Active installment plan not found.' });
+
+    const installments = await CreditCardInstallments.findAll({
+      where: { planId: plan.id },
+      order: [['installmentNumber', 'ASC']],
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
+    if (
+      installments.length !== plan.installmentCount ||
+      installments.some((installment) => installment.status !== CREDIT_CARD_INSTALLMENT_STATUSES.planned)
+    ) {
+      throw new ValidationError({
+        message: 'Only plans with all installments still planned can be edited.',
+      });
+    }
+
+    const plannedTransactions = [];
+    for (const installment of installments) {
+      if (!installment.transactionId) {
+        throw new ValidationError({ message: 'An installment has no linked planned transaction and cannot be edited.' });
+      }
+      const linked = await Transactions.findOne({
+        where: { id: installment.transactionId, userId: input.userId, accountId: plan.accountId },
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      });
+      if (!linked || !linked.isPlanned) {
+        throw new ValidationError({
+          message: 'An installment is already confirmed or its planned transaction is missing. The plan cannot be edited.',
+        });
+      }
+      plannedTransactions.push(linked);
+    }
+
+    await plan.update({
+      description: input.description.trim(),
+      categoryId: category.id,
+      purchaseDate: input.purchaseDate,
+    }, { transaction });
+
+    for (let index = 0; index < installments.length; index += 1) {
+      const installment = installments[index]!;
+      const linked = plannedTransactions[index]!;
+      const dueDate = addMonthsClamped(input.firstDueDate, installment.installmentNumber - 1);
+      await installment.update({ dueDate }, { transaction });
+      await linked.update({
+        categoryId: category.id,
+        note: input.description.trim() + ' — parcela ' + installment.installmentNumber + '/' + plan.installmentCount,
+        time: new Date(dueDate + 'T12:00:00.000Z'),
+      }, { transaction });
+    }
+
+    return plan.reload({
+      include: [{ model: CreditCardInstallments, as: 'installments' }],
+      transaction,
+    });
+  });
+}
+
 export async function linkInstallmentTransaction({
   userId,
   planId,
