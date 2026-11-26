@@ -15,6 +15,7 @@ import { type AccountModel } from '@bt/shared/types';
 import type { FormattedCategory } from '@/common/types';
 import { computed, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { format } from 'date-fns';
 import { toLocalCurrencyNumber } from '@/js/helpers';
 import { getCurrencyDecimals } from '@/js/helpers/currency-decimals';
 
@@ -26,7 +27,7 @@ const categories = useAccountCategories({ accountId: computed(() => props.accoun
 const selectedCategory = ref<FormattedCategory | null>(null);
 const queryKey = computed(() => ['credit-card-installment-plans', props.account.id]);
 const exposureKey = computed(() => ['credit-card-installment-exposure', props.account.id]);
-const today = new Date().toISOString().slice(0, 10);
+const today = format(new Date(), 'yyyy-MM-dd');
 const amountDecimals = computed(() => getCurrencyDecimals({ code: props.account.currencyCode, meta: props.account.currencyMeta }));
 const amountStep = computed(() => String(10 ** -amountDecimals.value));
 const form = reactive({
