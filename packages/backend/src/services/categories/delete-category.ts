@@ -4,6 +4,7 @@ import { t } from '@i18n/index';
 import { ConflictError, ValidationError } from '@js/errors';
 import * as Categories from '@models/categories.model';
 import TrackerCategories from '@models/tracker-categories.model';
+import CreditCardInstallmentPlans from '@models/credit-card-installment-plans.model';
 import TrackerLineCategories from '@models/tracker-line-categories.model';
 import TrackerLines from '@models/tracker-lines.model';
 import TransactionTemplates from '@models/transaction-templates.model';
@@ -117,6 +118,17 @@ export const deleteCategory = withTransaction(async (payload: DeleteCategoryPayl
       })
     : null;
 
+  const activeInstallmentPlanCount = await CreditCardInstallmentPlans.count({
+    where: { userId: payload.userId, categoryId: payload.categoryId, status: 'active' },
+  });
+  if (activeInstallmentPlanCount > 0 && !replacement) {
+    throw new ConflictError({
+      code: API_ERROR_CODES.categoryHasTransactions,
+      message: 'Category is used by active credit-card installment plans that need to be reassigned.',
+      details: { installmentPlanCount: activeInstallmentPlanCount },
+    });
+  }
+
   if (transactionCount > 0) {
     if (!replacement) {
       throw new ConflictError({
@@ -134,6 +146,15 @@ export const deleteCategory = withTransaction(async (payload: DeleteCategoryPayl
       balanceAdjustments: 'include',
       paranoid: false,
     });
+  }
+
+  // The generic transaction reassignment above also moves installment ledger rows.
+  // Keep their owning plans on the same category, including plans with posted rows.
+  if (replacement && activeInstallmentPlanCount > 0) {
+    await CreditCardInstallmentPlans.update(
+      { categoryId: replacement.id },
+      { where: { userId: payload.userId, categoryId: payload.categoryId, status: 'active' } },
+    );
   }
 
   // Without a successor the rules would silently lose their category action, so they are paused.
