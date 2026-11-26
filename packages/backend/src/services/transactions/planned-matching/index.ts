@@ -43,18 +43,23 @@ export const tryMergeIntoPlanned = async ({
     // The savepoint is what makes the fallback safe: the merge flips the plan to real partway
     // through, and without a scoped rollback a later throw would leave that flip in place while
     // the caller adds a second row for the same charge.
-    const merged = await runInSavepoint(() => mergeIntoPlanned({ planned, incoming }));
+    const merged = await runInSavepoint(async () => {
+      const row = await mergeIntoPlanned({ planned, incoming });
 
-    // Keep the installment ledger in sync when bank/import matching confirms its planned row.
-    await CreditCardInstallments.update(
-      { status: CREDIT_CARD_INSTALLMENT_STATUSES.posted },
-      {
-        where: {
-          transactionId: merged.id,
-          status: CREDIT_CARD_INSTALLMENT_STATUSES.planned,
+      // Keep the installment ledger in sync inside the same savepoint. If this fails,
+      // the transaction merge is rolled back too, so the caller cannot create a duplicate.
+      await CreditCardInstallments.update(
+        { status: CREDIT_CARD_INSTALLMENT_STATUSES.posted },
+        {
+          where: {
+            transactionId: row.id,
+            status: CREDIT_CARD_INSTALLMENT_STATUSES.planned,
+          },
         },
-      },
-    );
+      );
+
+      return row;
+    });
 
     logger.info('Merged an incoming transaction into a planned one', {
       transactionId: merged.id,
