@@ -144,6 +144,14 @@ export async function createAppUserWithUniqueUsername({
 export async function seedUserDefaults({ userId, locale: providedLocale }: { userId: number; locale?: string }) {
   await i18nextReady;
 
+  // MONETRA is Brazil-first: new accounts start with BRL as their reporting
+  // currency. Keep existing users' chosen base currency untouched when this
+  // seed is reused for recovery or maintenance.
+  const existingBaseCurrency = await userService.getUserBaseCurrency({ userId });
+  if (!existingBaseCurrency) {
+    await userService.setBaseUserCurrency({ userId, currencyCode: 'BRL' });
+  }
+
   const locale = providedLocale || requestContext.getLocale();
   const translatedCategories = getTranslatedCategories({ locale });
 
