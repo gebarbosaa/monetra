@@ -21,6 +21,9 @@ import type { BudgetPlanPeriodView } from '@bt/shared/types';
 import { INVESTMENT_TRANSACTION_CATEGORY } from '@bt/shared/types/investments';
 import { VENTURE_CASH_FLOW_MODE, VENTURE_EVENT_TYPE } from '@bt/shared/types/venture';
 import { generateRandomRecordId } from '@common/lib/record-id-helpers';
+import CreditCardInstallmentPlans from '@models/credit-card-installment-plans.model';
+import CreditCardInstallments from '@models/credit-card-installments.model';
+import Transactions from '@models/transactions.model';
 import { t } from '@i18n/index';
 import { beforeEach, describe, expect, it } from '@jest/globals';
 import { PNG_1X1_BYTES, PNG_1X1_DATA_URL } from '@tests/fixtures/logo-images';
@@ -1231,6 +1234,70 @@ describe('Data backup restore (POST /user/backup/restore)', () => {
       },
       30000,
     );
+  });
+
+  describe('Credit card installments', () => {
+    it('round-trips installment plan metadata and its transaction links', async () => {
+      const card = await helpers.createAccount({
+        payload: helpers.buildAccountPayload({
+          accountCategory: 'creditCard',
+          creditLimit: 500,
+        }),
+        raw: true,
+      });
+      const plan = await helpers.makeRequest<{
+        id: string;
+        installments: Array<{ id: string; transactionId: string; installmentNumber: number }>;
+      }, true>({
+        method: 'post',
+        url: '/credit-card-installments',
+        payload: {
+          accountId: card.id,
+          description: 'Backup installment round-trip',
+          categoryId: global.DEFAULT_CATEGORY_ID,
+          purchaseDate: '2026-11-01',
+          firstDueDate: '2026-12-01',
+          currencyCode: card.currencyCode,
+          totalAmount: 100,
+          installmentCount: 3,
+        },
+        raw: true,
+      });
+
+      const exported = await exportArchive();
+      const archive = helpers.parseBackupArchive({ buffer: exported.buffer });
+      const archivedPlans = archive.readData({ name: 'credit-card-installment-plans' }) as Row[];
+      const archivedInstallments = archive.readData({ name: 'credit-card-installments' }) as Row[];
+      expect(archivedPlans).toContainEqual(expect.objectContaining({
+        id: plan.id,
+        description: 'Backup installment round-trip',
+        installmentCount: 3,
+      }));
+      expect(archivedInstallments.filter((row) => row.planId === plan.id)).toHaveLength(3);
+
+      await helpers.restoreBackupAndWait({ fileContent: exported.base64 });
+
+      const restoredPlan = await CreditCardInstallmentPlans.findByPk(plan.id, { raw: true });
+      expect(restoredPlan).toEqual(expect.objectContaining({
+        id: plan.id,
+        description: 'Backup installment round-trip',
+        installmentCount: 3,
+        status: 'active',
+      }));
+      const restoredRows = (await CreditCardInstallments.findAll({
+        where: { planId: plan.id },
+        order: [['installmentNumber', 'ASC']],
+        raw: true,
+      })) as unknown as Row[];
+      expect(restoredRows).toHaveLength(3);
+      expect(restoredRows.map((row) => row.installmentNumber)).toEqual([1, 2, 3]);
+      for (const row of restoredRows) {
+        expect(row.transactionId).toBeTruthy();
+        const transaction = await Transactions.findByPk(String(row.transactionId), { paranoid: false });
+        expect(transaction).not.toBeNull();
+        expect(transaction?.isPlanned).toBe(row.status === 'planned');
+      }
+    }, 30000);
   });
 
   describe('Goals', () => {
