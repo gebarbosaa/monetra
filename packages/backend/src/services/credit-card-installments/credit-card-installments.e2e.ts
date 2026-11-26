@@ -9,6 +9,35 @@ import { addMonths, format } from 'date-fns';
 const dateOnly = (date: Date) => format(date, 'yyyy-MM-dd');
 
 describe('Credit card installment plans', () => {
+  it('blocks deleting a credit card while an active installment plan owns its transactions', async () => {
+    const account = await helpers.createAccount({
+      payload: helpers.buildAccountPayload({
+        accountCategory: ACCOUNT_CATEGORIES.creditCard,
+        creditLimit: asDecimal(500),
+      }),
+      raw: true,
+    });
+    await helpers.makeRequest({
+      method: 'post',
+      url: '/credit-card-installments',
+      payload: {
+        accountId: account.id,
+        description: 'Account deletion guard',
+        categoryId: global.DEFAULT_CATEGORY_ID,
+        purchaseDate: dateOnly(new Date()),
+        firstDueDate: dateOnly(addMonths(new Date(), 1)),
+        currencyCode: account.currencyCode,
+        totalAmount: 100,
+        installmentCount: 2,
+      },
+      raw: true,
+    });
+
+    const response = await helpers.deleteAccount({ id: account.id, raw: false });
+    expect(response.statusCode).toBe(ERROR_CODES.ValidationError);
+    expect(await Accounts.findByPk(account.id)).not.toBeNull();
+  });
+
   it('prevents installment transactions from being linked as transfers', async () => {
     const cardAccount = await helpers.createAccount({
       payload: helpers.buildAccountPayload({
