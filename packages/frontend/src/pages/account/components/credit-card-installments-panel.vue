@@ -7,11 +7,12 @@ import {
   type CreditCardInstallmentPlan,
 } from '@/api/credit-card-installments';
 import { Button } from '@/components/lib/ui/button';
+import { loadTransactions } from '@/api/transactions';
 import CategorySelectField from '@/components/fields/category-select-field.vue';
 import { useAccountCategories } from '@/composable/data-queries/categories';
 import { useNotificationCenter } from '@/components/notification-center';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
-import { type AccountModel } from '@bt/shared/types';
+import { type AccountModel, TRANSACTION_TYPES, type TransactionModel } from '@bt/shared/types';
 import type { FormattedCategory } from '@/common/types';
 import { computed, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -25,6 +26,7 @@ const { addSuccessNotification, addErrorNotification } = useNotificationCenter()
 const queryClient = useQueryClient();
 const categories = useAccountCategories({ accountId: computed(() => props.account.id) });
 const selectedCategory = ref<FormattedCategory | null>(null);
+const selectedTransactions = reactive<Record<string, string>>({});
 const queryKey = computed(() => ['credit-card-installment-plans', props.account.id]);
 const exposureKey = computed(() => ['credit-card-installment-exposure', props.account.id]);
 const today = format(new Date(), 'yyyy-MM-dd');
@@ -45,6 +47,21 @@ const exposureQuery = useQuery({
   queryKey: exposureKey,
   queryFn: () => loadCreditCardInstallmentExposure({ accountId: props.account.id }),
 });
+const candidateTransactionsQuery = useQuery({
+  queryKey: computed(() => ['credit-card-installment-reconciliation-candidates', props.account.id]),
+  queryFn: () => loadTransactions({
+    accountIds: [props.account.id],
+    transactionType: TRANSACTION_TYPES.expense,
+    isPlanned: false,
+    limit: 100,
+    offset: 0,
+  }),
+  staleTime: 30_000,
+});
+const matchingTransactions = (installment: CreditCardInstallment) =>
+  (candidateTransactionsQuery.data.value ?? []).filter((transaction: TransactionModel) =>
+    Math.abs(Number(transaction.amount)) === Number(installment.amount),
+  );
 const createMutation = useMutation({
   mutationFn: createCreditCardInstallmentPlan,
   onSuccess: async () => {
@@ -74,6 +91,25 @@ const cancelMutation = useMutation({
   },
   onError: () => addErrorNotification(t('pages.account.installments.cancelError')),
 });
+const linkMutation = useMutation({
+  mutationFn: linkCreditCardInstallmentTransaction,
+  onSuccess: async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKey.value }),
+      queryClient.invalidateQueries({ queryKey: exposureKey.value }),
+      queryClient.invalidateQueries({ queryKey: ['credit-card-installment-exposure-dashboard'] }),
+      queryClient.invalidateQueries({ queryKey: ['credit-card-installment-reconciliation-candidates', props.account.id] }),
+      queryClient.invalidateQueries({ predicate: (query) => (query.queryKey as string[]).includes('transactionChange') }),
+    ]);
+    addSuccessNotification(t('pages.account.installments.linked'));
+  },
+  onError: () => addErrorNotification(t('pages.account.installments.linkError')),
+});
+const linkSelectedTransaction = (planId: string, installmentId: string) => {
+  const transactionId = selectedTransactions[installmentId];
+  if (!transactionId) return;
+  linkMutation.mutate({ planId, installmentId, transactionId });
+};
 const canSubmit = computed(() =>
   form.description.trim().length > 0 &&
   !!selectedCategory.value &&
@@ -202,16 +238,48 @@ const canCancel = (plan: CreditCardInstallmentPlan) =>
           </Button>
         </div>
         <div class="grid gap-2">
-          <div v-for="installment in plan.installments" :key="installment.id" class="flex items-center justify-between gap-2 text-sm">
-            <span class="text-muted-foreground">
-              {{ installment.installmentNumber }}/{{ plan.installmentCount }} · {{ installment.dueDate }}
-            </span>
-            <span class="flex items-center gap-2">
-              {{ formatAmount(installment.amount) }}
-              <span class="text-xs" :class="installment.status === 'posted' ? 'text-app-income-color' : 'text-muted-foreground'">
-                {{ t('pages.account.installments.status.' + installment.status) }}
+          <div v-for="installment in plan.installments" :key="installment.id" class="grid gap-2 rounded-md border border-dashed p-3 text-sm">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-muted-foreground">
+                {{ installment.installmentNumber }}/{{ plan.installmentCount }} · {{ installment.dueDate }}
               </span>
-            </span>
+              <span class="flex items-center gap-2">
+                {{ formatAmount(installment.amount) }}
+                <span class="text-xs" :class="installment.status === 'posted' ? 'text-app-income-color' : 'text-muted-foreground'">
+                  {{ t('pages.account.installments.status.' + installment.status) }}
+                </span>
+              </span>
+            </div>
+            <div v-if="installment.status === 'planned'" class="flex flex-wrap items-center gap-2">
+              <select
+                v-model="selectedTransactions[installment.id]"
+                class="bg-background border-input min-w-0 flex-1 rounded-md border px-2 py-2 text-xs"
+                :disabled="candidateTransactionsQuery.isLoading.value || linkMutation.isPending.value"
+              >
+                <option value="">{{ t('pages.account.installments.selectTransaction') }}</option>
+                <option
+                  v-for="candidate in matchingTransactions(installment)"
+                  :key="candidate.id"
+                  :value="candidate.id"
+                >
+                  {{ new Date(candidate.time).toLocaleDateString() }} · {{ candidate.note || t('pages.account.installments.unnamedTransaction') }} · {{ formatAmount(candidate.amount) }}
+                </option>
+              </select>
+              <Button
+                size="sm"
+                variant="outline"
+                :disabled="!selectedTransactions[installment.id] || linkMutation.isPending.value"
+                @click="linkSelectedTransaction(plan.id, installment.id)"
+              >
+                {{ t('pages.account.installments.link') }}
+              </Button>
+            </div>
+            <p
+              v-if="installment.status === 'planned' && !candidateTransactionsQuery.isLoading.value && matchingTransactions(installment).length === 0"
+              class="text-muted-foreground text-xs"
+            >
+              {{ t('pages.account.installments.noMatchingTransactions') }}
+            </p>
           </div>
         </div>
       </article>
