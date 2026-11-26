@@ -70,6 +70,7 @@
           </template>
           <template v-else>
             <SystemAccount :account="account" />
+            <CreditCardInstallmentsPanel v-if="isCreditCardAccountOwner" :account="account" />
           </template>
         </Card.CardContent>
       </Card.Card>
