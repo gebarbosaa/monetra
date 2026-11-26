@@ -2,6 +2,7 @@ import { TRANSACTION_TYPES } from '@bt/shared/types';
 import { Money } from '@common/types/money';
 import { logger } from '@js/utils/logger';
 import Transactions from '@models/transactions.model';
+import CreditCardInstallments, { CREDIT_CARD_INSTALLMENT_STATUSES } from '@models/credit-card-installments.model';
 
 import { isDeadlockError } from '../../common/retry-on-deadlock';
 import { runInSavepoint } from '../../common/run-in-savepoint';
@@ -43,6 +44,17 @@ export const tryMergeIntoPlanned = async ({
     // through, and without a scoped rollback a later throw would leave that flip in place while
     // the caller adds a second row for the same charge.
     const merged = await runInSavepoint(() => mergeIntoPlanned({ planned, incoming }));
+
+    // Keep the installment ledger in sync when bank/import matching confirms its planned row.
+    await CreditCardInstallments.update(
+      { status: CREDIT_CARD_INSTALLMENT_STATUSES.posted },
+      {
+        where: {
+          transactionId: merged.id,
+          status: CREDIT_CARD_INSTALLMENT_STATUSES.planned,
+        },
+      },
+    );
 
     logger.info('Merged an incoming transaction into a planned one', {
       transactionId: merged.id,
