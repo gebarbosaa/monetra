@@ -222,6 +222,15 @@ export async function linkInstallmentTransaction({
       });
     }
 
+    const alreadyLinked = await CreditCardInstallments.findOne({
+      where: { transactionId: tx.id },
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
+    if (alreadyLinked && alreadyLinked.id !== installment.id) {
+      throw new ValidationError({ message: 'This transaction is already linked to another installment.' });
+    }
+
     // If this installment was initially represented by an auto-generated planned row,
     // allow an owner to replace that reservation with an already-imported real transaction.
     // Never delete a linked real transaction or silently detach it.
