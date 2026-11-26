@@ -36,7 +36,6 @@ const exposureQuery = useQuery({
   queryKey: exposureKey,
   queryFn: () => loadCreditCardInstallmentExposure({ accountId: props.account.id }),
 });
-const isSaving = computed(() => createMutation.isPending.value);
 const createMutation = useMutation({
   mutationFn: createCreditCardInstallmentPlan,
   onSuccess: async () => {
@@ -51,6 +50,7 @@ const createMutation = useMutation({
   },
   onError: () => addErrorNotification(t('pages.account.installments.createError')),
 });
+const isSaving = computed(() => createMutation.isPending.value);
 const cancelMutation = useMutation({
   mutationFn: cancelCreditCardInstallmentPlan,
   onSuccess: async () => {
