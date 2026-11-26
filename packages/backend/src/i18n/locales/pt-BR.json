@@ -249,7 +249,10 @@
     "must": {
       "name": "Essencial",
       "description": "Despesas essenciais que não dá para evitar"
-    }
+    },
+    "petLuna": { "name": "Luna", "description": "Animal associado a esta despesa: Luna" },
+    "petThor": { "name": "Thor", "description": "Animal associado a esta despesa: Thor" },
+    "petBoth": { "name": "Ambos", "description": "Despesa compartilhada entre Luna e Thor" }
   },
   "investments": {
     "portfolioNotFound": "Carteira não encontrada",
