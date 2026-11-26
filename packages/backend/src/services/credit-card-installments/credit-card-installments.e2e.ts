@@ -44,6 +44,10 @@ describe('Credit card installment plans', () => {
       raw: true,
     });
 
+    const installmentTransactionId = plan.installments[0]!.transactionId;
+    await Transactions.update({ isPlanned: false }, { where: { id: installmentTransactionId } });
+    await CreditCardInstallments.update({ status: 'posted' }, { where: { transactionId: installmentTransactionId } });
+
     const response = await helpers.linkTransactions({
       payload: { ids: [[plan.installments[0]!.transactionId, opposite.id]] },
     });
