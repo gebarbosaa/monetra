@@ -8,7 +8,7 @@ import { formatAccountAmount, formatCompactUIAmount } from '@/js/helpers';
 import { ROUTES_NAMES } from '@/routes/constants';
 import { AccountModel } from '@bt/shared/types';
 import { HomeIcon, UsersIcon } from '@lucide/vue';
-import { computed, toRef } from 'vue';
+import { toRef } from 'vue';
 
 const props = defineProps<{
   account: AccountModel;
