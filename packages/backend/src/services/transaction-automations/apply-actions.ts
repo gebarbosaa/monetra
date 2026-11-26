@@ -3,8 +3,8 @@ import {
   type AutomationNoteMode,
   CATEGORIZATION_SOURCE,
 } from '@bt/shared/types';
-import TransactionAutomations from '@models/transaction-automations.model';
 import CreditCardInstallments from '@models/credit-card-installments.model';
+import TransactionAutomations from '@models/transaction-automations.model';
 import TransactionTags from '@models/transaction-tags.model';
 import * as Transactions from '@models/transactions.model';
 import { DOMAIN_EVENTS, eventBus } from '@services/common/event-bus';
