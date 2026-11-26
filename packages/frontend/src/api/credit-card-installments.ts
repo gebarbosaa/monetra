@@ -69,6 +69,21 @@ export const createCreditCardInstallmentPlan = async (
   return api.post('/credit-card-installments', payload);
 };
 
+export interface UpdateCreditCardInstallmentPlanPayload {
+  id: string;
+  description: string;
+  categoryId: string;
+  purchaseDate: string;
+  firstDueDate: string;
+}
+
+export const updateCreditCardInstallmentPlan = async ({
+  id,
+  ...payload
+}: UpdateCreditCardInstallmentPlanPayload): Promise<CreditCardInstallmentPlan> => {
+  return api.patch(`/credit-card-installments/${id}`, payload);
+};
+
 export const cancelCreditCardInstallmentPlan = async ({ id }: { id: string }) => {
   return api.delete(`/credit-card-installments/${id}`);
 };
