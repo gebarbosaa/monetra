@@ -109,7 +109,11 @@ const totalUtilization = computed(() => {
 
 const { displayValue: animatedUtilization } = useAnimatedNumber({ value: totalUtilization });
 
-const isLoading = computed(() => !isAccountsFetched.value);
+const isLoading = computed(
+  () =>
+    !isAccountsFetched.value ||
+    (creditCardAccountIds.value.length > 0 && installmentExposureQuery.isLoading.value),
+);
 const isEmpty = computed(() => isAccountsFetched.value && creditAccounts.value.length === 0);
 
 const getUtilizationColors = ({ utilization }: { utilization: number }) => {
