@@ -2,6 +2,7 @@ import type { RecordId } from '@bt/shared/types';
 import Accounts from '@models/accounts.model';
 import BudgetLines from '@models/budget-lines.model';
 import BudgetPlans from '@models/budget-plans.model';
+import CreditCardInstallmentPlans from '@models/credit-card-installment-plans.model';
 import Categories from '@models/categories.model';
 import Goals from '@models/goals.model';
 import ImportBatches from '@models/import-batches.model';
@@ -61,6 +62,7 @@ export function createScopeResolver({ userId }: { userId: number }) {
     },
     importBatches: () => idsWhere({ model: ImportBatches, where: { userId } }),
     budgetPlans: () => idsWhere({ model: BudgetPlans, where: { userId } }),
+    creditCardInstallmentPlans: () => idsWhere({ model: CreditCardInstallmentPlans, where: { userId } }),
     budgetLines: async () => {
       const planIds = await getScope({ scope: 'budgetPlans' });
       if (planIds.length === 0) return [];
