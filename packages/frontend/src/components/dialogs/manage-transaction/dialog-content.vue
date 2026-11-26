@@ -97,6 +97,12 @@ import PaymentLegsField from './components/payment-legs-field.vue';
 import SplitDialog from './components/split-dialog.vue';
 import TypeSelector from './components/type-selector.vue';
 import TemplateFormDialog from './components/templates/template-form-dialog.vue';
+import {
+  PET_TAG_DESCRIPTION_PREFIX,
+  getPetTagIds,
+  getSelectedPetTagId,
+  replaceSelectedPetTag,
+} from './utils/pet-tag-selection';
 import TemplatesDrawer from './components/templates/templates-drawer.vue';
 import TemplatesPanel from './components/templates/templates-panel.vue';
 import { openCreateTransactionDialog } from '@/composable/global-state/create-transaction-dialog';
@@ -257,14 +263,9 @@ const form = ref<UI_FORM_STRUCT>({
   originalCurrency: null,
 });
 
-const PET_TAG_DESCRIPTION_PREFIX = 'MONETRA_PET:';
 type PetTagOption = { id: string; label: string };
 
-const petTagIds = computed(() =>
-  tagsStore.tags
-    .filter((tag) => tag.description?.startsWith(PET_TAG_DESCRIPTION_PREFIX))
-    .map((tag) => tag.id),
-);
+const petTagIds = computed(() => getPetTagIds(tagsStore.tags));
 const petTagOptions = computed<PetTagOption[]>(() =>
   tagsStore.tags
     .filter((tag) => tag.description?.startsWith(PET_TAG_DESCRIPTION_PREFIX))
@@ -276,10 +277,16 @@ const isPetsCategory = computed(() => {
   return category?.key === 'pets' || (!!category?.parentId && category.parentId === petsRootCategory.value?.id);
 });
 const selectedPetTag = computed<PetTagOption | null>({
-  get: () => petTagOptions.value.find((tag) => form.value.tagIds?.includes(tag.id)) ?? null,
+  get: () => {
+    const selectedId = getSelectedPetTagId({ tagIds: form.value.tagIds ?? [], tags: tagsStore.tags });
+    return petTagOptions.value.find((tag) => tag.id === selectedId) ?? null;
+  },
   set: (selected) => {
-    const otherTagIds = (form.value.tagIds ?? []).filter((id) => !petTagIds.value.includes(id));
-    form.value.tagIds = selected ? [...otherTagIds, selected.id] : otherTagIds;
+    form.value.tagIds = replaceSelectedPetTag({
+      tagIds: form.value.tagIds ?? [],
+      tags: tagsStore.tags,
+      selectedTagId: selected?.id ?? null,
+    });
   },
 });
 
