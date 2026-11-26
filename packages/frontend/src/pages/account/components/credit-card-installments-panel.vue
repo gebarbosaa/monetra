@@ -288,7 +288,13 @@ const canCancel = (plan: CreditCardInstallmentPlan) =>
               </Button>
             </div>
             <p
-              v-if="installment.status === 'planned' && !candidateTransactionsQuery.isLoading.value && matchingTransactions(installment).length === 0"
+              v-if="installment.status === 'planned' && candidateTransactionsQuery.isError.value"
+              class="text-muted-foreground text-xs"
+            >
+              {{ t('pages.account.installments.candidateLoadError') }}
+            </p>
+            <p
+              v-else-if="installment.status === 'planned' && !candidateTransactionsQuery.isLoading.value && matchingTransactions(installment).length === 0"
               class="text-muted-foreground text-xs"
             >
               {{ t('pages.account.installments.noMatchingTransactions') }}
