@@ -9,6 +9,7 @@ import CreditCardInstallmentPlans, {
 } from '@models/credit-card-installment-plans.model';
 import Transactions from '@models/transactions.model';
 import * as TransactionModel from '@models/transactions.model';
+import * as UsersCurrencies from '@models/users-currencies.model';
 import CreditCardInstallments, {
   CREDIT_CARD_INSTALLMENT_STATUSES,
 } from '@models/credit-card-installments.model';
@@ -71,6 +72,7 @@ export async function createInstallmentPlan(input: {
   if (!total.isPositive()) throw new ValidationError({ message: 'Total amount must be greater than zero.' });
 
   const precision = await import('@common/lib/currency-precision');
+  const baseCurrency = await UsersCurrencies.getBaseCurrency({ userId: input.userId });
   const refTotal = await calculateRefAmount({
     amount: total,
     userId: input.userId,
@@ -143,7 +145,7 @@ export async function createInstallmentPlan(input: {
         accountId: account.id,
         accountType: account.type,
         currencyCode: account.currencyCode,
-        refCurrencyCode: account.currencyCode,
+        refCurrencyCode: baseCurrency.currency.code,
         transferNature: TRANSACTION_TRANSFER_NATURE.not_transfer,
         note: input.description.trim() + ' — parcela ' + installment.installmentNumber + '/' + input.installmentCount,
         time: new Date(installment.dueDate + 'T12:00:00.000Z'),
