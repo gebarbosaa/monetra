@@ -3,6 +3,7 @@ import { findOrThrowNotFound } from '@common/utils/find-or-throw-not-found';
 import { NotFoundError, ValidationError } from '@js/errors';
 import Accounts from '@models/accounts.model';
 import Categories from '@models/categories.model';
+import CreditCardInstallments from '@models/credit-card-installments.model';
 import Payees from '@models/payees.model';
 import Tags from '@models/tags.model';
 import * as Transactions from '@models/transactions.model';
@@ -105,13 +106,37 @@ export const bulkUpdate = withTransaction(
         id: { [Op.in]: targetIds },
         userId,
       },
-      attributes: ['id', 'transferNature', 'accountId', 'categoryId'],
+      attributes: ['id', 'transferNature', 'accountId', 'categoryId', 'excludeFromStats'],
     });
 
     if (transactions.length === 0) {
       throw new NotFoundError({
         message: 'No valid transactions found',
       });
+    }
+
+    // Bulk editing must preserve the same installment invariants as single-row editing.
+    // Notes, tags and Payee metadata remain available, but category/reporting changes
+    // must go through the installment plan so its source data cannot drift.
+    if (hasCategory || hasExcludeFromStats) {
+      const linkedInstallments = await CreditCardInstallments.findAll({
+        where: { transactionId: { [Op.in]: transactions.map((tx) => tx.id) } },
+        attributes: ['transactionId'],
+      });
+      const linkedIds = new Set(linkedInstallments.map((item) => item.transactionId));
+      const changesLinkedInstallment = transactions.some(
+        (tx) =>
+          linkedIds.has(tx.id) &&
+          ((hasCategory && tx.categoryId !== categoryId) ||
+            (hasExcludeFromStats && tx.excludeFromStats !== excludeFromStats)),
+      );
+
+      if (changesLinkedInstallment) {
+        throw new ValidationError({
+          message:
+            'A transaction linked to a credit-card installment cannot be changed financially through bulk editing. Manage it through the installment plan.',
+        });
+      }
     }
 
     // Filter out transfer transactions - they cannot have category updated
