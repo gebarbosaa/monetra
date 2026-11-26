@@ -348,7 +348,12 @@
         "selectTransaction": "Choose an imported transaction",
         "unnamedTransaction": "Transaction",
         "noMatchingTransactions": "No unlinked expense with this installment amount was found on this card.",
-        "candidateLoadError": "Could not load imported transactions for reconciliation."
+        "candidateLoadError": "Could not load imported transactions for reconciliation.",
+        "edit": "Edit",
+        "updated": "Installment plan updated.",
+        "updateError": "Could not update this installment plan.",
+        "dismiss": "Close",
+        "saveChanges": "Save changes"
       }
     },
     "vehicleDetails": {
