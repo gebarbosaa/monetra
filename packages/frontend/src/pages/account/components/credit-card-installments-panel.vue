@@ -144,8 +144,8 @@ const canCancel = (plan: CreditCardInstallmentPlan) =>
         <span class="text-sm">{{ t('pages.account.installments.category') }}</span>
         <CategorySelectField
           v-model="selectedCategory"
-          :values="categories.formatted"
-          :categories-map="categories.map"
+          :values="categories.formatted.value"
+          :categories-map="categories.map.value"
           :placeholder="t('pages.account.installments.categoryPlaceholder')"
           :disabled="categories.isLoading.value"
         />
