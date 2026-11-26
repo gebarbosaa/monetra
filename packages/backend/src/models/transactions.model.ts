@@ -72,6 +72,7 @@ import {
   Order,
   ProjectionAlias,
   WhereOptions,
+  type Transaction,
   literal,
   where as sequelizeWhere,
 } from 'sequelize';
@@ -1642,7 +1643,12 @@ export type CreateTransactionPayload = CreateTxRequiredParams &
     definitionOwnerUserId: number;
   };
 
-export const createTransaction = async ({ userId, definitionOwnerUserId, ...rest }: CreateTransactionPayload) => {
+export const createTransaction = async ({
+  userId,
+  definitionOwnerUserId,
+  transaction,
+  ...rest
+}: CreateTransactionPayload & { transaction?: Transaction }) => {
   const { amount, commissionRate, cashbackAmount, originalAmount, refAmount, refCommissionRate } = rest;
   const rounded = await roundTransactionMoney({
     values: { amount, commissionRate, cashbackAmount, originalAmount, refAmount, refCommissionRate },
@@ -1653,7 +1659,7 @@ export const createTransaction = async ({ userId, definitionOwnerUserId, ...rest
     originalCurrencyCode: rest.originalCurrencyCode,
   });
 
-  const response = await Transactions.create({ userId, ...rest, ...rounded });
+  const response = await Transactions.create({ userId, ...rest, ...rounded }, { transaction });
 
   return getTransactionById({
     id: response.get('id'),
