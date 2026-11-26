@@ -82,6 +82,7 @@ Para cada conta de cartão:
 - manter a regra atual de `computeCreditUsed` para o saldo atual;
 - somar somente `refAmount` das parcelas futuras cujo estado seja planejado e cuja transação vinculada continue com `isPlanned = true`;
 - calcular o valor nativo da conta de forma equivalente, usando `amount`;
+- expor valores nativos e de moeda-base para o widget; o widget consulta a exposição dos cartões próprios e soma a reserva ao crédito utilizado;
 - nunca somar parcelas já lançadas, canceladas, excluídas ou sem vínculo válido;
 - limitar a apresentação do percentual a 100%, mas preservar o valor monetário real mesmo se houver estouro do limite;
 - respeitar conta ativa, exclusões de estatísticas e escopo de acesso/compartilhamento de contas.
@@ -114,10 +115,10 @@ O limite disponível será `max(limite total - utilização, 0)`. O valor de uti
 2. Implementar serviço transacional de criação/edição/cancelamento de plano e parcelas.
 3. Integrar confirmação e planned matching com a parcela.
 4. Implementar consulta agregada de reserva futura por cartão.
-5. Atualizar widget de utilização para exibir utilizado, reservado, disponível e limite total.
-6. Adicionar interface de criação/edição de compra parcelada e traduções.
-7. Executar testes unitários, E2E, lint e typecheck; revisar migração e fluxo de backup/restore antes de habilitar.
+5. **Implementado parcialmente:** endpoint retorna exposição nativa e na moeda-base, filtrando parcelas com transação ainda planejada; widget soma reservas ao crédito utilizado.
+6. **Implementado parcialmente:** painel de cadastro, listagem e cancelamento foi adicionado à aba Parcelamentos das contas manuais e às contas de cartão conectadas; traduções em inglês e pt-BR.
+7. **Pendente:** executar E2E, lint e typecheck; revisar migration e fluxo de backup/restore antes de habilitar.
 
-## Limites desta etapa
+## Limites e pendências da implementação
 
-Esta especificação não altera o comportamento do aplicativo nem migra dados existentes. A implementação deve começar pelas entidades e pelo fluxo de persistência; o widget não deve ser alterado antes de a fonte de verdade estar disponível.
+A interface inicial ainda não permite editar planos nem associar manualmente uma parcela a uma transação já existente. A conciliação automática pelo planned matching está integrada. A migration ainda não foi executada em banco real e não há confirmação de CI, lint ou typecheck. O fluxo de estorno de parcelas lançadas e a cobertura completa de permissões/compartilhamento precisam ser validados antes de habilitar o recurso em produção.
