@@ -59,8 +59,18 @@ const candidateTransactionsQuery = useQuery({
   }),
   staleTime: 30_000,
 });
+const linkedTransactionIds = computed(() =>
+  new Set(
+    (plansQuery.data.value ?? []).flatMap((plan) =>
+      plan.installments
+        .filter((installment) => installment.status === 'posted' && installment.transactionId)
+        .map((installment) => installment.transactionId as string),
+    ),
+  ),
+);
 const matchingTransactions = (installment: CreditCardInstallment) =>
   (candidateTransactionsQuery.data.value ?? []).filter((transaction: TransactionModel) =>
+    !linkedTransactionIds.value.has(transaction.id) &&
     Math.abs(Number(transaction.amount) - Number(installment.amount)) < 1e-8,
   );
 const createMutation = useMutation({
