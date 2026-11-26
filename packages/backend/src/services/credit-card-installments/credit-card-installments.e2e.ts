@@ -82,6 +82,39 @@ describe('Credit card installment plans', () => {
     expect(await Accounts.findByPk(account.id)).not.toBeNull();
   });
 
+  it('blocks changing a credit card category while an installment plan is active', async () => {
+    const account = await helpers.createAccount({
+      payload: helpers.buildAccountPayload({
+        accountCategory: ACCOUNT_CATEGORIES.creditCard,
+        creditLimit: asDecimal(500),
+      }),
+      raw: true,
+    });
+    await helpers.makeRequest({
+      method: 'post',
+      url: '/credit-card-installments',
+      payload: {
+        accountId: account.id,
+        description: 'Account category guard',
+        categoryId: global.DEFAULT_CATEGORY_ID,
+        purchaseDate: dateOnly(new Date()),
+        firstDueDate: dateOnly(addMonths(new Date(), 1)),
+        currencyCode: account.currencyCode,
+        totalAmount: 100,
+        installmentCount: 2,
+      },
+      raw: true,
+    });
+
+    const response = await helpers.updateAccount({
+      id: account.id,
+      payload: { accountCategory: ACCOUNT_CATEGORIES.general },
+      raw: false,
+    });
+    expect(response.statusCode).toBe(ERROR_CODES.ValidationError);
+    expect((await Accounts.findByPk(account.id))?.accountCategory).toBe(ACCOUNT_CATEGORIES.creditCard);
+  });
+
   it('prevents installment transactions from being linked as transfers', async () => {
     const cardAccount = await helpers.createAccount({
       payload: helpers.buildAccountPayload({
