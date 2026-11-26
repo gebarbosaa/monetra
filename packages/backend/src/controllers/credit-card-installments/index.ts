@@ -28,6 +28,21 @@ export const getInstallmentPlans = createController(
   }),
 );
 
+export const updateInstallmentPlan = createController(
+  z.object({
+    params: z.object({ id: recordId() }),
+    body: z.object({
+      description: z.string().trim().min(1).max(200),
+      categoryId: recordId(),
+      purchaseDate: z.iso.date(),
+      firstDueDate: z.iso.date(),
+    }).strict(),
+  }),
+  async ({ user, params, body }) => ({
+    data: await service.updateInstallmentPlan({ userId: user.id, id: params.id, ...body }),
+  }),
+);
+
 export const linkInstallmentTransaction = createController(
   z.object({
     params: z.object({ id: recordId(), installmentId: recordId() }),
