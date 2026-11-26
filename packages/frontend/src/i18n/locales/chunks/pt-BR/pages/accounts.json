@@ -6,16 +6,16 @@
     "actionsMenu": "Ações da conta",
     "sections": {
       "archived": "Arquivadas",
-      "manual": "Contas manuais",
+      "manual": "Contas",
       "sharedWithMe": "Compartilhadas comigo",
       "vehicles": "Veículos",
       "bankConnections": "Conexões bancárias"
     },
     "empty": {
       "title": "Nenhuma conta ainda",
-      "description": "Conecte seu banco ou crie uma conta manual para começar a acompanhar suas finanças, saldos e transações.",
+      "description": "Crie sua primeira conta para acompanhar saldos e movimentações manualmente.",
       "connectBank": "Conectar conta bancária",
-      "createManual": "Criar conta manual"
+      "createManual": "Criar conta"
     },
     "overview": {
       "totalBalance": "Saldo total",
