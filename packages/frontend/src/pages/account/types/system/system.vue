@@ -6,11 +6,12 @@ import * as Tabs from '@/components/lib/ui/tabs';
 import AccountArchiveSection from '@/pages/account/components/account-archive-section.vue';
 import AccountDeletionSection from '@/pages/account/components/account-deletion-section.vue';
 import AccountDetailsTab from '@/pages/account/components/account-details-tab.vue';
+import CreditCardInstallmentsPanel from '@/pages/account/components/credit-card-installments-panel.vue';
 import SettingAccountGroup from '@/pages/account/components/account-group.vue';
 import AccountLinkSection from '@/pages/account/components/account-link-section.vue';
 import SettingToggleVisibility from '@/pages/account/components/setting-toggle-visibility.vue';
 import SharingPanel from '@/pages/account/components/sharing-panel/sharing-panel.vue';
-import { AccountModel, SHARE_PERMISSIONS } from '@bt/shared/types';
+import { ACCOUNT_CATEGORIES, AccountModel, SHARE_PERMISSIONS } from '@bt/shared/types';
 import { computed, ref, toRef } from 'vue';
 import { useI18n } from 'vue-i18n';
 
@@ -22,10 +23,12 @@ const props = defineProps<{
 
 const { isOwner, permission } = useAccountAccess(toRef(() => props.account));
 const canSeeSharingTab = computed(() => isOwner.value || permission.value === SHARE_PERMISSIONS.manage);
+const isCreditCard = computed(() => props.account.accountCategory === ACCOUNT_CATEGORIES.creditCard);
 
 const activeTab = ref('details');
 const tabItems = computed(() => {
   const items = [{ value: 'details', label: t('pages.account.tabs.details') }];
+  if (isCreditCard.value && isOwner.value) items.push({ value: 'installments', label: t('pages.account.installments.tab') });
   if (isOwner.value) items.push({ value: 'integrations', label: t('pages.account.tabs.integrations') });
   if (canSeeSharingTab.value) items.push({ value: 'sharing', label: t('pages.account.tabs.sharing') });
   items.push({ value: 'settings', label: t('pages.account.tabs.settings') });
@@ -38,6 +41,10 @@ const tabItems = computed(() => {
     <PillTabs v-model="activeTab" :items="tabItems" class="mt-4 w-full" />
 
     <AccountDetailsTab tab-name="details" :account="account" />
+
+    <Tabs.TabsContent v-if="isCreditCard && isOwner" value="installments">
+      <CreditCardInstallmentsPanel :account="account" />
+    </Tabs.TabsContent>
 
     <Tabs.TabsContent value="settings">
       <div class="grid gap-4 py-6">
