@@ -6,6 +6,7 @@ import { NotFoundError, ValidationError } from '@js/errors';
 import { removeUndefinedKeys } from '@js/helpers';
 import { logger } from '@js/utils/logger';
 import * as Accounts from '@models/accounts.model';
+import CreditCardInstallments from '@models/credit-card-installments.model';
 import Categories from '@models/categories.model';
 import Payees from '@models/payees.model';
 import RefundTransactions from '@models/refund-transactions.model';
@@ -100,6 +101,54 @@ const touchesRefundState = ({
     (payload.transactionType !== undefined && payload.transactionType !== prevData.transactionType) ||
     (payload.transferNature !== undefined && payload.transferNature !== prevData.transferNature) ||
     (payload.isPlanned !== undefined && payload.isPlanned !== prevData.isPlanned)
+  );
+};
+
+
+const changesInstallmentFinancialState = ({
+  payload,
+  prevData,
+}: {
+  payload: UpdateTransactionParams;
+  prevData: Transactions.default;
+}) => {
+  const splitsChanged =
+    payload.splits !== undefined &&
+    (() => {
+      const previous = prevData.splits ?? [];
+      const next = payload.splits ?? [];
+      return (
+        next.length !== previous.length ||
+        next.some(
+          (split) =>
+            !previous.some(
+              (item) => item.categoryId === split.categoryId && item.amount.equals(split.amount),
+            ),
+        )
+      );
+    })();
+
+  return (
+    (payload.amount !== undefined && !payload.amount.equals(prevData.amount)) ||
+    (payload.time !== undefined && +payload.time !== +prevData.time) ||
+    (payload.transactionType !== undefined && payload.transactionType !== prevData.transactionType) ||
+    (payload.paymentType !== undefined && payload.paymentType !== prevData.paymentType) ||
+    (payload.accountId !== undefined && payload.accountId !== prevData.accountId) ||
+    (payload.categoryId !== undefined && payload.categoryId !== prevData.categoryId) ||
+    (payload.transferNature !== undefined && payload.transferNature !== prevData.transferNature) ||
+    (payload.isPlanned !== undefined && payload.isPlanned !== prevData.isPlanned) ||
+    (payload.originalAmount !== undefined &&
+      (payload.originalAmount === null
+        ? prevData.originalAmount !== null
+        : !payload.originalAmount.equals(prevData.originalAmount))) ||
+    (payload.originalCurrencyCode !== undefined &&
+      payload.originalCurrencyCode !== prevData.originalCurrencyCode) ||
+    (payload.excludeFromStats !== undefined && payload.excludeFromStats !== prevData.excludeFromStats) ||
+    payload.destinationAmount !== undefined ||
+    payload.destinationAccountId !== undefined ||
+    payload.destinationTransactionId !== undefined ||
+    splitsChanged ||
+    payload.paymentLegs !== undefined
   );
 };
 
@@ -748,6 +797,20 @@ export const updateTransaction = withTransaction(
       };
 
       assertPlannedWriteAllowed({ transaction: prevData, callerUserId: payload.userId });
+
+      // Installment transactions are ledger evidence owned by the installment plan.
+      // Keep their financial shape immutable through generic transaction editing;
+      // descriptive metadata remains editable without changing the plan.
+      const linkedInstallment = await CreditCardInstallments.findOne({
+        where: { transactionId: prevData.id },
+        attributes: ['id'],
+      });
+      if (linkedInstallment && changesInstallmentFinancialState({ payload, prevData })) {
+        throw new ValidationError({
+          message:
+            'A transaction linked to a credit-card installment cannot be changed financially. Manage it through the installment plan.',
+        });
+      }
 
       // A leg copies its main row, so an edit made here would be overwritten.
       if (prevData.paymentParentId) {
