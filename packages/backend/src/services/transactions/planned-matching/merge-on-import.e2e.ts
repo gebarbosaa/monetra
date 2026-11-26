@@ -6,7 +6,9 @@ import type {
   TagMappingConfig,
 } from '@bt/shared/types';
 import {
+  ACCOUNT_CATEGORIES,
   AccountOptionValue,
+  asDecimal,
   CategoryOptionValue,
   CurrencyOptionValue,
   PAYMENT_TYPES,
@@ -14,6 +16,7 @@ import {
   TransactionTypeOptionValue,
 } from '@bt/shared/types';
 import { describe, expect, it } from '@jest/globals';
+import CreditCardInstallments from '@models/credit-card-installments.model';
 import Transactions from '@models/transactions.model';
 import * as helpers from '@tests/helpers';
 import { expectCsvImportCompleted, waitForCsvImportCompletion } from '@tests/helpers/import-export';
@@ -219,6 +222,61 @@ describe('Planned transactions – merge on import', () => {
       // The plan had no balance effect, so the merge is the only thing that may move it.
       expect(await getBalance({ accountId: account.id })).toBe(750);
     });
+  });
+
+  it('marks a credit-card installment posted when its planned transaction is confirmed by CSV import', async () => {
+    const account = await helpers.createAccount({
+      payload: helpers.buildAccountPayload({
+        accountCategory: ACCOUNT_CATEGORIES.creditCard,
+        creditLimit: asDecimal(500),
+      }),
+      raw: true,
+    });
+    const plan = await helpers.makeRequest<{ id: string }, true>({
+      method: 'post',
+      url: '/credit-card-installments',
+      payload: {
+        accountId: account.id,
+        description: 'CSV confirmed installment',
+        categoryId: global.DEFAULT_CATEGORY_ID,
+        purchaseDate: '2024-01-01',
+        firstDueDate: ROW_DAY,
+        currencyCode: account.currencyCode,
+        totalAmount: 100,
+        installmentCount: 2,
+      },
+      raw: true,
+    });
+    const installment = await CreditCardInstallments.findOne({ where: { planId: plan.id } });
+    expect(installment).not.toBeNull();
+    const plannedTransactionId = installment!.transactionId!;
+    expect((await Transactions.findByPk(plannedTransactionId))?.isPlanned).toBe(true);
+
+    const summary = (
+      await runImport({
+        fileContent: buildCsv([
+          {
+            date: ROW_DAY,
+            amount: '50.00',
+            description: 'CSV CONFIRMED INSTALLMENT',
+            account: CSV_ACCOUNT,
+            currency: account.currencyCode,
+            type: 'expense',
+          },
+        ]),
+        accountMapping: {
+          [CSV_ACCOUNT]: { action: 'link-existing', accountId: account.id },
+        },
+      })
+    ).summary;
+
+    expect(summary.merged).toBe(1);
+    expect(summary.imported).toBe(0);
+    const confirmedTransaction = await Transactions.findByPk(plannedTransactionId);
+    expect(confirmedTransaction?.isPlanned).toBe(false);
+    const confirmedInstallment = await CreditCardInstallments.findByPk(installment!.id);
+    expect(confirmedInstallment?.transactionId).toBe(plannedTransactionId);
+    expect(confirmedInstallment?.status).toBe('posted');
   });
 
   describe('rows that must not merge', () => {
