@@ -19,7 +19,7 @@ export interface CreditCardInstallmentPlan {
   userId: number;
   accountId: string;
   description: string;
-  categoryId: string;
+  categoryId: string | null;
   purchaseDate: string;
   currencyCode: string;
   totalAmount: number;
@@ -47,7 +47,7 @@ export interface CreditCardInstallmentExposure {
 export interface CreateCreditCardInstallmentPlanPayload {
   accountId: string;
   description: string;
-  categoryId: string | null;
+  categoryId: string;
   purchaseDate: string;
   firstDueDate: string;
   currencyCode: string;
