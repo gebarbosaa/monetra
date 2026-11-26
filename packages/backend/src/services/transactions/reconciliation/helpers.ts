@@ -2,6 +2,7 @@ import { isLinkedTransfer, ACCOUNT_TYPES, RecordId, SUBSCRIPTION_LINK_STATUS } f
 import { t } from '@i18n/index';
 import { NotFoundError, ValidationError } from '@js/errors';
 import RefundTransactions from '@models/refund-transactions.model';
+import CreditCardInstallments from '@models/credit-card-installments.model';
 import SubscriptionPeriods from '@models/subscription-periods.model';
 import SubscriptionTransactions from '@models/subscription-transactions.model';
 import TrackerTransactions from '@models/tracker-transactions.model';
@@ -44,6 +45,20 @@ export const loadReconcilableRows = async ({
     rows: rows.filter((row) => row.accountType === ACCOUNT_TYPES.system),
     key: 'transactions.reconciliation.systemNotAllowed',
   });
+  const installmentLinks = await CreditCardInstallments.findAll({
+    where: { transactionId: { [Op.in]: transactionIds } },
+    attributes: ['transactionId'],
+  });
+  const installmentTransactionIds = new Set(installmentLinks.map((link) => link.transactionId));
+  const linkedInstallmentRows = rows.filter((row) => installmentTransactionIds.has(row.id));
+  if (linkedInstallmentRows.length) {
+    throw new ValidationError({
+      message:
+        'Transactions linked to credit-card installments cannot be removed or merged through bank reconciliation. Manage them through the installment plan.',
+      details: { transactionIds: linkedInstallmentRows.map((row) => row.id) },
+    });
+  }
+
   rejectIfAny({ rows: rows.filter((row) => row.isPlanned), key: 'transactions.reconciliation.plannedNotAllowed' });
   rejectIfAny({
     rows: rows.filter((tx) => isLinkedTransfer({ tx })),
