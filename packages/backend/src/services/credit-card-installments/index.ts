@@ -323,7 +323,7 @@ export async function linkInstallmentTransaction({
     if (
       tx.transactionType !== TRANSACTION_TYPES.expense ||
       tx.transferNature !== TRANSACTION_TRANSFER_NATURE.not_transfer ||
-      !Money.fromDecimal(tx.amount).equals(Money.fromDecimal(installment.amount)) ||
+      !Money.fromDecimal(tx.amount).abs().equals(Money.fromDecimal(installment.amount)) ||
       tx.currencyCode !== plan.currencyCode
     ) {
       throw new ValidationError({
