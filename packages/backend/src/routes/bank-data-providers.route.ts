@@ -36,7 +36,8 @@ router.use(authenticateSession);
 // unless the operator explicitly enables it for a separate deployment.
 router.use((req, res, next) => {
   if (process.env.BANK_PROVIDERS_ENABLED !== 'true') {
-    return res.status(404).json({ message: 'Bank integrations are disabled.' });
+    res.status(404).json({ message: 'Bank integrations are disabled.' });
+    return;
   }
   next();
 });
