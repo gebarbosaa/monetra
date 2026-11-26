@@ -307,6 +307,23 @@ export async function getCreditCardInstallmentExposure({ userId, accountId }: { 
         ? creditLimitMinusBalance
         : Money.zero();
   const available = account.creditLimit.subtract(used).subtract(reserved);
+
+  // Reference-currency values let dashboard aggregates combine cards with different currencies.
+  const reservedRef = Money.sum(
+    plans.flatMap((plan) => plan.installments ?? []).map((installment) => Money.fromDecimal(installment.refAmount)),
+  );
+  const refLimit = account.refCreditLimit;
+  const refBalance = account.refCurrentBalance;
+  const refLimitMinusBalance = refLimit.subtract(refBalance);
+  const refUsed = balanceIncludesCreditLimit
+    ? refLimitMinusBalance.isPositive() ? refLimitMinusBalance : Money.zero()
+    : refBalance.isNegative()
+      ? refBalance.abs()
+      : balanceIsAvailableCredit && refLimitMinusBalance.isPositive()
+        ? refLimitMinusBalance
+        : Money.zero();
+  const refAvailable = refLimit.subtract(refUsed).subtract(reservedRef);
+
   return {
     accountId,
     creditLimit: account.creditLimit,
@@ -315,5 +332,10 @@ export async function getCreditCardInstallmentExposure({ userId, accountId }: { 
     reservedInstallments: reserved,
     availableCredit: available.isNegative() ? Money.zero() : available,
     overLimit: available.isNegative(),
+    refCreditLimit: refLimit,
+    refUsedCredit: refUsed,
+    refReservedInstallments: reservedRef,
+    refAvailableCredit: refAvailable.isNegative() ? Money.zero() : refAvailable,
+    refOverLimit: refAvailable.isNegative(),
   };
 }
