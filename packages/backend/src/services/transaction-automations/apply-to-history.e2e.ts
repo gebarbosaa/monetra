@@ -10,6 +10,7 @@ import {
   SUBSCRIPTION_TYPES,
   TRANSACTION_TRANSFER_NATURE,
   TransactionTypeOptionValue,
+  asDecimal,
 } from '@bt/shared/types';
 import { generateRandomRecordId } from '@common/lib/record-id-helpers';
 import { describe, expect, it } from '@jest/globals';
@@ -493,7 +494,7 @@ describe('POST /automations/:id/apply', () => {
     const account = await helpers.createAccount({
       payload: helpers.buildAccountPayload({
         accountCategory: ACCOUNT_CATEGORIES.creditCard,
-        creditLimit: 1000,
+        creditLimit: asDecimal(1000),
       }),
       raw: true,
     });
