@@ -1,7 +1,7 @@
 import type { AccountMappingConfig, AutomationAction, ColumnMappingConfig, RecordId } from '@bt/shared/types';
 import {
-  AUTOMATION_LIMITS,
   ACCOUNT_CATEGORIES,
+  AUTOMATION_LIMITS,
   AccountOptionValue,
   CATEGORIZATION_SOURCE,
   CategoryOptionValue,
