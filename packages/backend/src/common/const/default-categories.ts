@@ -25,6 +25,7 @@ const CATEGORY_KEYS = Object.freeze({
   housing: 'housing',
   transportation: 'transportation',
   vehicle: 'vehicle',
+  pets: 'pets',
   life: 'life',
   communication: 'communication',
   financialExpenses: 'financial-expenses',
@@ -49,7 +50,7 @@ const DEFAULT_CATEGORY_STRUCTURE = Object.freeze({
     { key: CATEGORY_KEYS.housing, type: CATEGORY_TYPES.custom, color: '#e67e22', icon: 'home-20-filled' },
     { key: CATEGORY_KEYS.transportation, type: CATEGORY_TYPES.custom, color: '#95a5a6', icon: 'vehicle-bus-20-filled' },
     { key: CATEGORY_KEYS.vehicle, type: CATEGORY_TYPES.custom, color: '#8e44ad', icon: 'vehicle-car-20-filled' },
-    { key: 'pets', type: CATEGORY_TYPES.custom, color: '#d97706', icon: 'animal-dog-20-filled' },
+    { key: CATEGORY_KEYS.pets, type: CATEGORY_TYPES.custom, color: '#d97706', icon: 'animal-dog-20-filled' },
     { key: CATEGORY_KEYS.life, type: CATEGORY_TYPES.custom, color: '#2ecc71', icon: 'heart-20-filled' },
     { key: CATEGORY_KEYS.communication, type: CATEGORY_TYPES.custom, color: '#2980b9', icon: 'phone-20-filled' },
     { key: CATEGORY_KEYS.financialExpenses, type: CATEGORY_TYPES.custom, color: '#16a085', icon: 'receipt-20-filled' },
@@ -113,7 +114,7 @@ const DEFAULT_CATEGORY_STRUCTURE = Object.freeze({
       ],
     },
     {
-      parentKey: 'pets',
+      parentKey: CATEGORY_KEYS.pets,
       values: [
         { key: 'food', type: CATEGORY_TYPES.custom, icon: 'food-20-filled' },
         { key: 'veterinary', type: CATEGORY_TYPES.custom, icon: 'stethoscope-20-filled' },
