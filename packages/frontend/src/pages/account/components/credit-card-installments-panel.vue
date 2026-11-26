@@ -8,7 +8,7 @@ import {
 } from '@/api/credit-card-installments';
 import { Button } from '@/components/lib/ui/button';
 import { useNotificationCenter } from '@/components/notification-center';
-import { useQuery, useQueryClient } from '@tanstack/vue-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
 import { AccountModel } from '@bt/shared/types';
 import { computed, reactive } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -139,7 +139,7 @@ const canCancel = (plan: CreditCardInstallmentPlan) =>
       </div>
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label class="grid gap-1 text-sm">
-          <span>{{ t('pages.account.installments.totalAmount') }} ({{ account.currencyCode }})</span>
+          <span>{{ t('pages.account.installments.totalAmount') }} ({{ props.account.currencyCode }})</span>
           <input v-model="form.totalAmount" type="number" min="0.01" step="0.01" required class="bg-background border-input rounded-md border px-3 py-2" />
         </label>
         <label class="grid gap-1 text-sm">
