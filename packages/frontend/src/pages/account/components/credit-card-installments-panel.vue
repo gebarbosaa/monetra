@@ -44,6 +44,7 @@ const createMutation = useMutation({
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: queryKey.value }),
       queryClient.invalidateQueries({ queryKey: exposureKey.value }),
+      queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] === 'credit-card-installment-exposure-dashboard' }),
       queryClient.invalidateQueries({ predicate: (query) => (query.queryKey as string[]).includes('transactionChange') }),
     ]);
     addSuccessNotification(t('pages.account.installments.created'));
@@ -57,6 +58,8 @@ const cancelMutation = useMutation({
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: queryKey.value }),
       queryClient.invalidateQueries({ queryKey: exposureKey.value }),
+      queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] === 'credit-card-installment-exposure-dashboard' }),
+      queryClient.invalidateQueries({ predicate: (query) => (query.queryKey as string[]).includes('transactionChange') }),
     ]);
     addSuccessNotification(t('pages.account.installments.cancelled'));
   },
