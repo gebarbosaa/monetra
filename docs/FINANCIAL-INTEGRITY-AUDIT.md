@@ -41,7 +41,7 @@ A leitura dos modelos e serviços atuais encontrou estas distinções:
 **Conclusão desta auditoria:** não foi localizada uma implementação explícita que calcule o limite disponível do cartão subtraindo o saldo futuro de compras parceladas. Não é seguro tentar corrigir isso alterando `get-credit-limit-adjustment.ts`, pois ele serve a outro propósito (indicadores patrimoniais).
 
 **Decisão técnica:** antes de implementar o cálculo, é necessário definir/adotar uma fonte de verdade para compras parceladas (compra original, número de parcelas, valor de cada parcela, parcelas liquidadas, estornos/cancelamentos e conta/cartão associado). O cálculo deve reservar somente parcelas ainda não liquidadas e liberar o limite quando uma parcela for paga, estornada ou cancelada, sem criar uma segunda despesa no pagamento da fatura.
-### 3. Seleção de animais nas transações
+### 4. Seleção de animais nas transações
 
 O utilitário de seleção de tags foi endurecido para aceitar como animal somente IDs com marcador `MONETRA_PET:`. Tags comuns e IDs inexistentes não são mais anexados como seleção de animal. Foram adicionados casos de regressão em `pet-tag-selection.spec.ts`.
 
