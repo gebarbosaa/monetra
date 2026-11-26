@@ -141,6 +141,8 @@
           }
         },
         "tagsLabel": "Tags",
+        "animalLabel": "Pet",
+        "animalPlaceholder": "Select Luna, Thor or both",
         "originalAmountLabel": "Original amount",
         "originalAmountPlaceholder": "Amount in foreign currency",
         "originalAmountTooltip": "When a transaction was made in a currency different from the account's, this is the actual amount paid in that currency. The main amount stays in the account's currency. Doesn't affect statistics.",
