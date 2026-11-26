@@ -35,7 +35,7 @@ O utilitário de seleção de tags foi endurecido para aceitar como animal somen
 
 ## Pontos que continuam em aberto
 
-1. Criar ou localizar teste de regressão que registre uma compra no cartão e depois liquide a fatura sem duplicar a despesa nos relatórios.
+1. **Teste de regressão adicionado** em `matching-transactions.e2e.ts`: compra de R$ 500 no cartão seguida de pagamento da fatura entre contas; espera R$ 500 em despesas e R$ 500 em transferências, sem duplicar a despesa. Ainda falta executar o teste.
 2. Auditar o cálculo do limite disponível do cartão com parcelas futuras, parcelas pagas, estornos e compras canceladas.
 3. Validar transferências internas para garantir que não sejam somadas como receita ou despesa nos relatórios familiares.
 4. Verificar a exclusão de `GRANA EXTRA` no ranking Top 15, sem ocultar os lançamentos do razão financeiro.
@@ -45,7 +45,7 @@ O utilitário de seleção de tags foi endurecido para aceitar como animal somen
 ## Estado de validação
 
 - Alteração do seletor de animais: gravada na branch `dev`, com teste de regressão adicionado.
-- Testes automatizados: **não executados nesta sessão**; o acesso disponível ao repositório permite leitura e gravação no GitHub, mas não disponibiliza um runner local para executar Jest.
+- Testes automatizados: **não executados nesta sessão**; o novo caso está no arquivo E2E, mas o acesso ao repositório nesta sessão não disponibiliza um runner para executar Jest.
 - GitHub Actions: a consulta de execuções da branch `dev` não retornou execuções.
 - Deploy: não iniciado.
 
