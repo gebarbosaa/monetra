@@ -1,6 +1,7 @@
 import type { AccountMappingConfig, AutomationAction, ColumnMappingConfig, RecordId } from '@bt/shared/types';
 import {
   AUTOMATION_LIMITS,
+  ACCOUNT_CATEGORIES,
   AccountOptionValue,
   CATEGORIZATION_SOURCE,
   CategoryOptionValue,
@@ -486,6 +487,64 @@ describe('POST /automations/:id/apply', () => {
     const mixedPreview = await helpers.previewAutomation({ payload: { automationId: mixed.id }, raw: true });
 
     expect(mixedPreview.matchedCount).toBe(2);
+  });
+
+  it('does not let historical automations change financial fields of a posted installment', async () => {
+    const account = await helpers.createAccount({
+      payload: helpers.buildAccountPayload({
+        accountCategory: ACCOUNT_CATEGORIES.creditCard,
+        creditLimit: 1000,
+      }),
+      raw: true,
+    });
+    const plan = await helpers.makeRequest<{
+      id: string;
+      installments: { id: string }[];
+    }, true>({
+      method: 'post',
+      url: '/credit-card-installments',
+      payload: {
+        accountId: account.id,
+        description: 'Uber installment',
+        categoryId: global.DEFAULT_CATEGORY_ID,
+        purchaseDate: '2024-01-01',
+        firstDueDate: '2024-02-01',
+        currencyCode: account.currencyCode,
+        totalAmount: 201,
+        installmentCount: 2,
+      },
+      raw: true,
+    });
+
+    const idOf = await importRows({ descriptions: ['uber installment imported'], accountId: account.id });
+    const transactionId = idOf('uber installment imported');
+    await helpers.makeRequest({
+      method: 'post',
+      url: `/credit-card-installments/${plan.id}/installments/${plan.installments[0]!.id}/link`,
+      payload: { transactionId },
+      raw: true,
+    });
+
+    const category = await helpers.addCustomCategory({ name: 'Automation category', color: '#123456', raw: true });
+    const rule = await uberRule({
+      actions: [
+        { type: 'set_category', categoryId: category.id as RecordId },
+        { type: 'exclude_from_stats' },
+        { type: 'set_note', mode: 'append', value: ' reviewed' },
+      ],
+    });
+    const result = await helpers.applyAutomationToHistory({
+      id: rule.id,
+      payload: { transactionIds: [transactionId] },
+      raw: true,
+    });
+
+    expect(result.appliedCount).toBe(1);
+    expect(result.skippedIds).toEqual([]);
+    const row = await txByNote('uber installment imported reviewed');
+    expect(row?.categoryId).toBe(global.DEFAULT_CATEGORY_ID);
+    expect(row?.excludeFromStats).toBe(false);
+    expect(row?.note).toBe('uber installment imported reviewed');
   });
 
   it('accepts the maximum id list and the maximum preview limit', async () => {
