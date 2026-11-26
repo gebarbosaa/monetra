@@ -308,6 +308,38 @@
           "cancelSuccess": "Invitation cancelled.",
           "cancelError": "Could not cancel invitation."
         }
+      },
+      "installments": {
+        "tab": "Installments",
+        "title": "Credit card installments",
+        "description": "Track purchases split into installments and the credit reserved for future payments.",
+        "limit": "Credit limit",
+        "used": "Used",
+        "reserved": "Reserved",
+        "available": "Available",
+        "exposureUnavailable": "Credit exposure is temporarily unavailable.",
+        "newPlan": "Register an installment purchase",
+        "purchaseDescription": "Purchase description",
+        "purchaseDate": "Purchase date",
+        "firstDueDate": "First due date",
+        "totalAmount": "Purchase total",
+        "count": "Number of installments",
+        "create": "Create plan",
+        "created": "Installment plan created.",
+        "createError": "Could not create the installment plan.",
+        "history": "Installment plans",
+        "loading": "Loading plans…",
+        "loadError": "Could not load installment plans.",
+        "empty": "No installment plans yet.",
+        "installments": "installments",
+        "cancel": "Cancel plan",
+        "cancelled": "Installment plan cancelled.",
+        "cancelError": "Could not cancel this plan.",
+        "status": {
+          "planned": "Planned",
+          "posted": "Posted",
+          "cancelled": "Cancelled"
+        }
       }
     },
     "vehicleDetails": {
