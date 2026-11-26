@@ -124,6 +124,8 @@ const props = withDefaults(
     errorMessage?: string;
     disabled?: boolean;
     size?: ControlSize;
+    /** Hides system-managed tags from the general-purpose tag picker. */
+    excludeDescriptionPrefix?: string;
   }>(),
   {
     label: undefined,
@@ -131,6 +133,7 @@ const props = withDefaults(
     placeholder: undefined,
     errorMessage: undefined,
     size: 'default',
+    excludeDescriptionPrefix: undefined,
   },
 );
 
@@ -164,8 +167,16 @@ watch(isOpen, () => (searchQuery.value = ''));
 
 const query = computed(() => searchQuery.value.trim().toLowerCase());
 
+const visibleTags = computed(() =>
+  props.excludeDescriptionPrefix
+    ? tags.value.filter((tag) => !tag.description?.startsWith(props.excludeDescriptionPrefix!))
+    : tags.value,
+);
+
 const filteredTags = computed(() =>
-  query.value ? tags.value.filter((tag) => tag.name.toLowerCase().includes(query.value)) : tags.value,
+  query.value
+    ? visibleTags.value.filter((tag) => tag.name.toLowerCase().includes(query.value))
+    : visibleTags.value,
 );
 
 const hasNavigated = ref(false);
@@ -187,7 +198,10 @@ const selectedTagIds = computed(() => new Set(props.modelValue ?? []));
 
 const selectedTags = computed(() => {
   const ids = props.modelValue ?? [];
-  return ids.map((id) => tags.value.find((tag) => tag.id === id)).filter((tag): tag is TagModel => tag !== undefined);
+  return ids
+    .map((id) => tags.value.find((tag) => tag.id === id))
+    .filter((tag): tag is TagModel => tag !== undefined)
+    .filter((tag) => !props.excludeDescriptionPrefix || !tag.description?.startsWith(props.excludeDescriptionPrefix));
 });
 
 const placeholder = computed(() => props.placeholder ?? t('fields.tagSelect.placeholder'));
