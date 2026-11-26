@@ -24,6 +24,13 @@ module.exports = {
             onDelete: 'CASCADE',
           },
           description: { type: DataTypes.STRING(200), allowNull: false },
+          categoryId: {
+            type: DataTypes.UUID,
+            allowNull: true,
+            references: { model: 'Categories', key: 'id' },
+            onUpdate: 'CASCADE',
+            onDelete: 'SET NULL',
+          },
           purchaseDate: { type: DataTypes.DATEONLY, allowNull: false },
           currencyCode: { type: DataTypes.STRING(16), allowNull: false },
           totalAmount: { type: DataTypes.DECIMAL(36, 18), allowNull: false },
