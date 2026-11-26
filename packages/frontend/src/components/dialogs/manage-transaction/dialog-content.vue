@@ -270,7 +270,11 @@ const petTagOptions = computed<PetTagOption[]>(() =>
     .filter((tag) => tag.description?.startsWith(PET_TAG_DESCRIPTION_PREFIX))
     .map((tag) => ({ id: tag.id, label: tag.name })),
 );
-const isPetsCategory = computed(() => form.value.category?.key === 'pets');
+const petsRootCategory = computed(() => formattedCategories.value.find((category) => category.key === 'pets'));
+const isPetsCategory = computed(() => {
+  const category = form.value.category;
+  return category?.key === 'pets' || (!!category?.parentId && category.parentId === petsRootCategory.value?.id);
+});
 const selectedPetTag = computed<PetTagOption | null>({
   get: () => petTagOptions.value.find((tag) => form.value.tagIds?.includes(tag.id)) ?? null,
   set: (selected) => {
