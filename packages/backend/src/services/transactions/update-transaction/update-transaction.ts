@@ -6,8 +6,8 @@ import { NotFoundError, ValidationError } from '@js/errors';
 import { removeUndefinedKeys } from '@js/helpers';
 import { logger } from '@js/utils/logger';
 import * as Accounts from '@models/accounts.model';
-import CreditCardInstallments from '@models/credit-card-installments.model';
 import Categories from '@models/categories.model';
+import CreditCardInstallments from '@models/credit-card-installments.model';
 import Payees from '@models/payees.model';
 import RefundTransactions from '@models/refund-transactions.model';
 import Tags from '@models/tags.model';
@@ -104,7 +104,6 @@ const touchesRefundState = ({
   );
 };
 
-
 const changesInstallmentFinancialState = ({
   payload,
   prevData,
@@ -140,7 +139,7 @@ const changesInstallmentFinancialState = ({
     (payload.originalAmount !== undefined &&
       (payload.originalAmount === null
         ? prevData.originalAmount !== null
-        : !payload.originalAmount.equals(prevData.originalAmount))) ||
+        : prevData.originalAmount == null || !payload.originalAmount.equals(prevData.originalAmount))) ||
     (payload.originalCurrencyCode !== undefined &&
       payload.originalCurrencyCode !== prevData.originalCurrencyCode) ||
     (payload.excludeFromStats !== undefined && payload.excludeFromStats !== prevData.excludeFromStats) ||
