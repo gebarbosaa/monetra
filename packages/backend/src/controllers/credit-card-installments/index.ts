@@ -11,7 +11,6 @@ const createSchema = z.object({
     firstDueDate: z.iso.date(),
     currencyCode: z.string().min(1).max(20),
     totalAmount: z.number().positive(),
-    refTotalAmount: z.number().positive(),
     installmentCount: z.number().int().min(2).max(48),
   }).strict(),
 });
