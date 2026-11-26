@@ -79,7 +79,7 @@ export async function createInstallmentPlan(input: {
     userId: input.userId,
     definitionOwnerUserId: input.userId,
     date: input.purchaseDate,
-    baseCode: baseCurrency.currency.code,
+    baseCode: input.currencyCode,
   });
   if (!refTotal.isPositive()) throw new ValidationError({ message: 'Reference amount must be greater than zero.' });
   const baseDecimals = await precision.getBaseCurrencyDecimals({ userId: input.userId });
