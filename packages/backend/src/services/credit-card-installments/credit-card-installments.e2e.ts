@@ -1,4 +1,4 @@
-import { ACCOUNT_CATEGORIES, asDecimal } from '@bt/shared/types';
+import { ACCOUNT_CATEGORIES, asDecimal, TRANSACTION_TYPES } from '@bt/shared/types';
 import { describe, expect, it } from '@jest/globals';
 import { ERROR_CODES } from '@js/errors';
 import CreditCardInstallments from '@models/credit-card-installments.model';
@@ -9,6 +9,48 @@ import { addMonths, format } from 'date-fns';
 const dateOnly = (date: Date) => format(date, 'yyyy-MM-dd');
 
 describe('Credit card installment plans', () => {
+  it('prevents installment transactions from being linked as transfers', async () => {
+    const cardAccount = await helpers.createAccount({
+      payload: helpers.buildAccountPayload({
+        accountCategory: ACCOUNT_CATEGORIES.creditCard,
+        creditLimit: asDecimal(500),
+      }),
+      raw: true,
+    });
+    const otherAccount = await helpers.createAccount({ raw: true });
+    const plan = await helpers.makeRequest<{
+      installments: { transactionId: string }[];
+    }, true>({
+      method: 'post',
+      url: '/credit-card-installments',
+      payload: {
+        accountId: cardAccount.id,
+        description: 'Transfer protection',
+        categoryId: global.DEFAULT_CATEGORY_ID,
+        purchaseDate: dateOnly(new Date()),
+        firstDueDate: dateOnly(addMonths(new Date(), 1)),
+        currencyCode: cardAccount.currencyCode,
+        totalAmount: 100,
+        installmentCount: 2,
+      },
+      raw: true,
+    });
+    const [opposite] = await helpers.createTransaction({
+      payload: helpers.buildTransactionPayload({
+        accountId: otherAccount.id,
+        amount: 100,
+        transactionType: TRANSACTION_TYPES.income,
+      }),
+      raw: true,
+    });
+
+    const response = await helpers.linkTransactions({
+      payload: { ids: [[plan.installments[0]!.transactionId, opposite.id]] },
+    });
+    expect(response.statusCode).toBe(ERROR_CODES.ValidationError);
+    expect((await Transactions.findByPk(plan.installments[0]!.transactionId))?.transferId).toBeNull();
+  });
+
   it('updates dates, category and descriptions only while every installment is planned', async () => {
     const account = await helpers.createAccount({
       payload: helpers.buildAccountPayload({
