@@ -131,6 +131,7 @@ const canSubmit = computed(() =>
   Number(form.installmentCount) <= 48 &&
   !!form.purchaseDate &&
   !!form.firstDueDate &&
+  form.firstDueDate >= form.purchaseDate &&
   !isSaving.value,
 );
 const submit = () => {
@@ -147,6 +148,7 @@ const submit = () => {
   });
 };
 const formatAmount = (amount: number) => toLocalCurrencyNumber(amount, { currency: props.account.currencyCode, meta: props.account.currencyMeta });
+const formatTransactionDate = (value: Date | string) => format(new Date(value), 'dd/MM/yyyy');
 const canCancel = (plan: CreditCardInstallmentPlan) =>
   plan.status === 'active' && !plan.installments.some((installment) => installment.status === 'posted');
 </script>
@@ -201,11 +203,11 @@ const canCancel = (plan: CreditCardInstallmentPlan) =>
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label class="grid gap-1 text-sm">
           <span>{{ t('pages.account.installments.purchaseDate') }}</span>
-          <input v-model="form.purchaseDate" type="date" required class="bg-background border-input rounded-md border px-3 py-2" />
+          <input v-model="form.purchaseDate" type="date" :max="form.firstDueDate || undefined" required class="bg-background border-input rounded-md border px-3 py-2" />
         </label>
         <label class="grid gap-1 text-sm">
           <span>{{ t('pages.account.installments.firstDueDate') }}</span>
-          <input v-model="form.firstDueDate" type="date" required class="bg-background border-input rounded-md border px-3 py-2" />
+          <input v-model="form.firstDueDate" type="date" :min="form.purchaseDate || undefined" required class="bg-background border-input rounded-md border px-3 py-2" />
         </label>
       </div>
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -273,7 +275,7 @@ const canCancel = (plan: CreditCardInstallmentPlan) =>
                   :key="candidate.id"
                   :value="candidate.id"
                 >
-                  {{ new Date(candidate.time).toLocaleDateString() }} · {{ candidate.note || t('pages.account.installments.unnamedTransaction') }} · {{ formatAmount(candidate.amount) }}
+                  {{ formatTransactionDate(candidate.time) }} · {{ candidate.note || t('pages.account.installments.unnamedTransaction') }} · {{ formatAmount(candidate.amount) }}
                 </option>
               </select>
               <Button
