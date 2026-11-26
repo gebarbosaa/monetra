@@ -2,6 +2,7 @@ import { ACCOUNT_CATEGORIES, asDecimal, TRANSACTION_TYPES } from '@bt/shared/typ
 import { describe, expect, it } from '@jest/globals';
 import { ERROR_CODES } from '@js/errors';
 import Accounts from '@models/accounts.model';
+import CreditCardInstallmentPlans from '@models/credit-card-installment-plans.model';
 import CreditCardInstallments from '@models/credit-card-installments.model';
 import Transactions from '@models/transactions.model';
 import * as helpers from '@tests/helpers';
@@ -10,6 +11,48 @@ import { addMonths, format } from 'date-fns';
 const dateOnly = (date: Date) => format(date, 'yyyy-MM-dd');
 
 describe('Credit card installment plans', () => {
+  it('keeps installment plan and ledger categories aligned when deleting a category with replacement', async () => {
+    const account = await helpers.createAccount({
+      payload: helpers.buildAccountPayload({
+        accountCategory: ACCOUNT_CATEGORIES.creditCard,
+        creditLimit: asDecimal(500),
+      }),
+      raw: true,
+    });
+    const category = await helpers.addCustomCategory({ name: 'Installment source', color: '#123456', raw: true });
+    const replacement = await helpers.addCustomCategory({ name: 'Installment replacement', color: '#654321', raw: true });
+    const plan = await helpers.makeRequest<{ id: string }, true>({
+      method: 'post',
+      url: '/credit-card-installments',
+      payload: {
+        accountId: account.id,
+        description: 'Category reassignment',
+        categoryId: category.id,
+        purchaseDate: dateOnly(new Date()),
+        firstDueDate: dateOnly(addMonths(new Date(), 1)),
+        currencyCode: account.currencyCode,
+        totalAmount: 100,
+        installmentCount: 2,
+      },
+      raw: true,
+    });
+
+    await helpers.deleteCustomCategory({
+      categoryId: category.id,
+      replaceWithCategoryId: replacement.id,
+      raw: true,
+    });
+
+    const persistedPlan = await CreditCardInstallmentPlans.findByPk(plan.id);
+    expect(persistedPlan?.categoryId).toBe(replacement.id);
+    const installments = await CreditCardInstallments.findAll({ where: { planId: plan.id } });
+    expect(installments).toHaveLength(2);
+    for (const installment of installments) {
+      const transaction = await Transactions.findByPk(installment.transactionId!);
+      expect(transaction?.categoryId).toBe(replacement.id);
+    }
+  });
+
   it('blocks deleting a credit card while an active installment plan owns its transactions', async () => {
     const account = await helpers.createAccount({
       payload: helpers.buildAccountPayload({
