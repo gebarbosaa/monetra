@@ -1,5 +1,6 @@
 import {
   ACCOUNT_CATEGORIES,
+  asDecimal,
   AI_FEATURE,
   AI_PROVIDER,
   API_ERROR_CODES,
@@ -21,7 +22,6 @@ import {
 import type { BudgetPlanPeriodView } from '@bt/shared/types';
 import { INVESTMENT_TRANSACTION_CATEGORY } from '@bt/shared/types/investments';
 import { VENTURE_CASH_FLOW_MODE, VENTURE_EVENT_TYPE } from '@bt/shared/types/venture';
-import { asDecimal } from '@common/lib/decimal';
 import { generateRandomRecordId } from '@common/lib/record-id-helpers';
 import CreditCardInstallmentPlans from '@models/credit-card-installment-plans.model';
 import CreditCardInstallments from '@models/credit-card-installments.model';
