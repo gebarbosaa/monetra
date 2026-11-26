@@ -18,26 +18,24 @@ vi.mock('@/composable', () => ({
 vi.mock('@/composable/use-account-display-balance', () => ({
   useAccountDisplayBalance: () => ({ displayBalance: ref(0), displayRefBalance: ref(0) }),
 }));
-vi.mock('@/composable/use-sync-status', () => ({
-  useSyncStatus: () => ({ isAccountNeedingReauth: () => false }),
-}));
 
-const buildAccount = ({ currencyCode }: { currencyCode: string }) =>
+const buildAccount = ({ currencyCode, bankLinked = false }: { currencyCode: string; bankLinked?: boolean }) =>
   ({
     id: 'account-1',
     name: 'Savings',
     currencyCode,
+    bankDataProviderConnectionId: bankLinked ? 'legacy-connection' : null,
     accountCategory: ACCOUNT_CATEGORIES.general,
     refCurrentBalance: 0,
   }) as unknown as AccountModel;
 
-const mountRow = ({ currencyCode }: { currencyCode: string }) => {
+const mountRow = ({ currencyCode, bankLinked = false }: { currencyCode: string; bankLinked?: boolean }) => {
   const pinia = createPinia();
   setActivePinia(pinia);
   useCurrenciesStore();
 
   return mount(AccountListRow, {
-    props: { account: buildAccount({ currencyCode }) },
+    props: { account: buildAccount({ currencyCode, bankLinked }) },
     global: {
       plugins: [pinia],
       stubs: { RouterLink: { template: '<a><slot /></a>' }, AccountLogo: true, DesktopOnlyTooltip: true },
@@ -63,5 +61,13 @@ describe('AccountListRow currency icon', () => {
 
     expect(wrapper.find('img').exists()).toBe(false);
     expect(wrapper.get('[data-testid="currency-icon-monogram"]').text()).toBe('₿');
+  });
+});
+
+describe('AccountListRow manual-only presentation', () => {
+  it('does not show provider reauthorization warnings for legacy linked accounts', () => {
+    const wrapper = mountRow({ currencyCode: 'BRL', bankLinked: true });
+
+    expect(wrapper.text()).not.toContain('sidebar.accountsView.needsReauthTooltip');
   });
 });
