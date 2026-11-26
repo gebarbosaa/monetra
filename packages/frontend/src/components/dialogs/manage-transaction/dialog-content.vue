@@ -257,6 +257,28 @@ const form = ref<UI_FORM_STRUCT>({
   originalCurrency: null,
 });
 
+const PET_TAG_DESCRIPTION_PREFIX = 'MONETRA_PET:';
+type PetTagOption = { id: string; label: string };
+
+const petTagIds = computed(() =>
+  tagsStore.tags
+    .filter((tag) => tag.description?.startsWith(PET_TAG_DESCRIPTION_PREFIX))
+    .map((tag) => tag.id),
+);
+const petTagOptions = computed<PetTagOption[]>(() =>
+  tagsStore.tags
+    .filter((tag) => tag.description?.startsWith(PET_TAG_DESCRIPTION_PREFIX))
+    .map((tag) => ({ id: tag.id, label: tag.name })),
+);
+const isPetsCategory = computed(() => form.value.category?.key === 'pets');
+const selectedPetTag = computed<PetTagOption | null>({
+  get: () => petTagOptions.value.find((tag) => form.value.tagIds?.includes(tag.id)) ?? null,
+  set: (selected) => {
+    const otherTagIds = (form.value.tagIds ?? []).filter((id) => !petTagIds.value.includes(id));
+    form.value.tagIds = selected ? [...otherTagIds, selected.id] : otherTagIds;
+  },
+});
+
 watch(
   () => form.value.account,
   (account) => {
@@ -1592,11 +1614,24 @@ onUnmounted(() => {
           @focusout="touchField('form.note')"
         />
       </FormRow>
+      <FormRow v-if="!isLoanDestination && isPetsCategory && petTagOptions.length">
+        <SelectField
+          v-model="selectedPetTag"
+          :values="petTagOptions"
+          label-key="label"
+          value-key="id"
+          :label="$t('dialogs.manageTransaction.form.animalLabel')"
+          :placeholder="$t('dialogs.manageTransaction.form.animalPlaceholder')"
+          :disabled="isFormFieldsDisabled"
+          clearable
+        />
+      </FormRow>
       <FormRow v-if="!isLoanDestination && shownFields.tags" data-optional-field="tags">
         <TagSelectField
           v-model="form.tagIds"
           :label="$t('dialogs.manageTransaction.form.tagsLabel')"
           :disabled="isFormFieldsDisabled"
+          :exclude-description-prefix="PET_TAG_DESCRIPTION_PREFIX"
         />
       </FormRow>
       <div v-if="isAttachmentsAvailable && shownFields.attachments" data-optional-field="attachments">
