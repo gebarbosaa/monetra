@@ -7,6 +7,59 @@ import { addMonths, format } from 'date-fns';
 const dateOnly = (date: Date) => format(date, 'yyyy-MM-dd');
 
 describe('Credit card installment plans', () => {
+  it('replaces the generated planned row when manually linking an existing real transaction', async () => {
+    const account = await helpers.createAccount({
+      payload: helpers.buildAccountPayload({
+        accountCategory: ACCOUNT_CATEGORIES.creditCard,
+        creditLimit: asDecimal(500),
+      }),
+      raw: true,
+    });
+    const plan = await helpers.makeRequest<{
+      id: string;
+      installments: { id: string; transactionId: string }[];
+    }, true>({
+      method: 'post',
+      url: '/credit-card-installments',
+      payload: {
+        accountId: account.id,
+        description: 'Manual reconciliation',
+        purchaseDate: dateOnly(new Date()),
+        firstDueDate: dateOnly(addMonths(new Date(), 1)),
+        currencyCode: account.currencyCode,
+        totalAmount: 100,
+        installmentCount: 2,
+      },
+      raw: true,
+    });
+
+    const firstInstallment = plan.installments[0]!;
+    const generatedPlannedTransactionId = firstInstallment.transactionId;
+    const [importedTransaction] = await helpers.createTransaction({
+      payload: helpers.buildTransactionPayload({
+        accountId: account.id,
+        amount: asDecimal(50),
+      }),
+      raw: true,
+    });
+
+    const linked = await helpers.makeRequest<{
+      id: string;
+      transactionId: string;
+      status: string;
+    }, true>({
+      method: 'post',
+      url: `/credit-card-installments/${plan.id}/installments/${firstInstallment.id}/link`,
+      payload: { transactionId: importedTransaction.id },
+      raw: true,
+    });
+
+    expect(linked.transactionId).toBe(importedTransaction.id);
+    expect(linked.status).toBe('posted');
+    expect(await Transactions.findByPk(generatedPlannedTransactionId)).toBeNull();
+    expect(await Transactions.findByPk(importedTransaction.id)).not.toBeNull();
+  });
+
   it('creates planned ledger rows, reserves the limit and removes reservations on cancellation', async () => {
     const account = await helpers.createAccount({
       payload: helpers.buildAccountPayload({
