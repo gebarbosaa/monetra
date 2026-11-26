@@ -99,6 +99,8 @@ describe('Data backup export (POST /user/backup)', () => {
       expect(archive.readData({ name: 'transactions' })).toEqual([]);
       expect(archive.readData({ name: 'accounts' })).toEqual([]);
       expect(archive.readData({ name: 'balances' })).toEqual([]);
+      expect(archive.readData({ name: 'credit-card-installment-plans' })).toEqual([]);
+      expect(archive.readData({ name: 'credit-card-installments' })).toEqual([]);
       expect(archive.readData({ name: 'holdings' })).toEqual([]);
       expect(archive.files.get('reference/securities.json')?.toString('utf8')).toBe('[]');
 
