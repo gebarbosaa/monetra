@@ -8,6 +8,9 @@ const DEFAULT_TAG_KEYS = Object.freeze({
   want: 'want',
   need: 'need',
   must: 'must',
+  petLuna: 'petLuna',
+  petThor: 'petThor',
+  petBoth: 'petBoth',
 } as const);
 
 /**
@@ -21,6 +24,9 @@ const DEFAULT_TAG_STRUCTURE = Object.freeze([
   { key: DEFAULT_TAG_KEYS.want, color: '#16a34a', icon: 'sparkles' },
   { key: DEFAULT_TAG_KEYS.need, color: '#c35a04', icon: 'target' },
   { key: DEFAULT_TAG_KEYS.must, color: '#c11401', icon: 'circle-alert' },
+  { key: DEFAULT_TAG_KEYS.petLuna, color: '#d97706', icon: 'cat', description: 'MONETRA_PET:luna' },
+  { key: DEFAULT_TAG_KEYS.petThor, color: '#d97706', icon: 'dog', description: 'MONETRA_PET:thor' },
+  { key: DEFAULT_TAG_KEYS.petBoth, color: '#d97706', icon: 'paw-print', description: 'MONETRA_PET:both' },
 ] as const);
 
 /**
@@ -33,7 +39,7 @@ export function getTranslatedDefaultTags({ locale }: { locale: string }) {
     // creation, so it needs a locale-independent handle here.
     key: tag.key,
     name: t({ key: `defaultTags.${tag.key}.name`, locale }),
-    description: t({ key: `defaultTags.${tag.key}.description`, locale }),
+    description: 'description' in tag ? tag.description : t({ key: `defaultTags.${tag.key}.description`, locale }),
     color: tag.color,
     icon: tag.icon,
   }));
