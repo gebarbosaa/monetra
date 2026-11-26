@@ -347,7 +347,8 @@
         "linkError": "Não foi possível vincular este lançamento.",
         "selectTransaction": "Selecione um lançamento importado",
         "unnamedTransaction": "Lançamento",
-        "noMatchingTransactions": "Nenhuma despesa não vinculada com este valor foi encontrada neste cartão."
+        "noMatchingTransactions": "Nenhuma despesa não vinculada com este valor foi encontrada neste cartão.",
+        "candidateLoadError": "Não foi possível carregar os lançamentos importados para conciliação."
       }
     },
     "vehicleDetails": {
