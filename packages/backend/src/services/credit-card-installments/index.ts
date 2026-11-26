@@ -1,4 +1,4 @@
-import { ACCOUNT_CATEGORIES, ACCOUNT_TYPES, PAYMENT_TYPES, TRANSACTION_TRANSFER_NATURE, TRANSACTION_TYPES } from '@bt/shared/types';
+import { ACCOUNT_CATEGORIES, ACCOUNT_STATUSES, ACCOUNT_TYPES, PAYMENT_TYPES, TRANSACTION_TRANSFER_NATURE, TRANSACTION_TYPES } from '@bt/shared/types';
 import { roundToCurrency } from '@common/lib/currency-precision';
 import { Money } from '@common/types/money';
 import { calculateRefAmount } from '@services/calculate-ref-amount.service';
@@ -50,11 +50,17 @@ export async function createInstallmentPlan(input: {
   if (!Number.isInteger(input.installmentCount) || input.installmentCount < 2 || input.installmentCount > 48) {
     throw new ValidationError({ message: 'Installment count must be between 2 and 48.' });
   }
+  if (!Number.isFinite(input.totalAmount) || input.totalAmount <= 0) {
+    throw new ValidationError({ message: 'Total amount must be a finite value greater than zero.' });
+  }
   if (!input.description.trim() || input.description.trim().length > 200) {
     throw new ValidationError({ message: 'Description must contain between 1 and 200 characters.' });
   }
   const account = await Accounts.findOne({ where: { id: input.accountId, userId: input.userId } });
   if (!account) throw new NotFoundError({ message: 'Credit card account not found.' });
+  if (account.status !== ACCOUNT_STATUSES.active) {
+    throw new ValidationError({ message: 'Installment plans can only be created on active credit card accounts.' });
+  }
   if (account.accountCategory !== ACCOUNT_CATEGORIES.creditCard) {
     throw new ValidationError({ message: 'Installment plans can only be created for credit card accounts.' });
   }
@@ -63,6 +69,9 @@ export async function createInstallmentPlan(input: {
   }
   dateParts(input.purchaseDate);
   dateParts(input.firstDueDate);
+  if (input.firstDueDate < input.purchaseDate) {
+    throw new ValidationError({ message: 'The first installment due date cannot precede the purchase date.' });
+  }
 
   const total = await roundToCurrency({
     money: Money.fromDecimal(input.totalAmount),
