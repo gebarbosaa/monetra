@@ -1,4 +1,5 @@
-import { DataTypes, QueryInterface, Transaction } from 'sequelize';
+import { CURRENCY_CODE_MAX_LENGTH } from '@bt/shared/types';
+import { DataTypes, Op, QueryInterface, Transaction } from 'sequelize';
 
 module.exports = {
   up: async (queryInterface: QueryInterface): Promise<void> => {
@@ -25,7 +26,7 @@ module.exports = {
           },
           description: { type: DataTypes.STRING(200), allowNull: false },
           purchaseDate: { type: DataTypes.DATEONLY, allowNull: false },
-          currencyCode: { type: DataTypes.STRING(20), allowNull: false },
+          currencyCode: { type: DataTypes.STRING(CURRENCY_CODE_MAX_LENGTH), allowNull: false },
           totalAmount: { type: DataTypes.DECIMAL(36, 18), allowNull: false },
           refTotalAmount: { type: DataTypes.DECIMAL(36, 18), allowNull: false },
           installmentCount: { type: DataTypes.INTEGER, allowNull: false },
@@ -103,7 +104,7 @@ module.exports = {
       await queryInterface.addIndex('CreditCardInstallments', ['transactionId'], {
         name: 'credit_card_installments_transaction_uq',
         unique: true,
-        where: { transactionId: { [require('sequelize').Op.ne]: null } },
+        where: { transactionId: { [Op.ne]: null } },
         transaction: t,
       });
 
