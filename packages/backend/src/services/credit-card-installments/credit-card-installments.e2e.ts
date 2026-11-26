@@ -67,6 +67,49 @@ describe('Credit card installment plans', () => {
     expect(plannedTransaction?.time.toISOString()).toContain(newFirstDueDate);
   });
 
+  it('blocks direct financial edits to linked installment transactions but allows descriptive edits', async () => {
+    const account = await helpers.createAccount({
+      payload: helpers.buildAccountPayload({
+        accountCategory: ACCOUNT_CATEGORIES.creditCard,
+        creditLimit: asDecimal(500),
+      }),
+      raw: true,
+    });
+    const plan = await helpers.makeRequest<{
+      installments: { transactionId: string }[];
+    }, true>({
+      method: 'post',
+      url: '/credit-card-installments',
+      payload: {
+        accountId: account.id,
+        description: 'Protected transaction',
+        categoryId: global.DEFAULT_CATEGORY_ID,
+        purchaseDate: dateOnly(new Date()),
+        firstDueDate: dateOnly(addMonths(new Date(), 1)),
+        currencyCode: account.currencyCode,
+        totalAmount: 100,
+        installmentCount: 2,
+      },
+      raw: true,
+    });
+
+    const transactionId = plan.installments[0]!.transactionId;
+    const rejectedAmountEdit = await helpers.updateTransaction({
+      id: transactionId,
+      payload: { amount: 41 },
+      raw: false,
+    });
+    expect(rejectedAmountEdit.statusCode).toBe(ERROR_CODES.ValidationError);
+
+    await helpers.updateTransaction({
+      id: transactionId,
+      payload: { note: 'Description remains editable' },
+      raw: true,
+    });
+    expect((await Transactions.findByPk(transactionId))?.note).toBe('Description remains editable');
+    expect((await CreditCardInstallments.findOne({ where: { transactionId } }))?.status).toBe('planned');
+  });
+
   it('replaces the generated planned row when manually linking an existing real transaction', async () => {
     const account = await helpers.createAccount({
       payload: helpers.buildAccountPayload({
