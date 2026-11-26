@@ -1,4 +1,7 @@
-import { type RecordId, TRANSACTION_TRANSFER_NATURE, TRANSACTION_TYPES } from '@bt/shared/types';
+import { ACCOUNT_CATEGORIES, asDecimal, type RecordId, TRANSACTION_TRANSFER_NATURE, TRANSACTION_TYPES } from '@bt/shared/types';
+import CreditCardInstallments from '@models/credit-card-installments.model';
+import CreditCardInstallmentPlans from '@models/credit-card-installment-plans.model';
+import Transactions from '@models/transactions.model';
 import { VENTURE_CASH_FLOW_MODE, VENTURE_EVENT_TYPE } from '@bt/shared/types/venture';
 import { describe, expect, it } from '@jest/globals';
 import { ERROR_CODES } from '@js/errors';
@@ -108,6 +111,53 @@ describe('Transactions Trash: rows that must be unlinked first', () => {
     expect(result.skippedIds.toSorted()).toEqual([portfolioTx.id, ventureTx.id, main.id].toSorted());
     expect((await helpers.getTrash({ raw: true })).map((entry) => entry.id)).toEqual([plain.id]);
     expect(Number((await helpers.getAccount({ id: card.id, raw: true })).currentBalance)).toBe(balanceBefore + 10);
+  });
+
+  it('bulk trash cannot detach planned installment transactions from their plan', async () => {
+    const card = await helpers.createAccount({
+      payload: helpers.buildAccountPayload({
+        accountCategory: ACCOUNT_CATEGORIES.creditCard,
+        creditLimit: asDecimal(500),
+      }),
+      raw: true,
+    });
+    const plan = await helpers.makeRequest<{
+      id: string;
+      installments: Array<{ transactionId: string }>;
+    }, true>({
+      method: 'post',
+      url: '/credit-card-installments',
+      payload: {
+        accountId: card.id,
+        description: 'Bulk trash protection',
+        categoryId: global.DEFAULT_CATEGORY_ID,
+        purchaseDate: '2026-11-01',
+        firstDueDate: '2026-12-01',
+        currencyCode: card.currencyCode,
+        totalAmount: 120,
+        installmentCount: 3,
+      },
+      raw: true,
+    });
+    const ids = plan.installments.map((row) => row.transactionId);
+
+    const result = await helpers.bulkDeleteTransactions({
+      payload: { transactionIds: ids },
+      raw: true,
+    });
+
+    expect(result.deletedCount).toBe(0);
+    expect(result.deletedIds).toEqual([]);
+    expect(result.skippedIds.toSorted()).toEqual(ids.toSorted());
+    expect(await helpers.getTrash({ raw: true })).toEqual([]);
+    expect(await CreditCardInstallmentPlans.findByPk(plan.id)).not.toBeNull();
+    const installments = await CreditCardInstallments.findAll({ where: { planId: plan.id } });
+    expect(installments).toHaveLength(3);
+    for (const installment of installments) {
+      expect(installment.transactionId).toBeTruthy();
+      const transaction = await Transactions.findByPk(installment.transactionId!);
+      expect(transaction?.deletedAt).toBeNull();
+    }
   });
 
   it('bulk-trashes both legs of a selected transfer once', async () => {
