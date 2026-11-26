@@ -17,7 +17,7 @@ export const SUPPORTED_LOCALES = {
 
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[keyof typeof SUPPORTED_LOCALES];
 
-export const DEFAULT_LOCALE: SupportedLocale = SUPPORTED_LOCALES.ENGLISH;
+export const DEFAULT_LOCALE: SupportedLocale = SUPPORTED_LOCALES.BRAZILIAN_PORTUGUESE;
 
 // Translated by volunteers on Crowdin rather than maintained in-house.
 export const COMMUNITY_LOCALES: ReadonlySet<SupportedLocale> = new Set([
