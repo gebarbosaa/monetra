@@ -57,6 +57,7 @@ const candidateTransactionsQuery = useQuery({
     limit: 100,
     offset: 0,
   }),
+  enabled: computed(() => (plansQuery.data.value ?? []).some((plan) => plan.installments.some((installment) => installment.status === 'planned'))),
   staleTime: 30_000,
 });
 const linkedTransactionIds = computed(() =>
