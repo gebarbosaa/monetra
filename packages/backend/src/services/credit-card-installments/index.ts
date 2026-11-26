@@ -251,6 +251,21 @@ export async function cancelInstallmentPlan({ userId, id }: { userId: number; id
         message: 'A plan with posted installments cannot be cancelled. Reverse posted transactions first.',
       });
     }
+    const plannedInstallments = await CreditCardInstallments.findAll({
+      where: { planId: plan.id, status: CREDIT_CARD_INSTALLMENT_STATUSES.planned },
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
+    for (const installment of plannedInstallments) {
+      if (installment.transactionId) {
+        await Transactions.destroy({
+          where: { id: installment.transactionId, userId, isPlanned: true },
+          transaction,
+          individualHooks: true,
+        });
+      }
+    }
+
     await CreditCardInstallments.update(
       { status: CREDIT_CARD_INSTALLMENT_STATUSES.cancelled },
       { where: { planId: plan.id, status: CREDIT_CARD_INSTALLMENT_STATUSES.planned }, transaction },
