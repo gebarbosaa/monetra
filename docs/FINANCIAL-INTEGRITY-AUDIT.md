@@ -31,6 +31,10 @@ A suíte `credit-limit-in-stats.e2e.ts` cobre:
 
 ### 3. Limite disponível e compras parceladas no cartão
 
+A inspeção adicional confirmou que `Transactions.isPlanned` já existe e que linhas planejadas não alteram o saldo da conta. Ao confirmar uma linha planejada, os hooks do modelo aplicam seu efeito no saldo. Isso oferece um mecanismo de transição útil para parcelas futuras, mas ainda não existe vínculo tipado entre uma linha planejada e uma compra parcelada; portanto, não é seguro somar todas as linhas planejadas do cartão como reserva.
+
+A especificação técnica proposta está em `docs/CREDIT-CARD-INSTALLMENTS-DESIGN.md`. Ela define uma fonte de verdade relacional para planos e parcelas, a regra de troca de reserva por saldo real na confirmação e a separação entre pagamento de fatura e despesa.
+
 A leitura dos modelos e serviços atuais encontrou estas distinções:
 
 - `Accounts` armazena `creditLimit` e `refCreditLimit` como valores do limite total configurado e sua conversão para a moeda-base.
