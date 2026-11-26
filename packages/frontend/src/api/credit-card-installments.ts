@@ -47,6 +47,7 @@ export interface CreditCardInstallmentExposure {
 export interface CreateCreditCardInstallmentPlanPayload {
   accountId: string;
   description: string;
+  categoryId: string | null;
   purchaseDate: string;
   firstDueDate: string;
   currencyCode: string;
