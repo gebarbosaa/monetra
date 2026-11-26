@@ -43,15 +43,16 @@ export const deleteTransaction = withTransaction(
 
       assertPlannedWriteAllowed({ transaction: tx, callerUserId: userId });
 
-      // A posted installment is the ledger evidence for a credit-card plan.
-      // Deleting or trashing it would make the plan look settled while its
-      // transaction FK is nulled (ON DELETE SET NULL), losing the audit trail.
+      // Installment rows own their ledger links. Deleting or trashing either a
+      // planned reservation or a posted purchase would trigger ON DELETE SET NULL
+      // and silently detach the plan from its financial evidence. The plan service
+      // performs the two intentional removals (cancellation and reservation replace).
       const linkedInstallment = await CreditCardInstallments.findOne({
-        where: { transactionId: tx.id, status: 'posted' },
+        where: { transactionId: tx.id },
       });
       if (linkedInstallment) {
         throw new ValidationError({
-          message: 'A transaction linked to a posted credit-card installment cannot be deleted. Reverse it through the financial reversal flow.',
+          message: 'A transaction linked to a credit-card installment cannot be deleted directly. Manage it through the installment plan.',
         });
       }
 
