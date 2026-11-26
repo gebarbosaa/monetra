@@ -387,6 +387,17 @@ export const updateAccount = withTransaction(
     // Handle archive side effects when transitioning to archived status
     const isArchiving =
       payload.status === ACCOUNT_STATUSES.archived && accountData.status !== ACCOUNT_STATUSES.archived;
+    if (isArchiving && accountData.accountCategory === ACCOUNT_CATEGORIES.creditCard) {
+      const activeInstallmentPlans = await CreditCardInstallmentPlans.count({
+        where: { accountId: accountData.id, userId: payload.userId, status: 'active' },
+      });
+      if (activeInstallmentPlans > 0) {
+        throw new ValidationError({
+          message:
+            'This credit card has active installment plans. Settle or cancel those plans before archiving the account.',
+        });
+      }
+    }
     if (isArchiving) {
       await performArchiveSideEffects({ account: accountData, userId: accountData.userId });
       // Unlink rewrites the opening balance; the update below writes it back from this row.
