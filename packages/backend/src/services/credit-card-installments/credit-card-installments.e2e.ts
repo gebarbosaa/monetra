@@ -188,7 +188,11 @@ describe('Credit card installment plans', () => {
     });
 
     expect(plan.installments).toHaveLength(3);
-    expect(plan.installments.reduce((sum, installment) => sum + Number(installment.amount), 0)).toBeCloseTo(100);
+    const installmentMinorUnits = plan.installments.map((installment) =>
+      Math.round(Number(installment.amount) * 100),
+    );
+    expect(installmentMinorUnits).toEqual([3333, 3333, 3334]);
+    expect(installmentMinorUnits.reduce((sum, amount) => sum + amount, 0)).toBe(10000);
     expect(plan.installments.every((installment) => Number(installment.amount) > 0)).toBe(true);
     expect(plan.installments.every((installment) => installment.transactionId)).toBe(true);
     expect(plan.installments.every((installment) => installment.status === 'planned')).toBe(true);
