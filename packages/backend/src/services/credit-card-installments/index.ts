@@ -14,7 +14,16 @@ import CreditCardInstallments, {
 const dateParts = (value: string) => {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
   if (!match) throw new ValidationError({ message: 'Invalid date. Use YYYY-MM-DD.' });
-  return { year: Number(match[1]), month: Number(match[2]), day: Number(match[3]) };
+  const parts = { year: Number(match[1]), month: Number(match[2]), day: Number(match[3]) };
+  const normalized = new Date(Date.UTC(parts.year, parts.month - 1, parts.day));
+  if (
+    normalized.getUTCFullYear() !== parts.year ||
+    normalized.getUTCMonth() !== parts.month - 1 ||
+    normalized.getUTCDate() !== parts.day
+  ) {
+    throw new ValidationError({ message: 'Invalid calendar date.' });
+  }
+  return parts;
 };
 
 const addMonthsClamped = (value: string, offset: number): string => {
@@ -34,6 +43,12 @@ export async function createInstallmentPlan(input: {
   totalAmount: number;
   installmentCount: number;
 }) {
+  if (!Number.isInteger(input.installmentCount) || input.installmentCount < 2 || input.installmentCount > 48) {
+    throw new ValidationError({ message: 'Installment count must be between 2 and 48.' });
+  }
+  if (!input.description.trim() || input.description.trim().length > 200) {
+    throw new ValidationError({ message: 'Description must contain between 1 and 200 characters.' });
+  }
   const account = await Accounts.findOne({ where: { id: input.accountId, userId: input.userId } });
   if (!account) throw new NotFoundError({ message: 'Credit card account not found.' });
   if (account.accountCategory !== ACCOUNT_CATEGORIES.credit_card) {
@@ -135,13 +150,15 @@ export async function cancelInstallmentPlan({ userId, id }: { userId: number; id
   return sequelize.transaction(async (transaction) => {
     const plan = await CreditCardInstallmentPlans.findOne({
       where: { id, userId },
-      include: [{ model: CreditCardInstallments, as: 'installments' }],
       transaction,
       lock: transaction.LOCK.UPDATE,
     });
     if (!plan) throw new NotFoundError({ message: 'Installment plan not found.' });
-    const installments = plan.installments ?? [];
-    if (installments.some((item) => item.status === CREDIT_CARD_INSTALLMENT_STATUSES.posted)) {
+    const postedCount = await CreditCardInstallments.count({
+      where: { planId: plan.id, status: CREDIT_CARD_INSTALLMENT_STATUSES.posted },
+      transaction,
+    });
+    if (postedCount > 0) {
       throw new ValidationError({
         message: 'A plan with posted installments cannot be cancelled. Reverse posted transactions first.',
       });
