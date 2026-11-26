@@ -39,7 +39,8 @@ const creditCardAccountIds = computed(() =>
       account.status === ACCOUNT_STATUSES.active &&
       !account.excludeFromStats &&
       account.creditLimit > 0 &&
-      account.accountCategory === ACCOUNT_CATEGORIES.creditCard,
+      account.accountCategory === ACCOUNT_CATEGORIES.creditCard &&
+      account.share?.isOwner !== false,
     )
     .map((account) => account.id),
 );
