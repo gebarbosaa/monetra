@@ -1555,10 +1555,12 @@ export const getTransactionById = ({
   id: string;
   userId: number;
   include?: Includeable[];
+  transaction?: Transaction;
 }): Promise<Transactions | null> => {
   return Transactions.findOne({
     where: { id, userId },
     include,
+    transaction,
   });
 };
 
@@ -1664,6 +1666,7 @@ export const createTransaction = async ({
   return getTransactionById({
     id: response.get('id'),
     userId,
+    transaction,
   });
 };
 
