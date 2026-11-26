@@ -9,10 +9,11 @@ import {
 import { Button } from '@/components/lib/ui/button';
 import { useNotificationCenter } from '@/components/notification-center';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
-import { AccountModel } from '@bt/shared/types';
+import { type AccountModel } from '@bt/shared/types';
 import { computed, reactive } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { toLocalCurrencyNumber } from '@/js/helpers';
+import { getCurrencyDecimals } from '@/js/helpers/currency-decimals';
 
 const props = defineProps<{ account: AccountModel }>();
 const { t } = useI18n();
@@ -21,6 +22,8 @@ const queryClient = useQueryClient();
 const queryKey = computed(() => ['credit-card-installment-plans', props.account.id]);
 const exposureKey = computed(() => ['credit-card-installment-exposure', props.account.id]);
 const today = new Date().toISOString().slice(0, 10);
+const amountDecimals = computed(() => getCurrencyDecimals({ code: props.account.currencyCode, meta: props.account.currencyMeta }));
+const amountStep = computed(() => String(10 ** -amountDecimals.value));
 const form = reactive({
   description: '',
   purchaseDate: today,
@@ -143,7 +146,7 @@ const canCancel = (plan: CreditCardInstallmentPlan) =>
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label class="grid gap-1 text-sm">
           <span>{{ t('pages.account.installments.totalAmount') }} ({{ props.account.currencyCode }})</span>
-          <input v-model="form.totalAmount" type="number" min="0.01" step="0.01" required class="bg-background border-input rounded-md border px-3 py-2" />
+          <input v-model="form.totalAmount" type="number" :min="amountStep" :step="amountStep" required class="bg-background border-input rounded-md border px-3 py-2" />
         </label>
         <label class="grid gap-1 text-sm">
           <span>{{ t('pages.account.installments.count') }}</span>
