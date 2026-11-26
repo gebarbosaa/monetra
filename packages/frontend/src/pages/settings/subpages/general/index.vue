@@ -11,8 +11,6 @@
         <Separator />
         <CreditLimitRow />
         <Separator />
-        <BankSyncRows />
-        <Separator />
         <CategoryRows />
         <Separator />
         <AccountDropdownRows />
@@ -34,7 +32,6 @@ import { Card, CardContent, CardHeader } from '@/components/lib/ui/card';
 import { Separator } from '@/components/lib/ui/separator';
 
 import AccountDropdownRows from './rows/account-dropdown-rows.vue';
-import BankSyncRows from './rows/bank-sync-rows.vue';
 import CategoryRows from './rows/category-rows.vue';
 import CreditLimitRow from './rows/credit-limit-row.vue';
 import IosAddExpenseRows from './rows/ios-add-expense-rows.vue';
