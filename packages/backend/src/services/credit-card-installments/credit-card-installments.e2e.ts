@@ -209,6 +209,61 @@ describe('Credit card installment plans', () => {
     expect((await Transactions.findByPk(wrongAmountTransaction.id))?.isPlanned).toBe(false);
   });
 
+  it('does not cancel a plan when a planned row has already become a real transaction', async () => {
+    const account = await helpers.createAccount({
+      payload: helpers.buildAccountPayload({
+        accountCategory: ACCOUNT_CATEGORIES.creditCard,
+        creditLimit: asDecimal(500),
+      }),
+      raw: true,
+    });
+    const plan = await helpers.makeRequest<{
+      id: string;
+      installments: { id: string; transactionId: string; status: string }[];
+    }, true>({
+      method: 'post',
+      url: '/credit-card-installments',
+      payload: {
+        accountId: account.id,
+        description: 'Confirmed row protection',
+        categoryId: global.DEFAULT_CATEGORY_ID,
+        purchaseDate: dateOnly(new Date()),
+        firstDueDate: dateOnly(addMonths(new Date(), 1)),
+        currencyCode: account.currencyCode,
+        totalAmount: 100,
+        installmentCount: 2,
+      },
+      raw: true,
+    });
+
+    const installment = plan.installments[0]!;
+    const transaction = await Transactions.findByPk(installment.transactionId);
+    expect(transaction?.isPlanned).toBe(true);
+    await transaction!.update({ isPlanned: false });
+
+    const rejectedCancellation = await helpers.makeRequest({
+      method: 'delete',
+      url: `/credit-card-installments/${plan.id}`,
+      raw: false,
+    });
+    expect(rejectedCancellation.statusCode).toBe(ERROR_CODES.ValidationError);
+
+    const persistedPlan = await helpers.makeRequest<{
+      id: string;
+      status: string;
+      installments: { id: string; transactionId: string; status: string }[];
+    }[], true>({
+      method: 'get',
+      url: '/credit-card-installments',
+      raw: true,
+    });
+    const persisted = persistedPlan.find((item) => item.id === plan.id);
+    expect(persisted?.status).toBe('active');
+    expect(persisted?.installments[0]?.status).toBe('planned');
+    expect(persisted?.installments[0]?.transactionId).toBe(transaction!.id);
+    expect(await Transactions.findByPk(transaction!.id)).not.toBeNull();
+  });
+
   it('creates planned ledger rows, reserves the limit and removes reservations on cancellation', async () => {
     const account = await helpers.createAccount({
       payload: helpers.buildAccountPayload({
