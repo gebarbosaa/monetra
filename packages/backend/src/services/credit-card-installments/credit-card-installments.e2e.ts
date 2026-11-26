@@ -156,6 +156,58 @@ describe('Credit card installment plans', () => {
     expect(persisted?.installments[0]?.transactionId).toBe(importedTransaction.id);
   });
 
+  it('keeps the planned reservation intact when reconciliation is rejected', async () => {
+    const account = await helpers.createAccount({
+      payload: helpers.buildAccountPayload({
+        accountCategory: ACCOUNT_CATEGORIES.creditCard,
+        creditLimit: asDecimal(500),
+      }),
+      raw: true,
+    });
+    const plan = await helpers.makeRequest<{
+      id: string;
+      installments: { id: string; amount: number; transactionId: string; status: string }[];
+    }, true>({
+      method: 'post',
+      url: '/credit-card-installments',
+      payload: {
+        accountId: account.id,
+        description: 'Protected reservation',
+        categoryId: global.DEFAULT_CATEGORY_ID,
+        purchaseDate: dateOnly(new Date()),
+        firstDueDate: dateOnly(addMonths(new Date(), 1)),
+        currencyCode: account.currencyCode,
+        totalAmount: 100,
+        installmentCount: 2,
+      },
+      raw: true,
+    });
+
+    const installment = plan.installments[0]!;
+    const reservedTransactionId = installment.transactionId;
+    const [wrongAmountTransaction] = await helpers.createTransaction({
+      payload: helpers.buildTransactionPayload({
+        accountId: account.id,
+        amount: asDecimal(49),
+      }),
+      raw: true,
+    });
+
+    const rejectedLink = await helpers.makeRequest({
+      method: 'post',
+      url: `/credit-card-installments/${plan.id}/installments/${installment.id}/link`,
+      payload: { transactionId: wrongAmountTransaction.id },
+      raw: false,
+    });
+    expect(rejectedLink.statusCode).toBe(ERROR_CODES.ValidationError);
+
+    const persistedInstallment = await CreditCardInstallments.findByPk(installment.id);
+    expect(persistedInstallment?.status).toBe('planned');
+    expect(persistedInstallment?.transactionId).toBe(reservedTransactionId);
+    expect(await Transactions.findByPk(reservedTransactionId)).not.toBeNull();
+    expect((await Transactions.findByPk(wrongAmountTransaction.id))?.isPlanned).toBe(false);
+  });
+
   it('creates planned ledger rows, reserves the limit and removes reservations on cancellation', async () => {
     const account = await helpers.createAccount({
       payload: helpers.buildAccountPayload({
