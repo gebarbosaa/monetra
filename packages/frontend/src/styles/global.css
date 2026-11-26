@@ -270,13 +270,13 @@
       'Segoe UI Symbol', 'Noto Color Emoji';
     --header-height: 69px;
 
-    --background: rgb(251, 251, 253);
-    --foreground: rgb(23, 21, 31);
+    --background: rgb(247, 248, 250);
+    --foreground: rgb(23, 28, 34);
 
-    --base-text: rgb(23, 21, 31);
+    --base-text: rgb(23, 28, 34);
 
     --card: rgb(255, 255, 255);
-    --card-foreground: rgb(23, 21, 31);
+    --card-foreground: rgb(23, 28, 34);
     --card-shadow: 0 1px 2px rgb(23 21 31 / 0.04), 0 14px 34px -20px rgb(40 30 80 / 0.2);
 
     --dialog: rgb(255, 255, 255);
@@ -313,9 +313,9 @@
     --field-shadow: var(--field-plain-shadow);
     --field-hover-border: rgb(23 21 31 / 0.26);
 
-    --primary: rgb(115, 85, 190);
-    --primary-foreground: rgb(255, 255, 255);
-    --primary-text: rgb(106, 75, 181);
+    --primary: rgb(255, 121, 0);
+    --primary-foreground: rgb(23, 28, 34);
+    --primary-text: rgb(196, 83, 0);
 
     --secondary: rgb(239, 239, 242);
     --secondary-foreground: rgb(23, 21, 31);
@@ -335,7 +335,7 @@
 
     --border: rgb(230, 229, 238);
     --input: rgb(23 21 31 / 0.12);
-    --ring: rgba(115, 85, 190, 0.6);
+    --ring: rgba(255, 121, 0, 0.6);
     --radius: 0.75rem;
 
     --success: rgb(42, 141, 82);
@@ -403,17 +403,17 @@
   :root.dark {
     --shadow-header: 0 0 10px 2px rgba(0, 0, 0, 0.1);
 
-    --background: rgb(11, 9, 8);
-    --foreground: rgb(245, 243, 240);
+    --background: rgb(9, 11, 14);
+    --foreground: rgb(242, 244, 247);
 
-    --base-text: rgb(250, 249, 247);
+    --base-text: rgb(242, 244, 247);
 
-    --card: rgb(27, 25, 23);
-    --card-foreground: rgb(245, 243, 240);
+    --card: rgb(23, 28, 34);
+    --card-foreground: rgb(242, 244, 247);
     --card-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
 
     /* A subtle step above --background; input fields inside dialogs read through their border, not surface contrast. */
-    --dialog: rgb(20, 18, 17);
+    --dialog: rgb(20, 25, 31);
 
     --button-shadow: 0 0 #0000;
     --button-raised-shadow: 0 0 #0000;
@@ -441,10 +441,10 @@
     --field-well-shadow: 0 0 #0000;
     --field-hover-border: rgb(255 255 255 / 0.22);
 
-    --primary: rgb(130, 100, 205);
-    --primary-foreground: rgb(255, 255, 255);
+    --primary: rgb(255, 121, 0);
+    --primary-foreground: rgb(23, 28, 34);
     /* --primary stays dark enough for white labels on filled buttons; --primary-text is the brighter tint text/icons need on dark backgrounds. */
-    --primary-text: rgb(167, 139, 250);
+    --primary-text: rgb(255, 171, 69);
 
     --secondary: rgb(42, 40, 38);
     --secondary-foreground: rgb(249, 248, 246);
@@ -465,7 +465,7 @@
 
     --border: rgb(42, 40, 37);
     --input: rgb(255 255 255 / 0.12);
-    --ring: rgb(115, 85, 190);
+    --ring: rgb(255, 121, 0);
 
     --success: rgb(16, 59, 49);
     --success-foreground: rgb(250, 250, 250);
