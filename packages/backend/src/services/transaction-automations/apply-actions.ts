@@ -4,6 +4,7 @@ import {
   CATEGORIZATION_SOURCE,
 } from '@bt/shared/types';
 import TransactionAutomations from '@models/transaction-automations.model';
+import CreditCardInstallments from '@models/credit-card-installments.model';
 import TransactionTags from '@models/transaction-tags.model';
 import * as Transactions from '@models/transactions.model';
 import { DOMAIN_EVENTS, eventBus } from '@services/common/event-bus';
@@ -49,9 +50,25 @@ export const applyActions = async ({
 
   let applied = false;
 
+  // Imported/synced transactions can be linked to an installment plan after matching.
+  // Automation rules must not mutate the plan-owned category/reporting fields through
+  // this alternate write path. Descriptive actions (notes, tags, payee) remain usable.
+  const hasProtectedInstallmentActions = rule.actions.some(
+    (action) => action.type === 'set_category' || action.type === 'exclude_from_stats',
+  );
+  const isInstallmentTransaction =
+    hasProtectedInstallmentActions &&
+    Boolean(
+      await CreditCardInstallments.findOne({
+        where: { transactionId: transaction.id },
+        attributes: ['id'],
+      }),
+    );
+
   for (const action of rule.actions) {
     switch (action.type) {
       case 'set_category': {
+        if (isInstallmentTransaction) continue;
         const source = transaction.categorizationMeta?.source;
         if (skipSetCategory || (source && AUTOMATION_PROTECTED_CATEGORY_SOURCES.includes(source))) {
           continue;
@@ -100,7 +117,7 @@ export const applyActions = async ({
         });
         break;
       case 'exclude_from_stats':
-        if (transaction.excludeFromStats) continue;
+        if (isInstallmentTransaction || transaction.excludeFromStats) continue;
         await Transactions.updateTransactionById({ id: transaction.id, userId, excludeFromStats: true });
         break;
       default:
