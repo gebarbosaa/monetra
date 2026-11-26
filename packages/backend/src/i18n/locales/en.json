@@ -712,6 +712,7 @@
       "housing": "Housing",
       "transportation": "Transportation",
       "vehicle": "Vehicle",
+      "pets": "Pets",
       "life": "Life & Entertainment",
       "communication": "Communication, PC",
       "financial-expenses": "Financial expenses",
@@ -758,6 +759,14 @@
         "rentals": "Rentals",
         "vehicle-insurance": "Vehicle insurance",
         "leasing": "Leasing"
+      },
+      "pets": {
+        "food": "Pet food",
+        "veterinary": "Veterinary care",
+        "medication": "Medication",
+        "hygiene": "Hygiene",
+        "accessories": "Accessories",
+        "grooming": "Grooming"
       },
       "life": {
         "health-care-doctor": "Health care, doctor",
