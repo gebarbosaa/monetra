@@ -4,7 +4,6 @@ import { shutdownPostHog } from '@js/utils/posthog';
 import { aiUsageMonthEndCron } from './crons/ai-usage-month-end';
 import { attachmentsOrphanSweepCron } from './crons/attachments-orphan-sweep';
 import { balanceRevalueSweepCron } from './crons/balance-revalue-sweep';
-import { bankAccountsSyncCron } from './crons/bank-accounts-sync';
 import { budgetPlansPurgeCron } from './crons/budget-plans-purge';
 import { coingeckoRatesSyncCron } from './crons/coingecko-rates-sync';
 import { cryptoPricesSyncCron } from './crons/crypto-prices-sync';
