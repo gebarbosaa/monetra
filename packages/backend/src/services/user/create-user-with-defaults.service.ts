@@ -144,14 +144,6 @@ export async function createAppUserWithUniqueUsername({
 export async function seedUserDefaults({ userId, locale: providedLocale }: { userId: number; locale?: string }) {
   await i18nextReady;
 
-  // MONETRA is Brazil-first: new accounts start with BRL as their reporting
-  // currency. Keep existing users' chosen base currency untouched when this
-  // seed is reused for recovery or maintenance.
-  const existingBaseCurrency = await userService.getUserBaseCurrency({ userId });
-  if (!existingBaseCurrency) {
-    await userService.setBaseUserCurrency({ userId, currencyCode: 'BRL' });
-  }
-
   const locale = providedLocale || requestContext.getLocale();
   const translatedCategories = getTranslatedCategories({ locale });
 
@@ -253,5 +245,13 @@ export async function seedUserDefaults({ userId, locale: providedLocale }: { use
   const incomeCategory = categoryKeyToId.get('income');
   if (incomeCategory) {
     await patchUserSettings({ userId, patch: { incomeCategoryIds: [incomeCategory.id] } });
+  }
+
+  // MONETRA is Brazil-first: new accounts start with BRL as their reporting
+  // currency. Keep an existing user's chosen base currency untouched when
+  // this seed is reused for recovery or maintenance.
+  const existingBaseCurrency = await userService.getUserBaseCurrency({ userId });
+  if (!existingBaseCurrency) {
+    await userService.setBaseUserCurrency({ userId, currencyCode: 'BRL' });
   }
 }
