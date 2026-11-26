@@ -135,6 +135,7 @@ export async function createInstallmentPlan(input: {
       const plannedTransaction = await TransactionModel.createTransaction({
         userId: input.userId,
         definitionOwnerUserId: input.userId,
+        transaction,
         amount: Money.fromDecimal(installment.amount),
         refAmount: Money.fromDecimal(installment.refAmount),
         transactionType: TRANSACTION_TYPES.expense,
