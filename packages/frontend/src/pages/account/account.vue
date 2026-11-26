@@ -66,6 +66,7 @@
         <Card.CardContent>
           <template v-if="account.bankDataProviderConnectionId">
             <BankConnectionView :account="account" />
+            <CreditCardInstallmentsPanel v-if="isCreditCardAccountOwner" :account="account" />
           </template>
           <template v-else>
             <SystemAccount :account="account" />
@@ -124,6 +125,7 @@ import { SCROLL_AREA_IDS } from '@/components/lib/ui/scroll-area/types';
 import { Separator } from '@/components/lib/ui/separator';
 import * as Tabs from '@/components/lib/ui/tabs';
 import TransactionsList from '@/components/transactions-list/transactions-list.vue';
+import CreditCardInstallmentsPanel from './components/credit-card-installments-panel.vue';
 import { ROUTES_NAMES } from '@/routes/constants';
 import { useAccountsStore } from '@/stores';
 import { ACCOUNT_CATEGORIES } from '@bt/shared/types';
@@ -171,6 +173,9 @@ watch(
 // archive actions that are all invalid for a vehicle (the backend rejects them),
 // so bounce to the dedicated vehicle detail page instead.
 const isVehicleAccount = computed(() => account.value?.accountCategory === ACCOUNT_CATEGORIES.vehicle);
+const isCreditCardAccountOwner = computed(
+  () => account.value?.accountCategory === ACCOUNT_CATEGORIES.creditCard && account.value?.share?.isOwner !== false,
+);
 
 const {
   data: vehicles,
