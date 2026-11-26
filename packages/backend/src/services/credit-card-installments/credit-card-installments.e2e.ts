@@ -7,6 +7,64 @@ import { addMonths, format } from 'date-fns';
 const dateOnly = (date: Date) => format(date, 'yyyy-MM-dd');
 
 describe('Credit card installment plans', () => {
+  it('updates dates, category and descriptions only while every installment is planned', async () => {
+    const account = await helpers.createAccount({
+      payload: helpers.buildAccountPayload({
+        accountCategory: ACCOUNT_CATEGORIES.creditCard,
+        creditLimit: asDecimal(500),
+      }),
+      raw: true,
+    });
+    const plan = await helpers.makeRequest<{
+      id: string;
+      description: string;
+      installments: { id: string; dueDate: string; transactionId: string }[];
+    }, true>({
+      method: 'post',
+      url: '/credit-card-installments',
+      payload: {
+        accountId: account.id,
+        description: 'Original purchase',
+        categoryId: global.DEFAULT_CATEGORY_ID,
+        purchaseDate: dateOnly(new Date()),
+        firstDueDate: dateOnly(addMonths(new Date(), 1)),
+        currencyCode: account.currencyCode,
+        totalAmount: 120,
+        installmentCount: 3,
+      },
+      raw: true,
+    });
+
+    const newFirstDueDate = dateOnly(addMonths(new Date(), 2));
+    const updated = await helpers.makeRequest<{
+      id: string;
+      description: string;
+      purchaseDate: string;
+      installments: { dueDate: string; transactionId: string; status: string }[];
+    }, true>({
+      method: 'patch',
+      url: `/credit-card-installments/${plan.id}`,
+      payload: {
+        description: 'Updated purchase',
+        categoryId: global.DEFAULT_CATEGORY_ID,
+        purchaseDate: dateOnly(new Date()),
+        firstDueDate: newFirstDueDate,
+      },
+      raw: true,
+    });
+
+    expect(updated.description).toBe('Updated purchase');
+    expect(updated.installments.map((item) => item.dueDate)).toEqual([
+      newFirstDueDate,
+      dateOnly(addMonths(new Date(), 3)),
+      dateOnly(addMonths(new Date(), 4)),
+    ]);
+    expect(updated.installments.every((item) => item.status === 'planned')).toBe(true);
+    const plannedTransaction = await Transactions.findByPk(plan.installments[0]!.transactionId);
+    expect(plannedTransaction?.note).toContain('Updated purchase');
+    expect(plannedTransaction?.time.toISOString()).toContain(newFirstDueDate);
+  });
+
   it('replaces the generated planned row when manually linking an existing real transaction', async () => {
     const account = await helpers.createAccount({
       payload: helpers.buildAccountPayload({
