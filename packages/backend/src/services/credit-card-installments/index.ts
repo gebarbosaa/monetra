@@ -288,6 +288,13 @@ export async function getCreditCardInstallmentExposure({ userId, accountId }: { 
       as: 'installments',
       where: { status: CREDIT_CARD_INSTALLMENT_STATUSES.planned },
       required: false,
+      include: [{
+        model: Transactions,
+        as: 'transaction',
+        attributes: ['id', 'isPlanned'],
+        where: { isPlanned: true },
+        required: true,
+      }],
     }],
   });
   const reserved = Money.sum(
