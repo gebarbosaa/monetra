@@ -347,7 +347,8 @@
         "linkError": "Could not link this transaction.",
         "selectTransaction": "Choose an imported transaction",
         "unnamedTransaction": "Transaction",
-        "noMatchingTransactions": "No unlinked expense with this installment amount was found on this card."
+        "noMatchingTransactions": "No unlinked expense with this installment amount was found on this card.",
+        "candidateLoadError": "Could not load imported transactions for reconciliation."
       }
     },
     "vehicleDetails": {
