@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import AccountLogo from '@/components/common/account-logo.vue';
-import ResponsiveTooltip from '@/components/common/responsive-tooltip.vue';
 import Button from '@/components/lib/ui/button/Button.vue';
 import { DesktopOnlyTooltip } from '@/components/lib/ui/tooltip';
 import { useAccountAccess } from '@/composable/use-account-access';
 import { useAccountDisplayBalance } from '@/composable/use-account-display-balance';
-import { useSyncStatus } from '@/composable/use-sync-status';
 import { formatAccountAmount, formatCompactUIAmount } from '@/js/helpers';
 import { ROUTES_NAMES } from '@/routes/constants';
 import { AccountModel } from '@bt/shared/types';
-import { AlertTriangleIcon, HomeIcon, UsersIcon } from '@lucide/vue';
+import { HomeIcon, UsersIcon } from '@lucide/vue';
 import { computed, toRef } from 'vue';
 
 const props = defineProps<{
@@ -20,9 +18,6 @@ const { displayBalance } = useAccountDisplayBalance({ account: toRef(() => props
 
 const { isSharedWithCaller, ownerHandle, isHouseholdGranted } = useAccountAccess(toRef(() => props.account));
 
-const { isAccountNeedingReauth } = useSyncStatus();
-
-const needsReauth = computed(() => isAccountNeedingReauth(props.account));
 </script>
 
 <template>
@@ -49,13 +44,6 @@ const needsReauth = computed(() => isAccountNeedingReauth(props.account));
           </DesktopOnlyTooltip>
           <AccountLogo :account="account" class="size-5 shrink-0 rounded-md" />
           <span class="truncate text-sm">{{ account.name }}</span>
-          <ResponsiveTooltip
-            v-if="needsReauth"
-            :content="$t('sidebar.accountsView.needsReauthTooltip')"
-            content-class-name="max-w-64"
-          >
-            <AlertTriangleIcon class="text-destructive-text size-3.5 shrink-0" />
-          </ResponsiveTooltip>
         </div>
         <DesktopOnlyTooltip :content="formatAccountAmount({ amount: displayBalance, account, fullPrecision: true })">
           <span class="text-amount shrink-0 text-sm font-medium" :class="displayBalance < 0 && 'text-destructive-text'">
