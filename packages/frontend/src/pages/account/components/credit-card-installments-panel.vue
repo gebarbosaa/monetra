@@ -4,6 +4,7 @@ import {
   createCreditCardInstallmentPlan,
   loadCreditCardInstallmentExposure,
   loadCreditCardInstallmentPlans,
+  type CreditCardInstallment,
   type CreditCardInstallmentPlan,
 } from '@/api/credit-card-installments';
 import { Button } from '@/components/lib/ui/button';
@@ -60,7 +61,7 @@ const candidateTransactionsQuery = useQuery({
 });
 const matchingTransactions = (installment: CreditCardInstallment) =>
   (candidateTransactionsQuery.data.value ?? []).filter((transaction: TransactionModel) =>
-    Math.abs(Number(transaction.amount)) === Number(installment.amount),
+    Math.abs(Number(transaction.amount) - Number(installment.amount)) < 1e-8,
   );
 const createMutation = useMutation({
   mutationFn: createCreditCardInstallmentPlan,
