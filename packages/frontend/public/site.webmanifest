@@ -1,6 +1,6 @@
 {
-  "name": "MoneyMatter",
-  "short_name": "MoneyMatter",
+  "name": "MONETRA — Family Finance OS",
+  "short_name": "MONETRA",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",
@@ -27,8 +27,8 @@
       "purpose": "maskable"
     }
   ],
-  "theme_color": "#9074db",
-  "background_color": "#ffffff",
+  "theme_color": "#171C22",
+  "background_color": "#F7F8FA",
   "display": "standalone",
   "start_url": "/dashboard",
   "scope": "/"
