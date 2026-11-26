@@ -5,6 +5,7 @@ import {
   loadCreditCardInstallmentExposure,
   loadCreditCardInstallmentPlans,
   linkCreditCardInstallmentTransaction,
+  updateCreditCardInstallmentPlan,
   type CreditCardInstallment,
   type CreditCardInstallmentPlan,
 } from '@/api/credit-card-installments';
@@ -28,6 +29,9 @@ const { addSuccessNotification, addErrorNotification } = useNotificationCenter()
 const queryClient = useQueryClient();
 const categories = useAccountCategories({ accountId: computed(() => props.account.id) });
 const selectedCategory = ref<FormattedCategory | null>(null);
+const editingPlanId = ref<string | null>(null);
+const editingCategory = ref<FormattedCategory | null>(null);
+const editForm = reactive({ description: '', purchaseDate: '', firstDueDate: '' });
 const selectedTransactions = reactive<Record<string, string>>({});
 const queryKey = computed(() => ['credit-card-installment-plans', props.account.id]);
 const exposureKey = computed(() => ['credit-card-installment-exposure', props.account.id]);
@@ -108,6 +112,46 @@ const cancelMutation = useMutation({
   },
   onError: () => addErrorNotification(t('pages.account.installments.cancelError')),
 });
+const updateMutation = useMutation({
+  mutationFn: updateCreditCardInstallmentPlan,
+  onSuccess: async () => {
+    editingPlanId.value = null;
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKey.value }),
+      queryClient.invalidateQueries({ queryKey: exposureKey.value }),
+      queryClient.invalidateQueries({ queryKey: ['credit-card-installment-exposure-dashboard'] }),
+      queryClient.invalidateQueries({ predicate: (query) => (query.queryKey as string[]).includes('transactionChange') }),
+    ]);
+    addSuccessNotification(t('pages.account.installments.updated'));
+  },
+  onError: () => addErrorNotification(t('pages.account.installments.updateError')),
+});
+const beginEdit = (plan: CreditCardInstallmentPlan) => {
+  editingPlanId.value = plan.id;
+  editForm.description = plan.description;
+  editForm.purchaseDate = plan.purchaseDate;
+  editForm.firstDueDate = plan.installments[0]?.dueDate ?? plan.purchaseDate;
+  editingCategory.value = categories.formatted.value.find((category) => category.id === plan.categoryId) ?? null;
+};
+const submitEdit = (planId: string) => {
+  if (
+    !editForm.description.trim() ||
+    !editingCategory.value ||
+    !editForm.purchaseDate ||
+    !editForm.firstDueDate ||
+    editForm.firstDueDate < editForm.purchaseDate
+  ) return;
+  updateMutation.mutate({
+    id: planId,
+    description: editForm.description.trim(),
+    categoryId: editingCategory.value.id,
+    purchaseDate: editForm.purchaseDate,
+    firstDueDate: editForm.firstDueDate,
+  });
+};
+const canEdit = (plan: CreditCardInstallmentPlan) =>
+  plan.status === 'active' && plan.installments.length === plan.installmentCount &&
+  plan.installments.every((installment) => installment.status === 'planned');
 const linkMutation = useMutation({
   mutationFn: linkCreditCardInstallmentTransaction,
   onSuccess: async () => {
@@ -247,16 +291,65 @@ const canCancel = (plan: CreditCardInstallmentPlan) =>
               {{ plan.installmentCount }} {{ t('pages.account.installments.installments') }} · {{ formatAmount(plan.totalAmount) }}
             </div>
           </div>
-          <Button
-            v-if="canCancel(plan)"
-            variant="outline"
-            size="sm"
-            :disabled="cancelMutation.isPending.value"
-            @click="cancelMutation.mutate({ id: plan.id })"
-          >
-            {{ t('pages.account.installments.cancel') }}
-          </Button>
+          <div class="flex flex-wrap gap-2">
+            <Button
+              v-if="canEdit(plan)"
+              variant="outline"
+              size="sm"
+              :disabled="updateMutation.isPending.value"
+              @click="beginEdit(plan)"
+            >
+              {{ t('pages.account.installments.edit') }}
+            </Button>
+            <Button
+              v-if="canCancel(plan)"
+              variant="outline"
+              size="sm"
+              :disabled="cancelMutation.isPending.value"
+              @click="cancelMutation.mutate({ id: plan.id })"
+            >
+              {{ t('pages.account.installments.cancel') }}
+            </Button>
+          </div>
         </div>
+        <form
+          v-if="editingPlanId === plan.id"
+          class="grid gap-3 rounded-md border border-dashed p-3"
+          @submit.prevent="submitEdit(plan.id)"
+        >
+          <label class="grid gap-1 text-sm">
+            <span>{{ t('pages.account.installments.purchaseDescription') }}</span>
+            <input v-model="editForm.description" maxlength="200" required class="bg-background border-input rounded-md border px-3 py-2" />
+          </label>
+          <div class="grid gap-1">
+            <span class="text-sm">{{ t('pages.account.installments.category') }}</span>
+            <CategorySelectField
+              v-model="editingCategory"
+              :values="categories.formatted.value"
+              :categories-map="categories.map.value"
+              :placeholder="t('pages.account.installments.categoryPlaceholder')"
+              :disabled="categories.isLoading.value || updateMutation.isPending.value"
+            />
+          </div>
+          <div class="grid gap-3 sm:grid-cols-2">
+            <label class="grid gap-1 text-sm">
+              <span>{{ t('pages.account.installments.purchaseDate') }}</span>
+              <input v-model="editForm.purchaseDate" type="date" :max="editForm.firstDueDate || undefined" required class="bg-background border-input rounded-md border px-3 py-2" />
+            </label>
+            <label class="grid gap-1 text-sm">
+              <span>{{ t('pages.account.installments.firstDueDate') }}</span>
+              <input v-model="editForm.firstDueDate" type="date" :min="editForm.purchaseDate || undefined" required class="bg-background border-input rounded-md border px-3 py-2" />
+            </label>
+          </div>
+          <div class="flex justify-end gap-2">
+            <Button type="button" size="sm" variant="ghost" :disabled="updateMutation.isPending.value" @click="editingPlanId = null">
+              {{ t('pages.account.installments.dismiss') }}
+            </Button>
+            <Button type="submit" size="sm" :disabled="updateMutation.isPending.value || !editingCategory || !editForm.description.trim() || !editForm.purchaseDate || !editForm.firstDueDate || editForm.firstDueDate < editForm.purchaseDate" :loading="updateMutation.isPending.value">
+              {{ t('pages.account.installments.saveChanges') }}
+            </Button>
+          </div>
+        </form>
         <div class="grid gap-2">
           <div v-for="installment in plan.installments" :key="installment.id" class="grid gap-2 rounded-md border border-dashed p-3 text-sm">
             <div class="flex items-center justify-between gap-2">
