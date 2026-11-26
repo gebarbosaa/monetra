@@ -4,11 +4,12 @@ import {
   createCreditCardInstallmentPlan,
   loadCreditCardInstallmentExposure,
   loadCreditCardInstallmentPlans,
+  linkCreditCardInstallmentTransaction,
   type CreditCardInstallment,
   type CreditCardInstallmentPlan,
 } from '@/api/credit-card-installments';
-import { Button } from '@/components/lib/ui/button';
 import { loadTransactions } from '@/api/transactions';
+import { Button } from '@/components/lib/ui/button';
 import CategorySelectField from '@/components/fields/category-select-field.vue';
 import { useAccountCategories } from '@/composable/data-queries/categories';
 import { useNotificationCenter } from '@/components/notification-center';
@@ -31,7 +32,9 @@ const selectedTransactions = reactive<Record<string, string>>({});
 const queryKey = computed(() => ['credit-card-installment-plans', props.account.id]);
 const exposureKey = computed(() => ['credit-card-installment-exposure', props.account.id]);
 const today = format(new Date(), 'yyyy-MM-dd');
-const amountDecimals = computed(() => getCurrencyDecimals({ code: props.account.currencyCode, meta: props.account.currencyMeta }));
+const amountDecimals = computed(() =>
+  getCurrencyDecimals({ code: props.account.currencyCode, meta: props.account.currencyMeta }),
+);
 const amountStep = computed(() => String(10 ** -amountDecimals.value));
 const form = reactive({
   description: '',
@@ -57,7 +60,9 @@ const candidateTransactionsQuery = useQuery({
     limit: 100,
     offset: 0,
   }),
-  enabled: computed(() => (plansQuery.data.value ?? []).some((plan) => plan.installments.some((installment) => installment.status === 'planned'))),
+  enabled: computed(() =>
+    (plansQuery.data.value ?? []).some((plan) => plan.installments.some((installment) => installment.status === 'planned')),
+  ),
   staleTime: 30_000,
 });
 const linkedTransactionIds = computed(() =>
@@ -148,7 +153,8 @@ const submit = () => {
     installmentCount: Number(form.installmentCount),
   });
 };
-const formatAmount = (amount: number) => toLocalCurrencyNumber(amount, { currency: props.account.currencyCode, meta: props.account.currencyMeta });
+const formatAmount = (amount: number) =>
+  toLocalCurrencyNumber(amount, { currency: props.account.currencyCode, meta: props.account.currencyMeta });
 const formatTransactionDate = (value: Date | string) => format(new Date(value), 'dd/MM/yyyy');
 const canCancel = (plan: CreditCardInstallmentPlan) =>
   plan.status === 'active' && !plan.installments.some((installment) => installment.status === 'posted');
