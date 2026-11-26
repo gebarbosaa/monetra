@@ -348,7 +348,12 @@
         "selectTransaction": "Selecione um lançamento importado",
         "unnamedTransaction": "Lançamento",
         "noMatchingTransactions": "Nenhuma despesa não vinculada com este valor foi encontrada neste cartão.",
-        "candidateLoadError": "Não foi possível carregar os lançamentos importados para conciliação."
+        "candidateLoadError": "Não foi possível carregar os lançamentos importados para conciliação.",
+        "edit": "Editar",
+        "updated": "Parcelamento atualizado.",
+        "updateError": "Não foi possível atualizar este parcelamento.",
+        "dismiss": "Fechar",
+        "saveChanges": "Salvar alterações"
       }
     },
     "vehicleDetails": {
