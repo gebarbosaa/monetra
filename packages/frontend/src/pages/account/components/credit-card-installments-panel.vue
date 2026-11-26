@@ -7,10 +7,13 @@ import {
   type CreditCardInstallmentPlan,
 } from '@/api/credit-card-installments';
 import { Button } from '@/components/lib/ui/button';
+import CategorySelectField from '@/components/fields/category-select-field.vue';
+import { useAccountCategories } from '@/composable/data-queries/categories';
 import { useNotificationCenter } from '@/components/notification-center';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
 import { type AccountModel } from '@bt/shared/types';
-import { computed, reactive } from 'vue';
+import type { FormattedCategory } from '@/common/types';
+import { computed, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { toLocalCurrencyNumber } from '@/js/helpers';
 import { getCurrencyDecimals } from '@/js/helpers/currency-decimals';
@@ -19,6 +22,8 @@ const props = defineProps<{ account: AccountModel }>();
 const { t } = useI18n();
 const { addSuccessNotification, addErrorNotification } = useNotificationCenter();
 const queryClient = useQueryClient();
+const categories = useAccountCategories({ accountId: computed(() => props.account.id) });
+const selectedCategory = ref<FormattedCategory | null>(null);
 const queryKey = computed(() => ['credit-card-installment-plans', props.account.id]);
 const exposureKey = computed(() => ['credit-card-installment-exposure', props.account.id]);
 const today = new Date().toISOString().slice(0, 10);
@@ -70,6 +75,7 @@ const cancelMutation = useMutation({
 });
 const canSubmit = computed(() =>
   form.description.trim().length > 0 &&
+  !!selectedCategory.value &&
   Number(form.totalAmount) > 0 &&
   Number.isFinite(Number(form.totalAmount)) &&
   Number.isInteger(Number(form.installmentCount)) &&
@@ -84,6 +90,7 @@ const submit = () => {
   createMutation.mutate({
     accountId: props.account.id,
     description: form.description.trim(),
+    categoryId: selectedCategory.value!.id,
     purchaseDate: form.purchaseDate,
     firstDueDate: form.firstDueDate,
     currencyCode: props.account.currencyCode,
@@ -133,6 +140,16 @@ const canCancel = (plan: CreditCardInstallmentPlan) =>
         <span>{{ t('pages.account.installments.purchaseDescription') }}</span>
         <input v-model="form.description" maxlength="200" required class="bg-background border-input rounded-md border px-3 py-2" />
       </label>
+      <div class="grid gap-1">
+        <span class="text-sm">{{ t('pages.account.installments.category') }}</span>
+        <CategorySelectField
+          v-model="selectedCategory"
+          :values="categories.formatted"
+          :categories-map="categories.map"
+          :placeholder="t('pages.account.installments.categoryPlaceholder')"
+          :disabled="categories.isLoading.value"
+        />
+      </div>
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label class="grid gap-1 text-sm">
           <span>{{ t('pages.account.installments.purchaseDate') }}</span>
