@@ -1,4 +1,4 @@
-# Self-host base stack for MoneyMatter — pull-based and reverse-proxy-agnostic.
+# MONETRA self-host base stack — reverse-proxy-agnostic; use the source-build overlay.
 #
 # Pulls the published images and exposes the whole app on ONE host port
 # (${HTTP_PORT:-8080}). The frontend container serves the SPA and reverse-proxies
@@ -9,7 +9,7 @@
 # Quickstart (from this folder):
 #   1. cd self-hosting
 #   2. cp .env.example .env   # then fill the REQUIRED section
-#   3. docker compose up -d
+#   3. docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 #   4. open http://HOST:${HTTP_PORT:-8080}
 #
 # Optional overlays (compose merges them left-to-right):
