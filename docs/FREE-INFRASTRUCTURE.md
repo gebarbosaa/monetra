@@ -6,7 +6,7 @@
 
 | Necessidade | Serviço gratuito proposto | Limite gratuito verificado em 27/11/2026 | Variável / integração |
 |---|---|---|---|
-| PostgreSQL | Neon Free | 1 GB por projeto, 100 CU-horas/mês, 5 GB de tráfego público por projeto; compute escala a zero após inatividade | `APPLICATION_DB_URL` com `sslmode=require` |
+| PostgreSQL | Neon Free | 1 GB por projeto, 100 CU-horas/mês, 5 GB de tráfego público por projeto; compute escala a zero após inatividade | `APPLICATION_DB_URL` pooled para tráfego da aplicação; `APPLICATION_DB_DIRECT_URL` direto para lock de migrações |
 | Redis / BullMQ | Upstash Redis Free | 1 banco, 250 MB, 500 mil comandos/mês e 10 GB de banda/mês | `APPLICATION_REDIS_URL` (`rediss://`) |
 | Anexos e arquivos | Neon Object Storage Free | 5 GB por projeto | `ATTACHMENTS_S3_BUCKET`, `ATTACHMENTS_S3_ENDPOINT`, `ATTACHMENTS_S3_ACCESS_KEY_ID`, `ATTACHMENTS_S3_SECRET_ACCESS_KEY`, `ATTACHMENTS_S3_REGION` |
 | Aplicação | Vercel, no plano gratuito disponível à conta | Sujeito aos limites e recursos habilitados no plano da conta | Projeto Vercel MONETRA já conectado ao GitHub |
@@ -39,7 +39,7 @@ Fontes oficiais consultadas:
 
 - O último deploy Preview da branch `infra/production-readiness` concluiu o build com status `READY`.
 - O build pronto não comprova conexão com PostgreSQL, Redis, armazenamento, autenticação nem fluxos financeiros.
-- `APPLICATION_DB_URL` aponta para a branch Neon isolada `preview` e está cadastrada como variável criptografada no Vercel, restrita ao Preview da branch `infra/production-readiness`. Nenhuma variável de banco foi adicionada a Production.
+- `APPLICATION_DB_URL` aponta para a branch Neon isolada `preview` usando o pooler; `APPLICATION_DB_DIRECT_URL` aponta para o mesmo banco sem pooler, exclusivamente para o advisory lock de sessão que serializa migrações. Ambas estão cadastradas como variáveis secretas somente no Preview. Nenhuma variável de banco foi adicionada a Production.
 - Bucket privado `monetra-attachments` e credencial de escopo mínimo criados no Neon Object Storage; variáveis S3 compatíveis também estão cadastradas somente no Preview. O cliente AWS SDK foi ajustado para path-style addressing, obrigatório no Neon.
 - Redis Upstash Free temporário foi provisionado e ligado somente ao Preview; precisa ser reivindicado até 30/11/2026 para não expirar. Nenhuma migração foi aplicada e nenhum teste ponta a ponta foi executado.
 - A publicação em Production permanece bloqueada até a validação ponta a ponta.

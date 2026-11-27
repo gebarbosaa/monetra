@@ -1,9 +1,11 @@
 import { spawn } from 'node:child_process';
 import { Pool } from 'pg';
 
+const migrationLockUrl = process.env.APPLICATION_DB_DIRECT_URL || process.env.APPLICATION_DB_URL;
+
 const pool = new Pool({
-  ...(process.env.APPLICATION_DB_URL
-    ? { connectionString: process.env.APPLICATION_DB_URL }
+  ...(migrationLockUrl
+    ? { connectionString: migrationLockUrl }
     : {
         host: process.env.APPLICATION_DB_HOST,
         port: process.env.APPLICATION_DB_PORT ? Number(process.env.APPLICATION_DB_PORT) : undefined,
