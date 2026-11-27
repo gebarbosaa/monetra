@@ -1,4 +1,4 @@
-import { ACCOUNT_CATEGORIES, asDecimal, TRANSACTION_TYPES } from '@bt/shared/types';
+import { ACCOUNT_CATEGORIES, ACCOUNT_STATUSES, asDecimal, type RecordId, TRANSACTION_TYPES } from '@bt/shared/types';
 import { describe, expect, it } from '@jest/globals';
 import { ERROR_CODES } from '@js/errors';
 import Accounts from '@models/accounts.model';
@@ -141,11 +141,11 @@ describe('Credit card installment plans', () => {
 
     const response = await helpers.updateAccount({
       id: account.id,
-      payload: { status: 'archived' },
+      payload: { status: ACCOUNT_STATUSES.archived },
       raw: false,
     });
     expect(response.statusCode).toBe(ERROR_CODES.ValidationError);
-    expect((await Accounts.findByPk(account.id))?.status).not.toBe('archived');
+    expect((await Accounts.findByPk(account.id))?.status).not.toBe(ACCOUNT_STATUSES.archived);
   });
 
   it('prevents installment transactions from being linked as transfers', async () => {
@@ -188,7 +188,7 @@ describe('Credit card installment plans', () => {
     await CreditCardInstallments.update({ status: 'posted' }, { where: { transactionId: installmentTransactionId } });
 
     const response = await helpers.linkTransactions({
-      payload: { ids: [[plan.installments[0]!.transactionId, opposite.id]] },
+      payload: { ids: [[plan.installments[0]!.transactionId as RecordId, opposite.id]] },
     });
     expect(response.statusCode).toBe(ERROR_CODES.ValidationError);
     expect((await Transactions.findByPk(plan.installments[0]!.transactionId))?.transferId).toBeNull();
@@ -280,14 +280,14 @@ describe('Credit card installment plans', () => {
 
     const transactionId = plan.installments[0]!.transactionId;
     const rejectedAmountEdit = await helpers.updateTransaction({
-      id: transactionId,
+      id: transactionId as RecordId,
       payload: { amount: 41 },
       raw: false,
     });
     expect(rejectedAmountEdit.statusCode).toBe(ERROR_CODES.ValidationError);
 
     const rejectedBulkReportingEdit = await helpers.bulkUpdateTransactions({
-      payload: { transactionIds: [transactionId], excludeFromStats: true },
+      payload: { transactionIds: [transactionId as RecordId], excludeFromStats: true },
       raw: false,
     });
     expect(rejectedBulkReportingEdit.statusCode).toBe(ERROR_CODES.ValidationError);
@@ -379,11 +379,11 @@ describe('Credit card installment plans', () => {
     });
     expect(cancelAfterReconciliation.statusCode).toBe(ERROR_CODES.ValidationError);
 
-    const persistedPlan = await helpers.makeRequest<{
+    const persistedPlan = await helpers.makeRequest<Array<{
       id: string;
       description: string;
       installments: { status: string; transactionId: string }[];
-    }, true>({
+    }>, true>({
       method: 'get',
       url: '/credit-card-installments',
       raw: true,

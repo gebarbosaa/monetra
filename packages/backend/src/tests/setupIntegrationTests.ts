@@ -525,7 +525,7 @@ async function closeAllE2eResources() {
 
     // Now safe to close Redis client
     await redisClient.quit();
-    serverInstance.close();
+    serverInstance?.close();
     loadCurrencyRatesJob.stop();
   } catch (err) {
     console.log('afterAll', err);

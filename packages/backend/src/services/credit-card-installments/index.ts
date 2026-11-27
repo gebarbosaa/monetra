@@ -1,5 +1,6 @@
 import { ACCOUNT_CATEGORIES, ACCOUNT_STATUSES, ACCOUNT_TYPES, PAYMENT_TYPES, TRANSACTION_TRANSFER_NATURE, TRANSACTION_TYPES } from '@bt/shared/types';
 import { roundToCurrency } from '@common/lib/currency-precision';
+import type { CreationAttributes } from 'sequelize';
 import { Money } from '@common/types/money';
 import { calculateRefAmount } from '@services/calculate-ref-amount.service';
 import { NotFoundError, ValidationError } from '@js/errors';
@@ -8,6 +9,7 @@ import Categories from '@models/categories.model';
 import CreditCardInstallmentPlans, {
   CREDIT_CARD_INSTALLMENT_PLAN_STATUSES,
 } from '@models/credit-card-installment-plans.model';
+import Transactions from '@models/transactions.model';
 import { destroyTransactions, findOneTransaction } from '@models/transactions-query';
 import * as TransactionModel from '@models/transactions.model';
 import * as UsersCurrencies from '@models/users-currencies.model';
@@ -138,7 +140,7 @@ export async function createInstallmentPlan(input: {
       { transaction },
     );
 
-    const rows = [];
+    const rows: CreationAttributes<CreditCardInstallments>[] = [];
     for (let index = 1; index <= input.installmentCount; index += 1) {
       const amountUnits = baseAmountUnits + (index > input.installmentCount - extraAmountUnits ? 1 : 0);
       const refAmountUnits = baseRefUnits + (index > input.installmentCount - extraRefUnits ? 1 : 0);
@@ -177,6 +179,9 @@ export async function createInstallmentPlan(input: {
         isPlanned: true,
         excludeFromStats: false,
       });
+      if (!plannedTransaction) {
+        throw new Error(`Failed to create the planned transaction for installment ${installment.installmentNumber}.`);
+      }
       await installment.update({ transactionId: plannedTransaction.id }, { transaction });
     }
 
@@ -242,7 +247,7 @@ export async function updateInstallmentPlan(input: {
       });
     }
 
-    const plannedTransactions = [];
+    const plannedTransactions: Transactions[] = [];
     for (const installment of installments) {
       if (!installment.transactionId) {
         throw new ValidationError({ message: 'An installment has no linked planned transaction and cannot be edited.' });
