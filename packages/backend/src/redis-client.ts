@@ -10,14 +10,22 @@ logger.info('Initializing Redis client...');
 // Key prefix for test isolation - each Jest worker gets its own namespace
 export const REDIS_KEY_PREFIX = process.env.JEST_WORKER_ID ? `${process.env.JEST_WORKER_ID}:` : undefined;
 
-export const redisClient = new Redis({
-  host: process.env.APPLICATION_REDIS_HOST,
+const redisOptions = {
   keyPrefix: REDIS_KEY_PREFIX,
   lazyConnect: true,
   maxRetriesPerRequest: 3,
-  connectTimeout: 20000, // 20s connection timeout for slower CI environments
-  keepAlive: 10000, // Send TCP keepalive to prevent idle disconnection
-  retryStrategy: (times) => Math.min(times * 100, 3000), // Exponential backoff, max 3s
+  connectTimeout: 10000,
+  keepAlive: 10000,
+  retryStrategy: (times: number) => Math.min(times * 100, 3000),
+};
+
+// Vercel Marketplace Redis providers expose a TLS URL; local/self-hosted installs
+// can continue using APPLICATION_REDIS_HOST.
+export const redisClient = process.env.APPLICATION_REDIS_URL
+  ? new Redis(process.env.APPLICATION_REDIS_URL, redisOptions)
+  : new Redis({
+  host: process.env.APPLICATION_REDIS_HOST,
+  ...redisOptions,
 });
 
 // ioredis emits error events that need handling to prevent crashes
@@ -35,7 +43,7 @@ export const redisReady: Promise<void> = (async () => {
 
   // Clear stale sync statuses from Redis on startup
   // Skip in test environment - handled by setupIntegrationTests.ts beforeEach
-  if (process.env.NODE_ENV !== 'test') {
+  if (process.env.NODE_ENV !== 'test' && process.env.VERCEL !== '1') {
     await clearAllSyncStatuses();
   }
 })();

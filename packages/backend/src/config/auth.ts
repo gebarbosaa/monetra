@@ -40,6 +40,10 @@ if (process.env.NODE_ENV === 'production' && !process.env.AUTH_ORIGIN) {
 // Create a separate pg Pool for better-auth
 // This is required because better-auth uses raw SQL queries
 const pool = new Pool({
+  connectionString: process.env.APPLICATION_DB_URL,
+  max: process.env.VERCEL === '1' ? 3 : 10,
+  idleTimeoutMillis: 10000,
+  connectionTimeoutMillis: 10000,
   host: process.env.APPLICATION_DB_HOST,
   port: parseInt(process.env.APPLICATION_DB_PORT as string, 10),
   user: process.env.APPLICATION_DB_USERNAME,

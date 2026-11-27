@@ -145,6 +145,11 @@ const gracefulShutdown = ({ signal, onDone }: { signal: string; onDone: () => vo
   // force-exit timer.
   const closeServer = () => {
     console.log(`Closing HTTP server for ${signal}...`);
+    if (!serverInstance) {
+      clearTimeout(forceExitTimer);
+      onDone();
+      return;
+    }
     serverInstance.close(() => {
       clearTimeout(forceExitTimer);
       onDone();
