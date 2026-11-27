@@ -140,8 +140,8 @@ export async function createInstallmentPlan(input: {
 
     const rows = [];
     for (let index = 1; index <= input.installmentCount; index += 1) {
-      const amountUnits = baseAmountUnits + (index <= extraAmountUnits ? 1 : 0);
-      const refAmountUnits = baseRefUnits + (index <= extraRefUnits ? 1 : 0);
+      const amountUnits = baseAmountUnits + (index > input.installmentCount - extraAmountUnits ? 1 : 0);
+      const refAmountUnits = baseRefUnits + (index > input.installmentCount - extraRefUnits ? 1 : 0);
       const amount = Money.fromMinorUnits({ value: amountUnits, decimals: currencyDecimals });
       const refAmount = Money.fromMinorUnits({ value: refAmountUnits, decimals: baseDecimals });
       rows.push({
