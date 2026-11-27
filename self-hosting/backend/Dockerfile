@@ -11,8 +11,12 @@ COPY package*.json ./
 COPY post-install.sh ./
 RUN chmod +x ./post-install.sh
 
-# Copy backend package files
+# Copy every declared npm workspace manifest before npm ci. npm validates
+# the root workspaces list even when this image only builds the backend.
 COPY packages/backend/package*.json ./packages/backend/
+COPY packages/frontend/package*.json ./packages/frontend/
+COPY packages/landing/package*.json ./packages/landing/
+COPY packages/shared/package*.json ./packages/shared/
 
 # Install all dependencies (including dev dependencies for build)
 RUN npm ci
@@ -49,6 +53,9 @@ COPY --chown=nodejs:nodejs post-install.sh ./
 RUN chmod +x ./post-install.sh
 
 COPY --chown=nodejs:nodejs packages/backend/package*.json ./packages/backend/
+COPY --chown=nodejs:nodejs packages/frontend/package*.json ./packages/frontend/
+COPY --chown=nodejs:nodejs packages/landing/package*.json ./packages/landing/
+COPY --chown=nodejs:nodejs packages/shared/package*.json ./packages/shared/
 RUN npm ci
 
 # Remove build dependencies to reduce image size
