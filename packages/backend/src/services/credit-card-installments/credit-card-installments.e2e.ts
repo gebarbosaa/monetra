@@ -512,7 +512,8 @@ describe('Credit card installment plans', () => {
 
     const plan = await helpers.makeRequest<{
       totalAmount: number;
-      installments: { amount: number; refAmount: number }[];
+      refTotalAmount: number;
+      installments: { amount: number; refAmount: number; transactionId: string }[];
     }, true>({
       method: 'post',
       url: '/credit-card-installments',
@@ -537,6 +538,14 @@ describe('Credit card installment plans', () => {
     expect(units.reduce((sum, amount) => sum + amount, 0)).toBe(6);
     expect(plan.installments.reduce((sum, installment) => sum + Number(installment.amount), 0))
       .toBeCloseTo(Number(plan.totalAmount));
+    expect(plan.installments.reduce((sum, installment) => sum + Number(installment.refAmount), 0))
+      .toBeCloseTo(Number(plan.refTotalAmount));
+    for (const installment of plan.installments) {
+      const transaction = await Transactions.findByPk(installment.transactionId);
+      expect(transaction).not.toBeNull();
+      expect(Number(transaction!.amount)).toBeCloseTo(Number(installment.amount));
+      expect(transaction!.isPlanned).toBe(true);
+    }
     expect(plan.installments.every((installment) => Number(installment.refAmount) >= 0)).toBe(true);
   });
 
