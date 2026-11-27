@@ -18,22 +18,33 @@ export const storageKey = ({ userId, id }: { userId: number; id: string }) => `$
 export const STORAGE_KEY_PATTERN = /^\d+\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** S3-compatible storage (Cloudflare R2) is used whenever a bucket is configured; disk otherwise. */
-const bucket = (): string | undefined => process.env.ATTACHMENTS_S3_BUCKET || undefined;
+const bucket = (): string | undefined => {
+  const configuredBucket = process.env.ATTACHMENTS_S3_BUCKET || undefined;
+  if (!configuredBucket && process.env.VERCEL === '1' && process.env.NODE_ENV !== 'test') {
+    throw new Error('Persistent attachment storage is required on Vercel. Configure the S3-compatible bucket before enabling uploads.');
+  }
+  return configuredBucket;
+};
 
 let s3Promise: Promise<{ sdk: typeof import('@aws-sdk/client-s3'); client: S3Client }> | null = null;
 
 const s3 = () => {
-  s3Promise ??= import('@aws-sdk/client-s3').then((sdk) => ({
-    sdk,
-    client: new sdk.S3Client({
-      region: 'auto',
-      endpoint: process.env.ATTACHMENTS_S3_ENDPOINT,
-      credentials: {
-        accessKeyId: process.env.ATTACHMENTS_S3_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.ATTACHMENTS_S3_SECRET_ACCESS_KEY!,
-      },
-    }),
-  }));
+  s3Promise ??= import('@aws-sdk/client-s3').then((sdk) => {
+    const endpoint = process.env.ATTACHMENTS_S3_ENDPOINT;
+    const accessKeyId = process.env.ATTACHMENTS_S3_ACCESS_KEY_ID;
+    const secretAccessKey = process.env.ATTACHMENTS_S3_SECRET_ACCESS_KEY;
+    if (!endpoint || !accessKeyId || !secretAccessKey) {
+      throw new Error('S3-compatible attachment storage requires endpoint, access key ID and secret access key.');
+    }
+    return {
+      sdk,
+      client: new sdk.S3Client({
+        region: 'auto',
+        endpoint,
+        credentials: { accessKeyId, secretAccessKey },
+      }),
+    };
+  });
   return s3Promise;
 };
 
