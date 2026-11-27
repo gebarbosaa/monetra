@@ -26,7 +26,7 @@ const databaseConfig: Config = {
     password: databaseUrl ? decodeURIComponent(databaseUrl.password) : (process.env.APPLICATION_DB_PASSWORD as string),
     database: databaseUrl ? decodeURIComponent(databaseUrl.pathname.slice(1)) : (process.env.APPLICATION_DB_DATABASE as string),
     host: databaseUrl?.hostname || (process.env.APPLICATION_DB_HOST as string),
-    port: databaseUrl?.port ? Number(databaseUrl.port) : parseInt(process.env.APPLICATION_DB_PORT as string, 10),
+    port: databaseUrl?.port ? Number(databaseUrl.port) : Number(process.env.APPLICATION_DB_PORT || 5432),
     dialect: (process.env.APPLICATION_DB_DIALECT as Dialect) || 'postgres',
     logging: false,
     ...(databaseUrl?.searchParams.get('sslmode') === 'require'

@@ -51,7 +51,9 @@ logger.info('Attempting to start server...');
 
 let serverInstance: https.Server | ReturnType<typeof app.listen> | undefined;
 
-const isVercelFunction = process.env.VERCEL === '1' && process.env.MONETRA_ROLE !== 'api-service';
+const isVercelFunction =
+  process.env.MONETRA_ROLE === 'worker' ||
+  (process.env.VERCEL === '1' && process.env.MONETRA_ROLE !== 'api-service');
 const isProduction = process.env.NODE_ENV === 'production';
 const isTest = process.env.NODE_ENV === 'test';
 
