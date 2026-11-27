@@ -39,7 +39,7 @@ jobs:
           # crowdin-bot authors the auto-generated translation PRs; it's a plain
           # GitHub account (no `[bot]` suffix), so the `*[bot]` glob misses it and
           # it must be listed by name.
-          allowlist: 'letehaha,dependabot[bot],crowdin-bot,*[bot]'
+          allowlist: 'gebarbosaa,letehaha,dependabot[bot],crowdin-bot,*[bot]'
           # Signatures are the JSON file on the cla-signatures branch, not the PR
           # thread, so locking merged PRs guards nothing. Leaving them unlocked lets
           # the Preview Teardown workflow post its "torn down" comment after merge.
