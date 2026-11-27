@@ -17,7 +17,8 @@ async function stopWorker(signal: string): Promise<void> {
     await redisClient.quit();
     process.exit(0);
   } catch (error) {
-    logger.error({ message: 'Failed to stop MONETRA background worker cleanly.', error });
+    const errorToLog = error instanceof Error ? error : new Error(String(error));
+    logger.error({ message: 'Failed to stop MONETRA background worker cleanly.', error: errorToLog });
     process.exit(1);
   }
 }
@@ -26,6 +27,7 @@ process.once('SIGTERM', () => void stopWorker('SIGTERM'));
 process.once('SIGINT', () => void stopWorker('SIGINT'));
 
 void startWorker().catch((error) => {
-  logger.error({ message: 'MONETRA background worker failed to start.', error });
+  const errorToLog = error instanceof Error ? error : new Error(String(error));
+  logger.error({ message: 'MONETRA background worker failed to start.', error: errorToLog });
   process.exit(1);
 });

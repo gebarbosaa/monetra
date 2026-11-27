@@ -296,7 +296,7 @@ describe('Credit card installment plans', () => {
     expect(rejectedDirectDelete.statusCode).toBe(ERROR_CODES.ValidationError);
 
     await helpers.updateTransaction({
-      id: transactionId,
+      id: transactionId as RecordId,
       payload: { note: 'Description remains editable' },
       raw: true,
     });
