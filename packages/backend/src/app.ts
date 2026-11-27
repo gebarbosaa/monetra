@@ -71,7 +71,7 @@ if (isVercelFunction) {
   // Test mode: HTTP on a random port to avoid conflicts with parallel runs
   serverInstance = app.listen(0, () => {
     // Store the actual OS-assigned port so self-proxy (e.g. registration patch) can reach it
-    const addr = serverInstance.address();
+    const addr = serverInstance?.address();
     if (typeof addr === 'object' && addr) {
       app.set('port', addr.port);
     }

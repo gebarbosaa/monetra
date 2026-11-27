@@ -101,7 +101,7 @@ const DBConfig: Record<string, unknown> = {
   host: databaseUrl?.hostname || process.env.APPLICATION_DB_HOST,
   username: databaseUrl ? decodeURIComponent(databaseUrl.username) : process.env.APPLICATION_DB_USERNAME,
   password: databaseUrl ? decodeURIComponent(databaseUrl.password) : process.env.APPLICATION_DB_PASSWORD,
-  database: databaseUrl ? decodeURIComponent(databaseUrl.pathname.replace(/^\\//, '')) : process.env.APPLICATION_DB_DATABASE,
+  database: databaseUrl ? decodeURIComponent(databaseUrl.pathname.slice(1)) : process.env.APPLICATION_DB_DATABASE,
   port: databaseUrl?.port ? Number(databaseUrl.port) : process.env.APPLICATION_DB_PORT,
   dialect: process.env.APPLICATION_DB_DIALECT || 'postgres',
 };

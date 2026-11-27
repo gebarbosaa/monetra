@@ -1,3 +1,7 @@
+> **Optional alternative only:** MONETRA's current target deployment is
+> Vercel. The Docker Compose setup below is for users who explicitly choose
+> self-hosting; it is not required for the planned Vercel deployment.
+>
 # MONETRA — Self-hosting
 
 Este diretório contém a implantação Docker do MONETRA. Para produção, construa as imagens a partir **deste repositório**; não use imagens pré-compiladas do upstream MoneyMatter.
