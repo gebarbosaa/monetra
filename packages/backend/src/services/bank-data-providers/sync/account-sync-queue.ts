@@ -22,6 +22,10 @@ interface AccountSyncJobData extends SentryTraceData {
 // `maxRetriesPerRequest: null`.
 const connectionOptions = {
   host: process.env.APPLICATION_REDIS_HOST,
+  port: process.env.APPLICATION_REDIS_PORT ? Number(process.env.APPLICATION_REDIS_PORT) : undefined,
+  username: process.env.APPLICATION_REDIS_USERNAME,
+  password: process.env.APPLICATION_REDIS_PASSWORD,
+  tls: process.env.APPLICATION_REDIS_TLS === 'true' ? {} : undefined,
   maxRetriesPerRequest: null,
   connectTimeout: 20000,
   keepAlive: 10000,
@@ -147,7 +151,7 @@ export const accountSyncWorker = new Worker<AccountSyncJobData>(
     concurrency: 5,
     maxStalledCount: 2,
     // Keep persisted jobs dormant unless bank integrations are explicitly enabled.
-    autorun: process.env.BANK_PROVIDERS_ENABLED === 'true',
+    autorun: process.env.MONETRA_ROLE !== 'api-service' && process.env.BANK_PROVIDERS_ENABLED === 'true',
   },
 );
 

@@ -46,6 +46,10 @@ interface TransactionSyncJobData extends SentryTraceData {
 // Uses same resilient settings as main redisClient to prevent "Connection is closed" errors in CI
 const connection = {
   host: process.env.APPLICATION_REDIS_HOST,
+  port: process.env.APPLICATION_REDIS_PORT ? Number(process.env.APPLICATION_REDIS_PORT) : undefined,
+  username: process.env.APPLICATION_REDIS_USERNAME,
+  password: process.env.APPLICATION_REDIS_PASSWORD,
+  tls: process.env.APPLICATION_REDIS_TLS === 'true' ? {} : undefined,
   maxRetriesPerRequest: null, // Required for BullMQ
   connectTimeout: 20000, // 20s connection timeout for slower CI environments
   keepAlive: 10000, // Send TCP keepalive to prevent idle disconnection
@@ -385,6 +389,7 @@ function createBundle(tokenHash: string): QueueBundle {
     (job) => runWithBalanceRevalueBatch(() => processJob(job)),
     {
       connection,
+    autorun: process.env.MONETRA_ROLE !== 'api-service',
       concurrency: 1, // Process one job at a time per worker (one token's rate-limit lane)
       // Only enable rate limiter in production (not in tests)
       ...(process.env.NODE_ENV !== 'test' && {
@@ -471,6 +476,10 @@ async function recoverExistingQueues(): Promise<void> {
   // prefix that would mis-scope the pattern).
   const scanClient = new IORedis({
     host: process.env.APPLICATION_REDIS_HOST,
+  port: process.env.APPLICATION_REDIS_PORT ? Number(process.env.APPLICATION_REDIS_PORT) : undefined,
+  username: process.env.APPLICATION_REDIS_USERNAME,
+  password: process.env.APPLICATION_REDIS_PASSWORD,
+  tls: process.env.APPLICATION_REDIS_TLS === 'true' ? {} : undefined,
     lazyConnect: true,
     maxRetriesPerRequest: 3,
   });
