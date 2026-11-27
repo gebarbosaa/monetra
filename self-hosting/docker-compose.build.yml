@@ -1,5 +1,5 @@
-# Optional overlay: build the backend and frontend images from source instead
-# of pulling the published ones. For contributors and forks.
+# Build the MONETRA backend and frontend images from this repository's source.
+# Use this overlay for MONETRA deployments; do not pull upstream MoneyMatter app images.
 #
 # Usage (merge on top of the base file, add --build, from this folder):
 #   docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
