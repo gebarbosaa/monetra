@@ -501,6 +501,51 @@ describe('Credit card installment plans', () => {
     expect(await Transactions.findByPk(transaction!.id)).not.toBeNull();
   });
 
+  it('refuses cancellation when a planned installment has a broken ledger link', async () => {
+    const account = await helpers.createAccount({
+      payload: helpers.buildAccountPayload({
+        accountCategory: ACCOUNT_CATEGORIES.creditCard,
+        creditLimit: asDecimal(500),
+      }),
+      raw: true,
+    });
+    const plan = await helpers.makeRequest<{
+      id: string;
+      status: string;
+      installments: { id: string; transactionId: string; status: string }[];
+    }, true>({
+      method: 'post',
+      url: '/credit-card-installments',
+      payload: {
+        accountId: account.id,
+        description: 'Broken ledger link guard',
+        categoryId: global.DEFAULT_CATEGORY_ID,
+        purchaseDate: dateOnly(new Date()),
+        firstDueDate: dateOnly(addMonths(new Date(), 1)),
+        currencyCode: account.currencyCode,
+        totalAmount: 100,
+        installmentCount: 2,
+      },
+      raw: true,
+    });
+
+    const installment = plan.installments[0]!;
+    await CreditCardInstallments.update({ transactionId: null }, { where: { id: installment.id } });
+
+    const rejectedCancellation = await helpers.makeRequest({
+      method: 'delete',
+      url: '/credit-card-installments/' + plan.id,
+      raw: false,
+    });
+    expect(rejectedCancellation.statusCode).toBe(ERROR_CODES.ValidationError);
+
+    const persistedPlan = await CreditCardInstallmentPlans.findByPk(plan.id);
+    const persistedInstallment = await CreditCardInstallments.findByPk(installment.id);
+    expect(persistedPlan?.status).toBe('active');
+    expect(persistedInstallment?.status).toBe('planned');
+    expect(persistedInstallment?.transactionId).toBeNull();
+  });
+
   it('distributes small installment totals without zero or negative rows', async () => {
     const account = await helpers.createAccount({
       payload: helpers.buildAccountPayload({
