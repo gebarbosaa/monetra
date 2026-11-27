@@ -5,21 +5,48 @@
       "runtime": "container",
       "root": ".",
       "entrypoint": "self-hosting/backend/Dockerfile"
+    },
+    "frontend": {
+      "framework": "vite",
+      "root": "packages/frontend/"
     }
   },
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": { "service": "backend" }
+      "destination": {
+        "service": "backend"
+      }
+    },
+    {
+      "source": "/health",
+      "destination": {
+        "service": "backend"
+      }
+    },
+    {
+      "source": "/(.*)",
+      "destination": {
+        "service": "frontend"
+      }
     }
   ],
   "daemons": {
     "monetra-worker": {
       "root": ".",
       "entrypoint": "self-hosting/backend/Dockerfile",
-      "command": ["/docker-entrypoint.sh", "/worker-entrypoint.sh"],
-      "instances": { "iad1": 1 },
-      "resources": { "requests": { "memory": "1Gi" } }
+      "command": [
+        "/docker-entrypoint.sh",
+        "/worker-entrypoint.sh"
+      ],
+      "instances": {
+        "iad1": 1
+      },
+      "resources": {
+        "requests": {
+          "memory": "1Gi"
+        }
+      }
     }
   }
 }
