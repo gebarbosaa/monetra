@@ -19,7 +19,7 @@
       "entrypoint": "self-hosting/backend/Dockerfile",
       "command": ["/worker-entrypoint.sh"],
       "instances": { "iad1": 1 },
-      "resources": { "requests": { "memory": "512Mi" } }
+      "resources": { "requests": { "memory": "1Gi" } }
     }
   }
 }
