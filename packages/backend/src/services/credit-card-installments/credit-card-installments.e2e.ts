@@ -501,6 +501,45 @@ describe('Credit card installment plans', () => {
     expect(await Transactions.findByPk(transaction!.id)).not.toBeNull();
   });
 
+  it('distributes small installment totals without zero or negative rows', async () => {
+    const account = await helpers.createAccount({
+      payload: helpers.buildAccountPayload({
+        accountCategory: ACCOUNT_CATEGORIES.creditCard,
+        creditLimit: asDecimal(500),
+      }),
+      raw: true,
+    });
+
+    const plan = await helpers.makeRequest<{
+      totalAmount: number;
+      installments: { amount: number; refAmount: number }[];
+    }, true>({
+      method: 'post',
+      url: '/credit-card-installments',
+      payload: {
+        accountId: account.id,
+        description: 'Small amount allocation',
+        categoryId: global.DEFAULT_CATEGORY_ID,
+        purchaseDate: dateOnly(new Date()),
+        firstDueDate: dateOnly(addMonths(new Date(), 1)),
+        currencyCode: account.currencyCode,
+        totalAmount: 0.06,
+        installmentCount: 4,
+      },
+      raw: true,
+    });
+
+    const units = plan.installments.map((installment) =>
+      Math.round(Number(installment.amount) * 100),
+    );
+    expect(units).toEqual([2, 2, 1, 1]);
+    expect(units.every((amount) => amount > 0)).toBe(true);
+    expect(units.reduce((sum, amount) => sum + amount, 0)).toBe(6);
+    expect(plan.installments.reduce((sum, installment) => sum + Number(installment.amount), 0))
+      .toBeCloseTo(Number(plan.totalAmount));
+    expect(plan.installments.every((installment) => Number(installment.refAmount) >= 0)).toBe(true);
+  });
+
   it('creates planned ledger rows, reserves the limit and removes reservations on cancellation', async () => {
     const account = await helpers.createAccount({
       payload: helpers.buildAccountPayload({
