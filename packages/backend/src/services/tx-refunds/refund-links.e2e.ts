@@ -626,6 +626,8 @@ describe('Refund links against planned transactions', () => {
       const plannedOriginal = await createPlanned({ amount: 100, transactionType: TRANSACTION_TYPES.expense });
       const realRefund = await createReal({ amount: 40, transactionType: TRANSACTION_TYPES.income });
 
+      const balanceBeforeRejectedLinks = Number((await helpers.getAccount({ id: accountId, raw: true })).currentBalance);
+
       const plannedAsRefund = await helpers.createSingleRefund({
         originalTxId: realOriginal.id,
         refundTxId: plannedRefund.id,
@@ -643,6 +645,10 @@ describe('Refund links against planned transactions', () => {
       await expectNothingLinked({
         ids: [realOriginal.id, plannedRefund.id, plannedOriginal.id, realRefund.id],
       });
+      // Rejected links must not silently alter the already-booked account balance.
+      expect(Number((await helpers.getAccount({ id: accountId, raw: true })).currentBalance)).toBe(
+        balanceBeforeRejectedLinks,
+      );
     }, 20000);
   });
 });
