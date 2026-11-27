@@ -34,6 +34,9 @@ try {
         ...(process.env.APPLICATION_DB_DIRECT_URL
           ? { APPLICATION_DB_URL: process.env.APPLICATION_DB_DIRECT_URL }
           : {}),
+        // sequelize-cli discovers both .js and .ts migrations; register ts-node
+        // so TypeScript migrations are executable in the production container.
+        NODE_OPTIONS: [process.env.NODE_OPTIONS, '--require ts-node/register'].filter(Boolean).join(' '),
       },
       stdio: 'inherit',
     });
