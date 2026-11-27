@@ -8,7 +8,6 @@ import fs from 'fs';
 import https from 'https';
 import path from 'path';
 
-import { initializeBackgroundJobs, shutdownBackgroundJobs } from './background-jobs';
 import { API_PREFIX } from './config';
 import { registerAiCategorizationListeners } from './services/ai-categorization';
 import { initializeBankProviders } from './services/bank-data-providers/initialize-providers';
@@ -50,8 +49,9 @@ setupRoutes(app);
 
 logger.info('Attempting to start server...');
 
-let serverInstance: https.Server | ReturnType<typeof app.listen>;
+let serverInstance: https.Server | ReturnType<typeof app.listen> | undefined;
 
+const isVercelFunction = process.env.VERCEL === '1';
 const isProduction = process.env.NODE_ENV === 'production';
 const isTest = process.env.NODE_ENV === 'test';
 
@@ -59,10 +59,15 @@ const onServerReady = ({ protocol }: { protocol: 'http' | 'https' }) => {
   const port = app.get('port') as number;
   logger.info(`[OK] ${protocol.toUpperCase()} Server is running on ${protocol}://localhost:${port}`);
   logger.info(`API Prefix: ${API_PREFIX}`);
-  initializeBackgroundJobs();
+  // Persistent workers and cron jobs run outside request-scoped serverless functions.
+  void import('./background-jobs').then(({ initializeBackgroundJobs }) => initializeBackgroundJobs());
 };
 
-if (isTest) {
+if (isVercelFunction) {
+  // Vercel owns the HTTP lifecycle and invokes the exported Express app per request.
+  // Do not bind a port or start persistent workers from a serverless function.
+  logger.info('Running as a Vercel serverless function; HTTP listener and background workers are disabled.');
+} else if (isTest) {
   // Test mode: HTTP on a random port to avoid conflicts with parallel runs
   serverInstance = app.listen(0, () => {
     // Store the actual OS-assigned port so self-proxy (e.g. registration patch) can reach it
@@ -99,9 +104,11 @@ if (isTest) {
 
 export { serverInstance };
 
-serverInstance.on('error', (error) => {
-  logger.error(error);
-});
+if (serverInstance) {
+  serverInstance.on('error', (error) => {
+    logger.error(error);
+  });
+}
 
 process.on('uncaughtException', (error) => {
   logger.error(error);
@@ -144,7 +151,8 @@ const gracefulShutdown = ({ signal, onDone }: { signal: string; onDone: () => vo
     });
   };
 
-  shutdownBackgroundJobs()
+  import('./background-jobs')
+    .then(({ shutdownBackgroundJobs }) => shutdownBackgroundJobs())
     .then(closeServer)
     .catch((error) => {
       logger.error({ message: `Failed to stop background jobs during ${signal} shutdown`, error });
@@ -152,21 +160,25 @@ const gracefulShutdown = ({ signal, onDone }: { signal: string; onDone: () => vo
     });
 };
 
-process.on('SIGINT', () => {
-  gracefulShutdown({ signal: 'SIGINT', onDone: () => process.exit(0) });
-});
+if (!isVercelFunction && serverInstance) {
+  process.on('SIGINT', () => {
+    gracefulShutdown({ signal: 'SIGINT', onDone: () => process.exit(0) });
+  });
 
-process.on('SIGTERM', () => {
-  gracefulShutdown({ signal: 'SIGTERM', onDone: () => process.exit(0) });
-});
+  process.on('SIGTERM', () => {
+    gracefulShutdown({ signal: 'SIGTERM', onDone: () => process.exit(0) });
+  });
+}
 
 // nodemon sends SIGUSR2 on file-watch restarts (not a real shutdown). After
 // draining in-flight requests, re-emit SIGUSR2 to ourselves so nodemon can
 // proceed with its restart, per nodemon's documented convention:
 // https://github.com/remy/nodemon#gracefully-reloading-down-your-script
-process.once('SIGUSR2', () => {
-  gracefulShutdown({
-    signal: 'SIGUSR2',
-    onDone: () => process.kill(process.pid, 'SIGUSR2'),
+if (!isVercelFunction && serverInstance) {
+  process.once('SIGUSR2', () => {
+    gracefulShutdown({
+      signal: 'SIGUSR2',
+      onDone: () => process.kill(process.pid, 'SIGUSR2'),
+    });
   });
-});
+}
