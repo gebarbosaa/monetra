@@ -20,7 +20,11 @@ export const STORAGE_KEY_PATTERN = /^\d+\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0
 /** S3-compatible storage (Cloudflare R2) is used whenever a bucket is configured; disk otherwise. */
 const bucket = (): string | undefined => {
   const configuredBucket = process.env.ATTACHMENTS_S3_BUCKET || undefined;
-  if (!configuredBucket && process.env.VERCEL === '1' && process.env.NODE_ENV !== 'test') {
+  const isVercelRuntime =
+    process.env.VERCEL === '1' ||
+    process.env.MONETRA_ROLE === 'api-service' ||
+    process.env.MONETRA_ROLE === 'worker';
+  if (!configuredBucket && isVercelRuntime && process.env.NODE_ENV !== 'test') {
     throw new Error('Persistent attachment storage is required on Vercel. Configure the S3-compatible bucket before enabling uploads.');
   }
   return configuredBucket;
