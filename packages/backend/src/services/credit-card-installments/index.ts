@@ -109,8 +109,14 @@ export async function createInstallmentPlan(input: {
       message: 'The total amount is too small to create positive installments at this currency precision.',
     });
   }
-  const amountPerInstallment = total.divide(input.installmentCount).round(currencyDecimals);
-  const refPerInstallment = roundedRefTotal.divide(input.installmentCount).round(baseDecimals);
+  // Allocate integer minor units instead of rounding each quotient independently.
+  // Rounding the quotient upward can consume the entire total before the last row
+  // (for example, 0.06 split into 4 installments), creating a zero/negative tail.
+  const baseAmountUnits = Math.floor(totalMinorUnits / input.installmentCount);
+  const extraAmountUnits = totalMinorUnits % input.installmentCount;
+  const totalRefMinorUnits = roundedRefTotal.toMinorUnits({ decimals: baseDecimals });
+  const baseRefUnits = Math.floor(totalRefMinorUnits / input.installmentCount);
+  const extraRefUnits = totalRefMinorUnits % input.installmentCount;
 
   const sequelize = CreditCardInstallmentPlans.sequelize;
   if (!sequelize) throw new Error('Credit card installment models are not initialized.');
@@ -133,14 +139,11 @@ export async function createInstallmentPlan(input: {
     );
 
     const rows = [];
-    let allocated = Money.zero();
-    let allocatedRef = Money.zero();
     for (let index = 1; index <= input.installmentCount; index += 1) {
-      const isLast = index === input.installmentCount;
-      const amount = isLast ? total.subtract(allocated) : amountPerInstallment;
-      const refAmount = isLast ? roundedRefTotal.subtract(allocatedRef) : refPerInstallment;
-      allocated = allocated.add(amount);
-      allocatedRef = allocatedRef.add(refAmount);
+      const amountUnits = baseAmountUnits + (index <= extraAmountUnits ? 1 : 0);
+      const refAmountUnits = baseRefUnits + (index <= extraRefUnits ? 1 : 0);
+      const amount = Money.fromMinorUnits({ value: amountUnits, decimals: currencyDecimals });
+      const refAmount = Money.fromMinorUnits({ value: refAmountUnits, decimals: baseDecimals });
       rows.push({
         planId: plan.id,
         installmentNumber: index,
