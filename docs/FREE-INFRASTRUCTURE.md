@@ -27,7 +27,7 @@ Fontes oficiais consultadas:
 
 ## Bloqueios que ainda exigem configuração
 
-1. Criar um projeto de banco **exclusivo para MONETRA** no Neon Free (não reutilizar projetos de outros aplicativos).
+1. **Concluído em 27/11/2026:** projeto `monetra` criado na organização Neon Free `Geovanna`, região `aws-us-east-2`, PostgreSQL 17, branch `main`, compute mínimo 0,25 CU e banco `monetra`. O banco está vazio (nenhuma tabela/migração aplicada).
 2. Criar um banco Redis exclusivo no Upstash Free.
 3. Criar um bucket privado no Cloudflare R2 Standard e gerar credenciais S3 com acesso mínimo ao bucket.
 4. Cadastrar os valores em Preview primeiro; validar migrações, filas, anexos, autenticação e health checks.
@@ -38,6 +38,6 @@ Fontes oficiais consultadas:
 
 - O último deploy Preview da branch `infra/production-readiness` concluiu o build com status `READY`.
 - O build pronto não comprova conexão com PostgreSQL, Redis, armazenamento, autenticação nem fluxos financeiros.
-- As variáveis de conexão de banco e Redis ainda não estavam cadastradas no projeto Vercel quando esta revisão foi feita.
-- Este documento define a arquitetura gratuita pretendida; ele **não afirma** que as contas externas, bancos, buckets, migrações ou testes de ponta a ponta já foram criados/executados.
+- `APPLICATION_DB_URL` foi cadastrada como variável criptografada no Vercel, restrita ao Preview da branch `infra/production-readiness`. Nenhuma variável de banco foi adicionada a Production. A conexão ainda precisa ser validada pela aplicação após uma build de código.
+- Redis Upstash e bucket R2 ainda não foram provisionados; sem Redis, a inicialização atual do backend não está pronta para smoke test. Nenhuma migração foi aplicada e nenhum teste de ponta a ponta foi executado.
 - A publicação em Production permanece bloqueada até a validação ponta a ponta.
