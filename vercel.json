@@ -17,7 +17,7 @@
     "monetra-worker": {
       "root": ".",
       "entrypoint": "self-hosting/backend/Dockerfile",
-      "command": ["node", "--enable-source-maps", "packages/backend/dist/worker.js"],
+      "command": ["/worker-entrypoint.sh"],
       "instances": { "iad1": 1 }
     }
   }

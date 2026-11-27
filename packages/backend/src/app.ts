@@ -59,16 +59,16 @@ const onServerReady = ({ protocol }: { protocol: 'http' | 'https' }) => {
   const port = app.get('port') as number;
   logger.info(`[OK] ${protocol.toUpperCase()} Server is running on ${protocol}://localhost:${port}`);
   logger.info(`API Prefix: ${API_PREFIX}`);
-  // Persistent workers and cron jobs run outside request-scoped serverless functions.
+  // The Vercel API Service serves requests only; the Vercel Daemon owns persistent workers and cron jobs.
   if (process.env.MONETRA_ROLE !== 'api-service') {
     void import('./background-jobs').then(({ initializeBackgroundJobs }) => initializeBackgroundJobs());
   }
 };
 
 if (isVercelFunction) {
-  // Vercel owns the HTTP lifecycle and invokes the exported Express app per request.
-  // Do not bind a port or start persistent workers from a serverless function.
-  logger.info('Running as a Vercel serverless function; HTTP listener and background workers are disabled.');
+  // Vercel Daemons run background work without an HTTP listener. The API Service
+  // sets MONETRA_ROLE=api-service and follows the normal Express server path.
+  logger.info('Running as a Vercel worker runtime; HTTP listener is disabled.');
 } else if (isTest) {
   // Test mode: HTTP on a random port to avoid conflicts with parallel runs
   serverInstance = app.listen(0, () => {
