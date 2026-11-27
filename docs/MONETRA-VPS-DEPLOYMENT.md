@@ -1,3 +1,5 @@
+> **Optional self-hosting alternative only.** The selected MONETRA deployment plan is Vercel. Do not purchase or provision a VPS for the current plan.
+
 > **Architecture decision (2026-11-27):** MONETRA's selected target is Vercel.
 > This VPS guide is retained only as an optional self-hosting fallback. Do not
 > purchase or provision a VPS as part of the current deployment plan.
