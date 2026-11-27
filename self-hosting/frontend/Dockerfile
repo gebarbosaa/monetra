@@ -25,9 +25,13 @@ COPY post-install.sh ./
 COPY patches ./patches
 RUN chmod +x ./post-install.sh
 
-# Copy package files for workspaces
+# Copy every declared npm workspace manifest before npm ci. The frontend
+# build still needs only frontend + landing + shared source, but npm validates
+# the complete root workspace list during installation.
+COPY packages/backend/package*.json ./packages/backend/
 COPY packages/frontend/package*.json ./packages/frontend/
 COPY packages/landing/package*.json ./packages/landing/
+COPY packages/shared/package*.json ./packages/shared/
 
 # Install dependencies
 RUN npm ci
