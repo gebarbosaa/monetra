@@ -452,6 +452,9 @@ describe('Planned transactions – merge on import', () => {
       expect(rows).toHaveLength(2);
       expect(rows.every((row) => row.isPlanned === false)).toBe(true);
       expect(rows.find((row) => row.id === plan.id)!.note).toBe('Plan | CHARGE ONE');
+      // One row confirms the reservation and the second is a genuine expense;
+      // both must affect the balance exactly once, with no duplicate plan movement.
+      expect(await getBalance({ accountId: account.id })).toBe(500);
     });
   });
 
