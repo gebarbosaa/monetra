@@ -407,14 +407,22 @@ export async function cancelInstallmentPlan({ userId, id }: { userId: number; id
       lock: transaction.LOCK.UPDATE,
     });
     for (const installment of plannedInstallments) {
-      if (!installment.transactionId) continue;
+      if (!installment.transactionId) {
+        throw new ValidationError({
+          message: 'A planned installment has no linked transaction. The plan cannot be cancelled until it is repaired.',
+        });
+      }
 
       const linkedTransaction = await Transactions.findOne({
         where: { id: installment.transactionId, userId },
         transaction,
         lock: transaction.LOCK.UPDATE,
       });
-      if (!linkedTransaction) continue;
+      if (!linkedTransaction) {
+        throw new ValidationError({
+          message: 'A planned installment points to a missing transaction. The plan cannot be cancelled until it is repaired.',
+        });
+      }
       if (!linkedTransaction.isPlanned) {
         throw new ValidationError({
           message: 'A plan with confirmed transactions cannot be cancelled. Reverse those transactions first.',
