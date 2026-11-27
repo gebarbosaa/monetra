@@ -1,49 +1,32 @@
-# MoneyMatter – Self-Hosting
+# MONETRA — Self-hosting
 
-Run MoneyMatter on your own server with Docker Compose. The stack pulls
-published Docker images (amd64 and arm64) and exposes the whole app on **one
-host port** – put whatever reverse proxy you already run in front of it (Nginx
-Proxy Manager, npmplus, Caddy, Traefik), or nothing at all for a LAN /
-localhost trial.
+Este diretório contém a implantação Docker do MONETRA. Para produção, construa as imagens a partir **deste repositório**; não use imagens pré-compiladas do upstream MoneyMatter.
 
-## Quickstart
+## Guia recomendado para VPS
+
+Consulte [MONETRA VPS deployment](../docs/MONETRA-VPS-DEPLOYMENT.md) antes de executar qualquer comando em um servidor.
+
+## Build local / VPS a partir do código
+
+Na raiz do repositório:
 
 ```bash
-git clone https://github.com/letehaha/moneymatter.git
-cd moneymatter/self-hosting
-cp .env.example .env   # then fill the REQUIRED section
-docker compose up -d
+cp self-hosting/.env.example self-hosting/.env
+# Edite self-hosting/.env e substitua TODOS os segredos de exemplo.
+cd self-hosting
+docker compose -f docker-compose.yml -f docker-compose.build.yml config
+docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 ```
 
-Open `http://<host>:8080`. Full walkthrough:
-[setup guide](docs/setup-guide.md).
+O compose mantém PostgreSQL, Redis, backend e armazenamento de anexos na rede/volumes Docker. Somente o frontend publica a porta HTTP. Configure HTTPS por meio de um proxy reverso (Caddy, Traefik ou Nginx Proxy Manager).
 
-## Documentation
+**Não** execute o compose base sozinho para produção: ele é um template pull-based herdado e não representa uma publicação validada das imagens MONETRA.
 
-- [Setup guide](docs/setup-guide.md) – prerequisites, quickstart, exposing
-  the app publicly, building from source, backups.
-- [Portainer](docs/portainer.md) – deploy the same stack from the Portainer
-  UI instead of the CLI.
-- [Reverse proxies](docs/reverse-proxies.md) – requirements any proxy must
-  meet + recipes per proxy (Nginx Proxy Manager, Caddy).
-- [Traefik overlay](docs/traefik-overlay.md) – bundled TLS termination with
-  Let's Encrypt, for hosts without a reverse proxy.
-- [Environment variable reference](docs/environment-reference.md) – every
-  `.env` setting: required, optional features, frontend runtime, overlays.
-- [Troubleshooting](docs/troubleshooting.md) – common issues and fixes.
+## Arquivos
 
-## What's in this folder
+- `docker-compose.yml`: serviços, rede interna e volumes persistentes.
+- `docker-compose.build.yml`: build local das imagens frontend/backend.
+- `.env.example`: modelo sem credenciais reais.
+- `backend/` e `frontend/`: Dockerfiles e entrypoints.
 
-| Path                         | Purpose                                                 |
-| ---------------------------- | ------------------------------------------------------- |
-| `docker-compose.yml`         | Base stack – pulls published images, one host port      |
-| `docker-compose.traefik.yml` | Optional overlay: bundled Traefik + Let's Encrypt TLS   |
-| `docker-compose.build.yml`   | Optional overlay: build the images from source          |
-| `.env.example`               | Configuration template – copy to `.env` and fill in     |
-| `backend/`, `frontend/`      | Dockerfiles + entrypoints for the published images      |
-| `docs/`                      | Setup guide, proxy docs, env reference, troubleshooting |
-
-## Where to get help
-
-- Issues: https://github.com/letehaha/moneymatter/issues
-- License: AGPL-3.0 – see `LICENSE`
+Nunca envie `.env`, senhas, chaves JWT ou credenciais de provedores ao GitHub.
