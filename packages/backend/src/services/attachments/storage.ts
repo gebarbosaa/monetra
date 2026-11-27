@@ -17,7 +17,7 @@ export const storageKey = ({ userId, id }: { userId: number; id: string }) => `$
 
 export const STORAGE_KEY_PATTERN = /^\d+\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** S3-compatible storage (Cloudflare R2) is used whenever a bucket is configured; disk otherwise. */
+/** S3-compatible object storage (Neon Object Storage, Cloudflare R2, etc.) is used whenever a bucket is configured; disk otherwise. */
 const bucket = (): string | undefined => {
   const configuredBucket = process.env.ATTACHMENTS_S3_BUCKET || undefined;
   const isVercelRuntime =
@@ -43,8 +43,9 @@ const s3 = () => {
     return {
       sdk,
       client: new sdk.S3Client({
-        region: 'auto',
+        region: process.env.ATTACHMENTS_S3_REGION || 'auto',
         endpoint,
+        forcePathStyle: true,
         credentials: { accessKeyId, secretAccessKey },
       }),
     };
