@@ -18,6 +18,10 @@ interface TrackerScanJobData extends SentryTraceData {
 
 const connection = {
   host: process.env.APPLICATION_REDIS_HOST,
+  port: process.env.APPLICATION_REDIS_PORT ? Number(process.env.APPLICATION_REDIS_PORT) : undefined,
+  username: process.env.APPLICATION_REDIS_USERNAME,
+  password: process.env.APPLICATION_REDIS_PASSWORD,
+  tls: process.env.APPLICATION_REDIS_TLS === 'true' ? {} : undefined,
   maxRetriesPerRequest: null,
   connectTimeout: 20000,
   keepAlive: 10000,
@@ -73,7 +77,8 @@ export const trackerScanWorker = new Worker<TrackerScanJobData>(
         return (await runTrackerScan({ trackerId })) ?? { linkedCount: 0, suggestedCount: 0 };
       },
     }),
-  { connection, concurrency: 3 },
+  { connection,
+    autorun: process.env.MONETRA_ROLE !== 'api-service', concurrency: 3 },
 );
 
 trackerScanWorker.on('completed', async (job, result) => {

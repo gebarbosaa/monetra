@@ -21,6 +21,10 @@ interface SubscriptionReminderEmailJobData extends SentryTraceData {
 // Redis connection configuration for BullMQ
 const redisConnection = {
   host: process.env.APPLICATION_REDIS_HOST,
+  port: process.env.APPLICATION_REDIS_PORT ? Number(process.env.APPLICATION_REDIS_PORT) : undefined,
+  username: process.env.APPLICATION_REDIS_USERNAME,
+  password: process.env.APPLICATION_REDIS_PASSWORD,
+  tls: process.env.APPLICATION_REDIS_TLS === 'true' ? {} : undefined,
   maxRetriesPerRequest: null as null,
   connectTimeout: 20000,
   keepAlive: 10000,
@@ -132,6 +136,7 @@ export const subscriptionReminderEmailWorker = new Worker<SubscriptionReminderEm
   },
   {
     connection: redisConnection,
+    autorun: process.env.MONETRA_ROLE !== 'api-service',
     concurrency: 3,
   },
 );
