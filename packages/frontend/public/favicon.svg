@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="MONETRA">
+  <rect width="1024" height="1024" rx="210" fill="#171C22"/>
+  <path d="M190 760V264c0-24 26-39 47-27l253 146 253-146c21-12 47 3 47 27v496H660V438L512 523 364 438v322H190Z" fill="#FF7900"/>
+  <path d="M436 760V588l76-43 76 43v172H436Z" fill="#FFAB45"/>
+</svg>

@@ -1,0 +1,307 @@
+import { describe, expect, it } from '@jest/globals';
+import { z } from 'zod';
+
+import {
+  boundedDecimalAmount,
+  currencyCode,
+  dateBound,
+  dateRange,
+  externalUrl,
+  isoCurrencyCode,
+  withDateOrder,
+} from './custom-types';
+
+describe('dateBound', () => {
+  describe("precision 'date' (default)", () => {
+    const schema = dateBound();
+
+    it('accepts a real calendar day', () => {
+      expect(schema.safeParse('2025-01-15').success).toBe(true);
+    });
+
+    it('rejects a regex-matching but non-existent date', () => {
+      expect(schema.safeParse('2025-13-45').success).toBe(false);
+    });
+
+    it('rejects a day that would roll over into the next month', () => {
+      expect(schema.safeParse('2026-02-30').success).toBe(false);
+      expect(schema.safeParse('2026-02-28').success).toBe(true);
+    });
+
+    it('rejects a full ISO datetime', () => {
+      expect(schema.safeParse('2025-01-15T00:00:00.000Z').success).toBe(false);
+    });
+
+    it('rejects freeform garbage', () => {
+      expect(schema.safeParse('not-a-date').success).toBe(false);
+    });
+  });
+
+  describe("precision 'datetime'", () => {
+    const schema = dateBound({ precision: 'datetime' });
+
+    it('accepts a UTC ISO datetime', () => {
+      expect(schema.safeParse('2025-01-15T12:30:00.000Z').success).toBe(true);
+    });
+
+    it('rejects a date-only string', () => {
+      expect(schema.safeParse('2025-01-15').success).toBe(false);
+    });
+
+    it('rejects a datetime with a timezone offset when offset is not allowed', () => {
+      expect(schema.safeParse('2025-01-15T12:30:00+05:00').success).toBe(false);
+    });
+  });
+
+  describe("precision 'datetime' with offset", () => {
+    const schema = dateBound({ precision: 'datetime', offset: true });
+
+    it('accepts a datetime with a timezone offset', () => {
+      expect(schema.safeParse('2025-01-15T12:30:00+05:00').success).toBe(true);
+    });
+
+    it('still accepts a UTC datetime', () => {
+      expect(schema.safeParse('2025-01-15T12:30:00Z').success).toBe(true);
+    });
+  });
+});
+
+describe('dateRange (spreadable { from, to } fields)', () => {
+  describe('optional bounds (default) + withDateOrder', () => {
+    const schema = withDateOrder(z.object({ ...dateRange(), accountId: z.string().optional() }));
+
+    it('accepts an empty object (both bounds absent)', () => {
+      expect(schema.safeParse({}).success).toBe(true);
+    });
+
+    it('accepts only one bound', () => {
+      expect(schema.safeParse({ from: '2025-01-01' }).success).toBe(true);
+      expect(schema.safeParse({ to: '2025-01-31' }).success).toBe(true);
+    });
+
+    it('accepts a well-ordered range and passes sibling fields through', () => {
+      const result = schema.safeParse({ from: '2025-01-01', to: '2025-01-31', accountId: 'acc-1' });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.accountId).toBe('acc-1');
+      }
+    });
+
+    it('accepts an equal range', () => {
+      expect(schema.safeParse({ from: '2025-01-15', to: '2025-01-15' }).success).toBe(true);
+    });
+
+    it('rejects an inverted range', () => {
+      const result = schema.safeParse({ from: '2025-01-31', to: '2025-01-01' });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0]?.path).toEqual(['from']);
+      }
+    });
+
+    it('rejects a malformed bound', () => {
+      expect(schema.safeParse({ from: 'garbage' }).success).toBe(false);
+    });
+  });
+
+  describe('required bounds', () => {
+    const schema = withDateOrder(z.object({ ...dateRange({ required: true }) }));
+
+    it('rejects when a bound is missing', () => {
+      expect(schema.safeParse({ from: '2025-01-01' }).success).toBe(false);
+      expect(schema.safeParse({}).success).toBe(false);
+    });
+
+    it('accepts when both bounds are present and ordered', () => {
+      expect(schema.safeParse({ from: '2025-01-01', to: '2025-01-31' }).success).toBe(true);
+    });
+
+    it('produces a string-typed from at the type level', () => {
+      const parsed = z.object({ ...dateRange({ required: true }) }).parse({ from: '2025-01-01', to: '2025-01-31' });
+      // Compile-time assertion: `from` is a required string on the required variant.
+      const from: string = parsed.from;
+      expect(from).toBe('2025-01-01');
+    });
+  });
+
+  describe('datetime precision', () => {
+    const schema = withDateOrder(z.object({ ...dateRange({ precision: 'datetime' }) }));
+
+    it('orders by instant, not lexicographically', () => {
+      expect(schema.safeParse({ from: '2025-01-01T00:00:00Z', to: '2025-01-01T12:00:00Z' }).success).toBe(true);
+      expect(schema.safeParse({ from: '2025-01-01T12:00:00Z', to: '2025-01-01T00:00:00Z' }).success).toBe(false);
+    });
+  });
+
+  describe('datetime precision with offset', () => {
+    const schema = withDateOrder(z.object({ ...dateRange({ required: true, precision: 'datetime', offset: true }) }));
+
+    it('compares offset datetimes as absolute instants', () => {
+      // 2025-01-01T10:00:00+05:00 == 05:00Z, which is before 06:00Z — ordered.
+      expect(schema.safeParse({ from: '2025-01-01T10:00:00+05:00', to: '2025-01-01T06:00:00Z' }).success).toBe(true);
+      // 2025-01-01T10:00:00+05:00 == 05:00Z, which is after 04:00Z — inverted.
+      expect(schema.safeParse({ from: '2025-01-01T10:00:00+05:00', to: '2025-01-01T04:00:00Z' }).success).toBe(false);
+    });
+  });
+});
+
+describe('withDateOrder', () => {
+  describe('guards against a no-op (missing bound fields)', () => {
+    it('throws when the object has neither bound field', () => {
+      expect(() => withDateOrder(z.object({ foo: z.string() }))).toThrow(/missing bound field/i);
+    });
+
+    it('throws when one bound field is missing', () => {
+      expect(() => withDateOrder(z.object({ from: dateBound() }))).toThrow(/\bto\b/);
+    });
+
+    it('throws when applied to a non-object schema', () => {
+      expect(() => withDateOrder(z.string() as never)).toThrow(/not a ZodObject/);
+    });
+
+    it('does not throw when the fields come from a spread dateRange()', () => {
+      expect(() => withDateOrder(z.object({ ...dateRange(), accountId: z.string() }))).not.toThrow();
+    });
+
+    it('does not throw for custom-named bound fields present in the object', () => {
+      expect(() =>
+        withDateOrder(z.object({ startDate: dateBound(), endDate: dateBound().nullable().optional() }), [
+          'startDate',
+          'endDate',
+        ]),
+      ).not.toThrow();
+    });
+
+    it('reads the shape through a superRefine wrapper (still throws when fields are absent)', () => {
+      expect(() =>
+        withDateOrder(
+          z.object({ foo: z.string() }).superRefine(() => {}),
+          ['startDate', 'endDate'],
+        ),
+      ).toThrow(/missing bound field/i);
+    });
+  });
+
+  it('attaches the ordering guard to a manually built schema with custom names', () => {
+    const schema = withDateOrder(z.object({ dateFrom: dateBound(), dateTo: dateBound() }), ['dateFrom', 'dateTo']);
+    expect(schema.safeParse({ dateFrom: '2025-01-01', dateTo: '2025-01-31' }).success).toBe(true);
+
+    const inverted = schema.safeParse({ dateFrom: '2025-02-01', dateTo: '2025-01-01' });
+    expect(inverted.success).toBe(false);
+    if (!inverted.success) {
+      expect(inverted.error.issues[0]?.path).toEqual(['dateFrom']);
+    }
+  });
+
+  // The pattern domain entities (tracker, subscription) use: their own asymmetric /
+  // nullable bound optionality via `dateBound`, plus the shared ordering guard.
+  describe('nullable / asymmetric domain-entity bounds', () => {
+    const schema = withDateOrder(
+      z.object({
+        startDate: dateBound(),
+        endDate: dateBound().nullable().optional(),
+      }),
+      ['startDate', 'endDate'],
+    );
+
+    it('accepts a null upper bound', () => {
+      expect(schema.safeParse({ startDate: '2025-01-01', endDate: null }).success).toBe(true);
+    });
+
+    it('accepts an absent upper bound', () => {
+      expect(schema.safeParse({ startDate: '2025-01-01' }).success).toBe(true);
+    });
+
+    it('still enforces ordering when both bounds are present', () => {
+      expect(schema.safeParse({ startDate: '2025-02-01', endDate: '2025-01-01' }).success).toBe(false);
+    });
+  });
+});
+
+describe('currencyCode', () => {
+  const schema = currencyCode();
+
+  it.each([
+    ['USD', 'USD'],
+    ['usd', 'USD'],
+    ['  eur ', 'EUR'],
+    ['USDT', 'USDT'],
+    ['btc', 'BTC'],
+    ['SAT', 'SAT'],
+    ['1INCH', '1INCH'],
+    ['AB', 'AB'],
+    ['ABCDEFGHIJKLMNOP', 'ABCDEFGHIJKLMNOP'],
+  ])('accepts %p as %p', (input, expected) => {
+    expect(schema.parse(input)).toBe(expected);
+  });
+
+  it.each([
+    ['empty', ''],
+    ['one character', 'A'],
+    ['seventeen characters', 'ABCDEFGHIJKLMNOPQ'],
+    ['a hyphen', 'US-D'],
+    ['a space inside', 'US D'],
+    ['a dot', 'U.S'],
+    ['a non-latin letter', 'ДОЛ'],
+  ])('rejects %s', (_label, input) => {
+    expect(schema.safeParse(input).success).toBe(false);
+  });
+
+  it('does not check ISO 4217 membership, because existence is a service check', () => {
+    expect(schema.parse('zzz')).toBe('ZZZ');
+  });
+});
+
+describe('isoCurrencyCode', () => {
+  const schema = isoCurrencyCode();
+
+  it('accepts and uppercases an ISO 4217 code', () => {
+    expect(schema.parse(' jpy ')).toBe('JPY');
+  });
+
+  it.each(['ZZZ', 'USDT', 'BTC', 'US', ''])('rejects %p, which is not an ISO 4217 code', (input) => {
+    expect(schema.safeParse(input).success).toBe(false);
+  });
+});
+
+describe('boundedDecimalAmount', () => {
+  it.each([5e-7, 1e-8, 0.00000123, 1e-18, 12.5, 0])('accepts %p', (value) => {
+    expect(boundedDecimalAmount().safeParse(value).success).toBe(true);
+  });
+
+  it.each([1e-19, 1.5e-18])('rejects %p, which has more than 18 decimals', (value) => {
+    expect(boundedDecimalAmount().safeParse(value).success).toBe(false);
+  });
+});
+
+describe('externalUrl', () => {
+  const schema = externalUrl();
+  const nullishSchema = externalUrl().nullish();
+
+  it('accepts http and https URLs including uppercase scheme and 2048-char length', () => {
+    expect(schema.safeParse('https://example.com/portal').success).toBe(true);
+    expect(schema.safeParse('http://localhost:8080/login').success).toBe(true);
+    expect(schema.safeParse('HTTPS://BANK.EXAMPLE/auth').success).toBe(true);
+
+    const prefix = 'https://example.com/';
+    const exactMax = prefix + 'a'.repeat(2048 - prefix.length);
+    expect(exactMax).toHaveLength(2048);
+    expect(schema.safeParse(exactMax).success).toBe(true);
+  });
+
+  it('supports null and undefined when wrapped with .nullish()', () => {
+    expect(nullishSchema.safeParse(null).success).toBe(true);
+    expect(nullishSchema.safeParse(undefined).success).toBe(true);
+  });
+
+  it.each([
+    { label: 'ftp scheme', value: 'ftp://example.com/file' },
+    { label: 'javascript scheme', value: 'javascript:alert(1)' },
+    { label: 'empty string', value: '' },
+    { label: 'non-URL string', value: 'not-a-url' },
+    { label: 'URL exceeding 2048 characters', value: `https://example.com/${'a'.repeat(2049)}` },
+  ])('rejects $label', ({ value }) => {
+    expect(schema.safeParse(value).success).toBe(false);
+    expect(nullishSchema.safeParse(value).success).toBe(false);
+  });
+});

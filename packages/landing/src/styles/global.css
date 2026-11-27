@@ -1,0 +1,54 @@
+@import 'tailwindcss' source(none);
+/* Add a file here before using utilities in it. Scanning everything emits utilities that collide with hand-written class names. */
+@source '../components/demo-loading-overlay.vue';
+@source '../components/faq-ask.vue';
+@source '../pages/demo.astro';
+@source '../pages/guides';
+@source '../pages/privacy-policy.astro';
+@source '../pages/support.astro';
+@source '../pages/terms-of-use.astro';
+@source inline('sr-only');
+
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+@theme {
+  /* Legacy utility colors resolve to the redesign tokens, so they follow the theme switch. */
+  --color-border: var(--border);
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
+  --color-primary: var(--accent);
+  --color-primary-text: var(--accent-text);
+  --color-muted-foreground: var(--muted);
+  --color-destructive-text: var(--destructive-text);
+}
+
+/*
+  Buttons in tailwind v4 use `cursor: default` instead of `cursor: pointer`.
+  Revert to pointer.
+*/
+@layer base {
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+@layer base {
+  :root {
+    --destructive-text: rgb(200, 30, 30);
+  }
+
+  :root[data-theme='dark'] {
+    --destructive-text: rgb(239, 68, 68);
+  }
+}
+
+@layer base {
+  *,
+  ::before,
+  ::after,
+  ::backdrop,
+  ::file-selector-button {
+    @apply border-border;
+  }
+}

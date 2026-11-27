@@ -1,0 +1,222 @@
+import { RecordId, SUBSCRIPTION_LINK_STATUS, TRANSACTION_TYPES } from '@bt/shared/types';
+import { BudgetPlanScheduled, BudgetPlanScheduledItem } from '@bt/shared/types';
+import { Money } from '@common/types/money';
+import { toUtcDateString, toZonedDateString } from '@common/utils/date';
+import { t } from '@i18n/index';
+import { ExchangeRateUnavailableError, NotFoundError } from '@js/errors';
+import { logger } from '@js/utils/logger';
+import Accounts from '@models/accounts.model';
+import BudgetPlanAccounts from '@models/budget-plan-accounts.model';
+import BudgetPlans from '@models/budget-plans.model';
+import Payees from '@models/payees.model';
+import SubscriptionTransactions from '@models/subscription-transactions.model';
+import Subscriptions from '@models/subscriptions.model';
+import { findTransactions } from '@models/transactions-query';
+import { calculateRefAmount } from '@services/calculate-ref-amount.service';
+import { paymentDatesInRange, scheduleInclude } from '@services/subscriptions/get-upcoming-payments';
+import { Op } from 'sequelize';
+
+import { addUtcDays, utcInstant } from './date-ranges';
+import { findPlan } from './find-plan';
+import { ensurePeriods } from './periods/ensure-periods';
+import { loadLineOwnerResolver } from './validate-line-categories';
+
+const EMPTY: BudgetPlanScheduled = {
+  items: [],
+  outflows: { total: 0, count: 0 },
+  inflows: { total: 0, count: 0 },
+  nextDate: null,
+};
+
+const signed = ({ amount, type }: { amount: Money; type: TRANSACTION_TYPES }): Money =>
+  type === TRANSACTION_TYPES.expense ? amount.negate() : amount;
+
+const totals = ({ items }: { items: BudgetPlanScheduledItem[] }) =>
+  items.reduce((sum, item) => ({ total: sum.total.add(Money.fromDecimal(item.amount)), count: sum.count + 1 }), {
+    total: Money.zero(),
+    count: 0,
+  });
+
+export const planAccountIds = async ({ plan }: { plan: BudgetPlans }): Promise<string[]> =>
+  (
+    await BudgetPlanAccounts.findAll({
+      where: { planId: plan.id },
+      attributes: ['accountId'],
+      include: [{ model: Accounts, attributes: [], where: { userId: plan.userId, excludeFromStats: false } }],
+    })
+  ).map((row) => row.accountId);
+
+export const findPlanSubscriptions = ({ plan, accountIds }: { plan: BudgetPlans; accountIds: string[] }) =>
+  Subscriptions.findAll({
+    where: {
+      userId: plan.userId,
+      isActive: true,
+      expectedAmount: { [Op.ne]: null },
+      accountId: { [Op.or]: [{ [Op.in]: accountIds }, { [Op.is]: null }] },
+    },
+    include: scheduleInclude,
+  });
+
+/** `null`, with a warning, when no exchange rate converts it. */
+export const subscriptionAmountInPlanCurrency = async ({
+  plan,
+  subscription,
+  amount,
+  today,
+}: {
+  plan: BudgetPlans;
+  subscription: Subscriptions;
+  amount: Money;
+  today: string;
+}): Promise<Money | null> => {
+  const currencyCode = subscription.expectedCurrencyCode ?? plan.currencyCode;
+  if (currencyCode === plan.currencyCode) return amount;
+  try {
+    return await calculateRefAmount({
+      userId: plan.userId,
+      definitionOwnerUserId: plan.userId,
+      amount,
+      baseCode: currencyCode,
+      quoteCode: plan.currencyCode,
+      date: today,
+    });
+  } catch (e) {
+    if (!(e instanceof ExchangeRateUnavailableError)) throw e;
+    logger.warn('[Budget plans] Scheduled subscription skipped: no exchange rate', {
+      planId: plan.id,
+      subscriptionId: subscription.id,
+      currencyCode,
+    });
+    return null;
+  }
+};
+
+/**
+ * Subscription occurrences and planned transactions dated in the period, from
+ * today on. A subscription counts when it is paid from an attached account, or
+ * has no account and its category falls under a plan line.
+ */
+export const getScheduled = async ({
+  userId,
+  planId,
+  periodId,
+  timezone,
+}: {
+  userId: number;
+  planId: RecordId;
+  periodId: RecordId;
+  timezone: string;
+}): Promise<BudgetPlanScheduled> => {
+  const plan = await findPlan({ planId, userId });
+
+  const today = toZonedDateString({ date: new Date(), timezone });
+  const period = (await ensurePeriods({ plan, today })).find((entry) => entry.id === periodId);
+  if (!period) throw new NotFoundError({ message: t({ key: 'budgetPlans.periodNotFound' }) });
+
+  const start = toUtcDateString(period.startDate);
+  const until = toUtcDateString(period.endDate);
+  if (until <= today) return EMPTY;
+  const from = start > today ? start : today;
+
+  const [accountIds, { ownerOf: lineOf }] = await Promise.all([
+    planAccountIds({ plan }),
+    loadLineOwnerResolver({ plan, start }),
+  ]);
+  const lineOfCategory = ({ categoryId }: { categoryId: string | null }) =>
+    categoryId === null ? null : lineOf(categoryId);
+
+  const [subscriptions, plannedNearby] = await Promise.all([
+    findPlanSubscriptions({ plan, accountIds }),
+    findTransactions({
+      planned: 'only',
+      access: { creator: plan.userId },
+      balanceAdjustments: 'exclude',
+      transfers: 'exclude',
+      completeness: 'all',
+      where: {
+        accountId: { [Op.in]: accountIds },
+        // A day of padding each side covers any zone offset; the local date below decides.
+        time: {
+          [Op.gte]: utcInstant({ date: addUtcDays({ date: from, days: -1 }) }),
+          [Op.lt]: utcInstant({ date: addUtcDays({ date: until, days: 1 }) }),
+        },
+      },
+      include: [{ model: Payees, attributes: ['name'] }],
+    }),
+  ]);
+
+  const planned = plannedNearby
+    .map((tx) => ({ tx, date: toZonedDateString({ date: tx.time, timezone }) }))
+    .filter(({ date }) => date >= from && date < until);
+  const plannedDateById = new Map(planned.map(({ tx, date }) => [tx.id, date]));
+
+  const plannedLinks = planned.length
+    ? await SubscriptionTransactions.findAll({
+        where: {
+          transactionId: { [Op.in]: planned.map(({ tx }) => tx.id) },
+          status: SUBSCRIPTION_LINK_STATUS.active,
+        },
+      })
+    : [];
+  // A planned row linked to a subscription stands in for that day's occurrence.
+  const coveredOccurrences = new Set(
+    plannedLinks.map((link) => `${link.subscriptionId}:${plannedDateById.get(link.transactionId)}`),
+  );
+
+  const subscriptionItems = await Promise.all(
+    subscriptions
+      .filter((sub) => sub.accountId !== null || lineOfCategory({ categoryId: sub.categoryId }) !== null)
+      .flatMap((sub) =>
+        paymentDatesInRange({ subscription: sub, from, until })
+          .filter((date) => !coveredOccurrences.has(`${sub.id}:${date}`))
+          .map((date) => ({ sub, date })),
+      )
+      .map(async ({ sub, date }): Promise<BudgetPlanScheduledItem | null> => {
+        const currencyCode = sub.expectedCurrencyCode ?? plan.currencyCode;
+        const native = signed({ amount: sub.expectedAmount!, type: sub.transactionType });
+        const base = await subscriptionAmountInPlanCurrency({ plan, subscription: sub, amount: native, today });
+        if (!base) return null;
+
+        return {
+          source: 'subscription',
+          id: sub.id,
+          name: sub.name,
+          date,
+          amount: base.toNumber(),
+          currencyCode,
+          nativeAmount: native.toNumber(),
+          categoryId: sub.categoryId,
+          lineId: lineOfCategory({ categoryId: sub.categoryId }),
+          accountId: sub.accountId,
+        };
+      }),
+  ).then((results) => results.filter((item) => item !== null));
+
+  const plannedItems = planned.map(
+    ({ tx, date }): BudgetPlanScheduledItem => ({
+      source: 'planned',
+      id: tx.id,
+      name: tx.payee?.name || tx.note || '',
+      date,
+      amount: signed({ amount: tx.refAmount, type: tx.transactionType }).toNumber(),
+      currencyCode: tx.currencyCode,
+      nativeAmount: signed({ amount: tx.amount, type: tx.transactionType }).toNumber(),
+      categoryId: tx.categoryId,
+      lineId: lineOfCategory({ categoryId: tx.categoryId }),
+      accountId: tx.accountId,
+    }),
+  );
+
+  const items = [...subscriptionItems, ...plannedItems].toSorted(
+    (a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id),
+  );
+  const outflows = totals({ items: items.filter((item) => item.amount < 0) });
+  const inflows = totals({ items: items.filter((item) => item.amount >= 0) });
+
+  return {
+    items,
+    outflows: { total: outflows.total.toNumber(), count: outflows.count },
+    inflows: { total: inflows.total.toNumber(), count: inflows.count },
+    nextDate: items[0]?.date ?? null,
+  };
+};

@@ -1,0 +1,105 @@
+import { RecordId } from '@bt/shared/types';
+import { SetBudgetPlanAssignmentPayload } from '@bt/shared/types';
+import { roundToCurrency } from '@common/lib/currency-precision';
+import { Money } from '@common/types/money';
+import { toUtcDateString } from '@common/utils/date';
+import { t } from '@i18n/index';
+import { ConflictError, NotFoundError } from '@js/errors';
+import BudgetAssignments from '@models/budget-assignments.model';
+import BudgetPeriods from '@models/budget-periods.model';
+import BudgetPlans from '@models/budget-plans.model';
+import { withTransaction } from '@services/common/with-transaction';
+
+import { covers, toRange } from './date-ranges';
+import { findLine, findPlan } from './find-plan';
+import { isEmptyAssignment } from './fold/resolve-assigned';
+import { getPeriodView } from './get-period-view';
+import { ensureCurrentPeriods } from './periods/ensure-periods';
+
+/** `scope` only affects `amount`: a baseline runs on, an override is one period. */
+interface SetAssignmentParams extends SetBudgetPlanAssignmentPayload {
+  userId: number;
+  planId: RecordId;
+  periodId: RecordId;
+  lineId: RecordId;
+  timezone: string;
+}
+
+interface WriteAssignmentParams extends SetBudgetPlanAssignmentPayload {
+  userId: number;
+  plan: BudgetPlans;
+  periods: BudgetPeriods[];
+  periodId: RecordId;
+  lineId: RecordId;
+}
+
+/** Writes one line's assignment inside the caller's transaction, which already holds the plan lock. */
+export const writeAssignment = async ({
+  userId,
+  plan,
+  periods,
+  periodId,
+  lineId,
+  scope,
+  amount,
+  carryPolicy,
+}: WriteAssignmentParams) => {
+  const money =
+    amount == null
+      ? amount
+      : await roundToCurrency({
+          money: Money.fromDecimal(amount),
+          userId,
+          currencyCode: plan.currencyCode,
+          mode: 'half-up',
+        });
+
+  const period = periods.find((entry) => entry.id === periodId);
+  if (!period) throw new NotFoundError({ message: t({ key: 'budgetPlans.periodNotFound' }) });
+
+  const line = await findLine({ planId: plan.id, lineId });
+  const lifetime = toRange({ from: line.activeFrom, until: line.activeUntil });
+  if (!covers({ range: lifetime, start: toUtcDateString(period.startDate) })) {
+    throw new ConflictError({ message: t({ key: 'budgetPlans.periodOutsideLifetime' }) });
+  }
+
+  const existing = await BudgetAssignments.findOne({ where: { periodId, lineId } });
+
+  const next = {
+    baselineAmount: existing?.baselineAmount ?? null,
+    overrideAmount: existing?.overrideAmount ?? null,
+    carryPolicy: existing?.carryPolicy ?? null,
+  };
+
+  if (money !== undefined) {
+    if (money === null) {
+      next[scope === 'from_here' ? 'baselineAmount' : 'overrideAmount'] = null;
+    } else if (scope === 'from_here') {
+      next.baselineAmount = money;
+      next.overrideAmount = null;
+    } else {
+      next.overrideAmount = money;
+    }
+  }
+
+  if (carryPolicy !== undefined) next.carryPolicy = carryPolicy;
+
+  // The row CHECK is not deferrable, so the final state decides between a
+  // delete and an upsert; "upsert, then delete" would fail.
+  const empty = isEmptyAssignment(next);
+
+  if (existing && empty) await existing.destroy();
+  else if (existing) await existing.update(next);
+  else if (!empty) await BudgetAssignments.create({ periodId, lineId, ...next });
+};
+
+const setAssignmentImpl = async ({ userId, planId, periodId, timezone, ...rest }: SetAssignmentParams) => {
+  const plan = await findPlan({ planId, userId, lock: true });
+  const { periods } = await ensureCurrentPeriods({ plan });
+
+  await writeAssignment({ userId, plan, periods, periodId, ...rest });
+
+  return getPeriodView({ userId, planId, periodId, timezone });
+};
+
+export const setAssignment = withTransaction(setAssignmentImpl);

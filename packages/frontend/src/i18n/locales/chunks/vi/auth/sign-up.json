@@ -1,0 +1,41 @@
+{
+  "auth": {
+    "signup": {
+      "title": "Tạo tài khoản",
+      "divider": "Or continue with email",
+      "submitButton": "Đăng ký",
+      "alreadyHaveAccount": "Đã có tài khoản?",
+      "signInLink": "Đăng nhập",
+      "labels": {
+        "displayName": "Tên hiển thị",
+        "verifyPassword": "Xác nhận mật khẩu"
+      },
+      "placeholders": {
+        "displayName": "vd. John Snow",
+        "verifyPassword": "Xác nhận mật khẩu"
+      },
+      "errors": {
+        "invalidEmail": "Vui lòng nhập địa chỉ email hợp lệ.",
+        "passwordTooShort": "Mật khẩu quá ngắn.",
+        "passwordTooLong": "Mật khẩu quá dài.",
+        "invalidPassword": "Mật khẩu không hợp lệ.",
+        "userExists": "Đã tồn tại người dùng với email này.",
+        "signupsDisabled": "Quản trị viên của máy chủ này đã tắt chức năng đăng ký.",
+        "genericErrorRetry": "An error occurred. Please try again.",
+        "oauthFailed": "Không đăng ký được bằng {provider}. Vui lòng thử lại.",
+        "oauthNotConfigured": "{provider} sign-in is not configured on this server."
+      }
+    },
+    "shared": {
+      "divider": "Or continue with",
+      "passkeyButton": {
+        "signIn": "Đăng nhập bằng Passkey",
+        "register": "Thêm Passkey"
+      },
+      "oauthButton": {
+        "signIn": "Sign in with {provider}",
+        "signUp": "Sign up with {provider}"
+      }
+    }
+  }
+}

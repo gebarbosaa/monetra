@@ -1,0 +1,143 @@
+{
+  "pages": {
+    "budgets": {
+      "transactionsList": {
+        "loadError": "Couldn't load transactions.",
+        "selectionModeWarning": "Chế độ chọn — chọn giao dịch muốn gỡ liên kết",
+        "selectAll": "Chọn tất cả",
+        "selected": "Đã chọn {count}",
+        "unlink": "Gỡ liên kết",
+        "cancel": "Cancel",
+        "unlinkSelected": "Gỡ liên kết các giao dịch đã chọn",
+        "noMatchingTransactions": "Không tìm thấy giao dịch phù hợp",
+        "noTransactionsLinked": "Chưa có giao dịch nào được liên kết",
+        "filterAdjustmentHint": "Hãy thử điều chỉnh bộ lọc để xem thêm giao dịch.",
+        "addTransactionsHint": "Thêm giao dịch vào ngân sách này để bắt đầu theo dõi chi tiêu.",
+        "resetFilters": "Đặt lại bộ lọc",
+        "addTransactions": "Thêm giao dịch",
+        "add": "Add",
+        "loadingMore": "Đang tải thêm…",
+        "unlinkError": "Failed to unlink transactions",
+        "addError": "Failed to add transactions"
+      }
+    },
+    "budgetDetails": {
+      "notSet": "Chưa đặt",
+      "saving": "Đang lưu…",
+      "saveChanges": "Lưu thay đổi",
+      "loading": "Loading...",
+      "uncategorized": "Chưa phân loại",
+      "stats": {
+        "income": "Thu nhập",
+        "expenses": "Chi tiêu",
+        "netBalance": "Thu chi ròng"
+      },
+      "utilization": {
+        "title": "Mức sử dụng ngân sách",
+        "summary": "Đã chi {spent} trên hạn mức {limit}",
+        "na": "Không áp dụng"
+      },
+      "noTransactionsYet": "Chưa có giao dịch nào",
+      "transactions": "Giao dịch",
+      "transactionsLinked": "{count} giao dịch được liên kết với ngân sách này | {count} giao dịch được liên kết với ngân sách này",
+      "tabs": {
+        "statistics": "Statistics",
+        "transactions": "Giao dịch",
+        "sharing": "Chia sẻ"
+      },
+      "statistics": {
+        "tabs": {
+          "categories": "Categories",
+          "timeline": "Dòng thời gian"
+        },
+        "errorTitle": "Không thể tải số liệu thống kê.",
+        "errorDescription": "Đã xảy ra lỗi khi tải dữ liệu. Vui lòng thử lại sau.",
+        "noDataTitle": "Chưa có dữ liệu chi tiêu",
+        "noDataDescription": "Ngân sách này chưa có dữ liệu chi tiêu.",
+        "noCategoryData": "Chưa có dữ liệu chi tiêu theo danh mục.",
+        "noTimelineData": "Chưa có dữ liệu theo dòng thời gian.",
+        "total": "Tổng",
+        "income": "Thu nhập",
+        "expenses": "Chi tiêu",
+        "incomeLabel": "Thu nhập:",
+        "expensesLabel": "Chi tiêu:",
+        "kpi": {
+          "dailyPace": "Daily pace",
+          "perDay": "/ day",
+          "allowedPerDay": "allowed {amount} / day · {elapsed} of {total} days",
+          "neededPerDay": "needed {amount} / day · {elapsed} of {total} days",
+          "daysElapsed": "{elapsed} of {total} days",
+          "projectedTotal": "Projected total",
+          "projectedLimit": "at this pace · limit {amount}",
+          "averagePerDay": "Average per day",
+          "firstTransaction": "First transaction",
+          "lastTransaction": "Last transaction",
+          "transactions": "Transactions",
+          "avgAmount": "avg {amount}",
+          "biggestDay": "Biggest day",
+          "shareOfTotal": "{percent}% of total"
+        },
+        "byCategory": "By category",
+        "categoriesCount": "{count} category | {count} categories",
+        "byCurrency": "By currency",
+        "asPaid": "as paid",
+        "timeline": "Timeline",
+        "todayMarker": "today {date}",
+        "timelineAria": "Cumulative spending over time with per-period bars",
+        "limitLabel": "{amount} limit",
+        "cumulativeLabel": "Cumulative",
+        "legend": {
+          "cumulative": "Spent, cumulative",
+          "earnedCumulative": "Earned, cumulative",
+          "evenPace": "Even pace to the limit",
+          "projection": "Projection",
+          "daily": "Per day",
+          "weekly": "Per week",
+          "monthly": "Per month"
+        },
+        "topPayees": "Top payees",
+        "bySpend": "by spend",
+        "noPayee": "No payee",
+        "txCount": "{count} tx"
+      },
+      "sharing": {
+        "inviteAnother": "Mời người khác",
+        "membersHeading": "Thành viên",
+        "pendingHeading": "Pending invitations",
+        "loadError": "Không thể tải danh sách thành viên.",
+        "permissions": {
+          "read": "Chỉ xem",
+          "write": "Liên kết giao dịch của riêng bạn",
+          "manage": "Manage"
+        },
+        "member": {
+          "you": "Bạn",
+          "roleOwner": "Chủ sở hữu",
+          "roleRecipient": "Thành viên",
+          "ownerHint": "Toàn quyền kiểm soát ngân sách này",
+          "updateSuccess": "Permission updated.",
+          "updateError": "Couldn't update permission.",
+          "revoke": "Thu hồi quyền truy cập",
+          "revokeConfirm": "Thu hồi",
+          "revokeTitle": "Thu hồi quyền truy cập?",
+          "revokeDescription": "{user} sẽ mất quyền truy cập vào {budget}.",
+          "revokeSuccess": "Đã thu hồi quyền truy cập.",
+          "revokeError": "Không thể thu hồi quyền truy cập."
+        },
+        "pending": {
+          "empty": "Không có lời mời nào đang chờ xử lý.",
+          "resend": "Resend",
+          "resendSuccess": "Invitation resent.",
+          "resendError": "Không thể gửi lại lời mời.",
+          "resendDeliveryFailed": "Đã gửi lại lời mời nhưng không gửi được email.",
+          "cancel": "Cancel",
+          "cancelConfirm": "Cancel invitation",
+          "cancelTitle": "Cancel invitation?",
+          "cancelDescription": "Lời mời gửi đến {email} sẽ bị hủy.",
+          "cancelSuccess": "Invitation cancelled.",
+          "cancelError": "Không thể hủy lời mời."
+        }
+      }
+    }
+  }
+}

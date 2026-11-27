@@ -1,0 +1,141 @@
+import {
+  SUBSCRIPTION_CANDIDATE_STATUS,
+  SUBSCRIPTION_FREQUENCIES,
+  SUBSCRIPTION_INTERVAL_UNITS,
+  RecordId,
+} from '@bt/shared/types';
+import { CURRENCY_CODE_MAX_LENGTH } from '@common/lib/currency-code-columns';
+import { IdColumn } from '@common/types/id-column';
+import { Money } from '@common/types/money';
+import { MoneyField } from '@common/types/money-column';
+import { Table, Column, Model, ForeignKey, BelongsTo, DataType } from 'sequelize-typescript';
+
+import Accounts from './accounts.model';
+import Subscriptions from './subscriptions.model';
+import Users from './users.model';
+
+@Table({
+  tableName: 'SubscriptionCandidates',
+  timestamps: false,
+  freezeTableName: true,
+})
+export default class SubscriptionCandidates extends Model {
+  @Column(IdColumn())
+  declare id: RecordId;
+
+  @ForeignKey(() => Users)
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: false,
+  })
+  userId!: number;
+
+  @Column({
+    type: DataType.STRING(200),
+    allowNull: false,
+  })
+  suggestedName!: string;
+
+  // VARCHAR + TS-side enum (project convention: no DB enums), guarded by a CHECK.
+  @Column({
+    type: DataType.STRING(50),
+    allowNull: false,
+  })
+  detectedFrequency!: SUBSCRIPTION_FREQUENCIES;
+
+  // The detected step when `detectedFrequency` is `custom`; both null for the presets.
+  @Column({
+    type: DataType.STRING(10),
+    allowNull: true,
+  })
+  detectedIntervalUnit!: SUBSCRIPTION_INTERVAL_UNITS | null;
+
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: true,
+  })
+  detectedIntervalCount!: number | null;
+
+  @MoneyField()
+  declare averageAmount: Money;
+
+  @Column({
+    type: DataType.STRING(CURRENCY_CODE_MAX_LENGTH),
+    allowNull: false,
+  })
+  currencyCode!: string;
+
+  @ForeignKey(() => Accounts)
+  @Column({
+    type: DataType.UUID,
+    allowNull: true,
+  })
+  accountId!: RecordId | null;
+
+  @Column({
+    type: DataType.ARRAY(DataType.UUID),
+    allowNull: false,
+    defaultValue: [],
+  })
+  sampleTransactionIds!: RecordId[];
+
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: false,
+  })
+  occurrenceCount!: number;
+
+  @Column({
+    type: DataType.FLOAT,
+    allowNull: false,
+  })
+  confidenceScore!: number;
+
+  @Column({
+    type: DataType.FLOAT,
+    allowNull: false,
+  })
+  medianIntervalDays!: number;
+
+  @Column({
+    type: DataType.ENUM(...Object.values(SUBSCRIPTION_CANDIDATE_STATUS)),
+    allowNull: false,
+    defaultValue: SUBSCRIPTION_CANDIDATE_STATUS.pending,
+  })
+  status!: SUBSCRIPTION_CANDIDATE_STATUS;
+
+  @ForeignKey(() => Subscriptions)
+  @Column({
+    type: DataType.UUID,
+    allowNull: true,
+  })
+  subscriptionId!: RecordId | null;
+
+  @Column({
+    type: DataType.DATE,
+    allowNull: false,
+    defaultValue: DataType.NOW,
+  })
+  detectedAt!: Date;
+
+  @Column({
+    type: DataType.DATE,
+    allowNull: true,
+  })
+  lastOccurrenceAt!: Date | null;
+
+  @Column({
+    type: DataType.DATE,
+    allowNull: true,
+  })
+  resolvedAt!: Date | null;
+
+  @BelongsTo(() => Users)
+  user!: Users;
+
+  @BelongsTo(() => Accounts)
+  account!: Accounts;
+
+  @BelongsTo(() => Subscriptions)
+  subscription!: Subscriptions;
+}

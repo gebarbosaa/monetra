@@ -1,0 +1,185 @@
+---
+title: Assigning and rollover
+description: Give each line its amount for one period or from now on, go back to a line's usual amount, move money between lines, choose what happens to leftovers and overspending when a period ends, and reset rollover to start a period fresh.
+sidebar:
+  order: 3
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+import Screenshot from '~/components/screenshot.astro';
+
+Assigning is how you tell a line how much it can spend. Rollover decides what happens to the money that's left, or missing, when the period ends.
+
+## How Available is worked out
+
+For every line and period:
+
+**Available** = money carried over from the last period + **Assigned** + **Activity**
+
+**Activity** is negative when you spend, so spending lowers **Available**. The [side panel](/budgeting/side-panel/#breakdown) shows this sum for any line under **Breakdown**.
+
+## Assign money to a line
+
+<Steps>
+
+1. Click the amount in the line's **Assigned** column. A window opens with the line's name at the top.
+2. Enter the amount under **Assigned**. A preview shows the line's available amount before and after.
+3. Under **Amount applies to**, choose **This period only** or **From now on**.
+4. Press Enter or click **Save**.
+
+</Steps>
+
+<Screenshot
+  src="/screenshots/budgeting/assign-popover.png"
+  alt="The assign window for a Groceries line with 5,000 entered under Assigned, the Groceries available preview going from $181.54 to $381.54, From now on selected under Amount applies to, and the Rollover rule below with the hint Applies from this period on."
+  hint="On /budget, click the Assigned amount of the Groceries line. Type an amount 200 above what it has, and keep From now on. Show the Assigned field, the available preview, the Amount applies to tabs, the Rollover select with its hint, 'Enter to save' and the Cancel and Save buttons. Crop to the window and the row it opened from."
+/>
+
+## This period only or from now on
+
+Every line has a usual amount that repeats, and any period can make an exception.
+
+- **From now on** sets the line's usual amount, its baseline. It applies to the period you're viewing and every period after it, until a later period sets a different **From now on** amount. Earlier periods keep what they had.
+- **This period only** is a one-off. Only the period you're viewing uses it, and the next period goes back to the usual amount. The line shows an **override** badge in that period.
+
+For example, you set Groceries to 400 **From now on** in March. April, May and every month after start with 400. In May you're hosting guests, so you set 500 **This period only**. June is back to 400.
+
+The window starts on **From now on**, unless the period already has a one-off amount. Then it starts on **This period only**, so a quick change doesn't overwrite the usual amount by accident.
+
+### Go back to the usual amount
+
+When a period has a one-off amount, the window shows **Use baseline** under **Amount applies to**. Click it to remove the one-off, and the period uses the line's usual amount again.
+
+### Assign ahead
+
+Use the arrows next to the period at the top of the budget, or click the period to pick one from the list, to open a later period. You can assign money up to 12 periods ahead. The current period is marked **Current** in the list.
+
+<Aside type="note" title="Other ways to assign">
+**Budget X** on a [goal](/budgeting/goals/#see-what-a-goal-needs) adds money on top of what the line already has, for this period only. With [Ready to assign](/budgeting/ready-to-assign/#assign-from-ready-to-assign) on, its **Assign** menu can fund several lines at once.
+</Aside>
+
+## Move money between lines
+
+When a line runs short, take the money from a line that has some left instead of raising your total.
+
+<Steps>
+
+1. Open the **⋯** menu at the end of a line and choose **Move money**.
+2. Check **From** and **To**. Opened on an overspent line, that line is **To**, **From** is the line with the most to give, and the amount covers as much of the overspending as that line can give. Opened on any other line, that line is **From**. The arrows button swaps them.
+3. Type the amount under **How much?**, or click **Cover the overspend** or **All it can give**.
+4. Check the preview: both lines' available amounts, before and after.
+5. Click **Move X**.
+
+</Steps>
+
+<Screenshot
+  src="/screenshots/budgeting/move-money.png"
+  alt="The Move money window moving $722.09 from Hobbies and leisure to the overspent Transport and taxi line, with the Cover the overspend and All it can give buttons and the preview of both lines' available amounts."
+  hint="On /budget, open the ⋯ menu of an overspent line and choose Move money. Keep the suggested From line and amount. Crop to the window."
+/>
+
+The move changes **Assigned** in both lines, for this period only. A line can give only money that's assigned to it and not yet spent. If you type more, you'll see how much it can give at most, and the button moves that amount instead.
+
+After the move, click **Undo** in the message to put both lines back. **Move money** shows once your budget has at least two lines that aren't archived.
+
+## Rollover
+
+Rollover decides what a line brings into a new period from the one before. There are three rules:
+
+| Rule | What happens |
+|---|---|
+| **Carry surplus** (the default) | Money left in a line moves to the next period. Overspending does not. |
+| **Carry surplus and deficit** | Both leftovers and overspending move to the next period. |
+| **Start fresh each period** | Every line starts at zero, whatever happened before. |
+
+Here's what a Groceries line with 400 assigned every month starts April with:
+
+| March ended with | Carry surplus | Carry surplus and deficit | Start fresh each period |
+|---|---|---|---|
+| 50 left | 450 | 450 | 400 |
+| 50 overspent | 400 | 350 | 400 |
+
+A line using **Carry surplus and deficit** shows a **carries deficit** badge.
+
+<Aside type="tip" title="Want a clean slate?">
+To drop everything that carried into a period at once, use [Reset rollover](#reset-rollover).
+</Aside>
+
+### Choose a rule for the whole budget
+
+You pick the rule when you [create the budget](/budgeting/start-budgeting/#create-your-budget), under **Rollover**. To change it later:
+
+<Steps>
+
+1. Click **Budget settings** at the top right of the budget.
+2. Under **Rollover default**, pick a rule. It saves right away.
+
+</Steps>
+
+Every line without its own rule follows the budget's rule, in every period. Changing it recalculates those lines, past periods included.
+
+### Give a line its own rule
+
+<Steps>
+
+1. Click the line's **Assigned** amount in the period where the new rule should start.
+2. Pick a rule under **Rollover**. The hint reminds you it applies from this period on.
+3. Click **Save**.
+
+</Steps>
+
+The line keeps that rule in every later period, until you pick another one.
+
+<Aside type="tip" title="The rule decides what a period brings in">
+A period's rule decides what it takes over from the period before. For example, if you switch a line to **Start fresh each period** in April, April starts without March's leftovers.
+</Aside>
+
+### Where money that doesn't roll over goes
+
+Money that isn't carried simply isn't counted any more. The next period starts from the new **Assigned** amount.
+
+If your budget uses [Ready to assign](/budgeting/ready-to-assign/), leftovers that don't roll over go back to it, and overspending that doesn't roll over comes out of it.
+
+## Reset rollover
+
+Sometimes you want a period to start clean: a new year, a new job, or a budget that drifted after a few messy months. **Reset rollover** makes every line start the period with only what you assign. Leftovers and overspending from earlier periods don't carry in, whatever the lines' rollover rules say.
+
+<Steps>
+
+1. Open the period you want to start fresh. It can be the current period, a past one or a future one.
+2. Click **Options** above the lines and choose **Reset rollover**.
+
+   <Screenshot
+     src="/screenshots/budgeting/reset-rollover-menu.png"
+     alt="The open Options menu on the budget, with Row bars, Pace hint and Manage layout, and Reset rollover at the bottom."
+     hint="On /budget for the seeded Household budget, current period, click Options above the grid and hover Reset rollover. Crop to the Options button and the open menu."
+   />
+
+3. Click **Reset** to confirm.
+
+   <Screenshot
+     src="/screenshots/budgeting/reset-rollover-dialog.png"
+     alt="The Reset rollover for this period? window explaining that every line starts the period with only what you assign, with Cancel and Reset buttons."
+     hint="On /budget, open Options → Reset rollover and don't confirm. Crop to the window."
+   />
+
+</Steps>
+
+For example, Groceries has 400 assigned every month and uses **Carry surplus**. October ended with 150 left, so November would start with 550. Reset rollover on November, and it starts with 400. December carries over whatever November ends with, as usual.
+
+What a reset changes, and what it leaves alone:
+
+- It applies to **every line**, lines with a goal included.
+- **Assigned** amounts, **Activity** and the lines' rollover rules stay as they are. In the [side panel](/budgeting/side-panel/#breakdown), **Carried over** shows 0 for that period.
+- Only the period you reset starts fresh. Later periods carry over from its new balance as usual.
+- It stays in place when earlier periods change. If you later add a forgotten October expense, November still starts fresh.
+
+### Undo a reset
+
+Open the same period, click **Options** and choose **Undo reset**. It takes effect right away, without asking. The period carries over again from the period before, using today's numbers.
+
+## Related
+
+- [Budget lines and groups](/budgeting/lines-and-groups/)
+- [Ready to assign](/budgeting/ready-to-assign/)
+- [Goals](/budgeting/goals/)

@@ -1,0 +1,53 @@
+{
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "sourceMap": true,
+    "allowJs": true,
+    "noUncheckedIndexedAccess": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@routes/*": [
+        "packages/backend/src/routes/*"
+      ],
+      "@middlewares/*": [
+        "packages/backend/src/middlewares/*"
+      ],
+      "@crons/*": [
+        "packages/backend/src/crons/*"
+      ],
+      "@common/*": [
+        "packages/backend/src/common/*"
+      ],
+      "@controllers/*": [
+        "packages/backend/src/controllers/*"
+      ],
+      "@models/*": [
+        "packages/backend/src/models/*"
+      ],
+      "@tests/*": [
+        "packages/backend/src/tests/*"
+      ],
+      "@js/*": [
+        "packages/backend/src/js/*"
+      ],
+      "@i18n/*": [
+        "packages/backend/src/i18n/*"
+      ],
+      "@root/*": [
+        "packages/backend/src/*"
+      ],
+      "@bt/shared/*": [
+        "packages/shared/src/*"
+      ],
+      "@services/*": [
+        "packages/backend/src/services/*"
+      ],
+      "@config/*": [
+        "packages/backend/src/config/*"
+      ]
+    }
+  }
+}

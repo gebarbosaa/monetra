@@ -1,0 +1,382 @@
+{
+  "transactions": {
+    "filters": {
+      "filtersLabel": "Filter",
+      "selectFilters": "Filter auswählen",
+      "reset": "Zurücksetzen",
+      "apply": "Anwenden",
+      "dateRange": {
+        "placeholder": "Datum oder Zeitraum",
+        "presets": {
+          "thisMonth": "Diesen Monat",
+          "last3Months": "Letzte 3 Monate",
+          "last6Months": "Letzte 6 Monate",
+          "last12Months": "Letzte 12 Monate",
+          "lastMonth": "Letzter Monat",
+          "thisYear": "Dieses Jahr",
+          "lastYear": "Letztes Jahr"
+        }
+      },
+      "transactionType": {
+        "label": "Transaktionstyp:",
+        "income": "Einnahmen",
+        "expense": "Ausgaben",
+        "allTypes": "Alle Arten"
+      },
+      "amountRange": {
+        "from": "Betrag von (>=)",
+        "to": "Bis (<=)",
+        "placeholderFrom": ">= als",
+        "placeholderTo": "<= als",
+        "compactFrom": "Min. Betrag",
+        "compactTo": "Max. Betrag"
+      },
+      "refundsFilter": {
+        "label": "Rückerstattungen"
+      },
+      "transferFilter": {
+        "label": "Umbuchungen"
+      },
+      "plannedFilter": {
+        "label": "Geplant"
+      },
+      "attachments": {
+        "label": "Anhänge"
+      },
+      "filterOperation": {
+        "all": "Alle",
+        "exclude": "Ohne",
+        "only": "Nur"
+      },
+      "search": {
+        "placeholder": "Notizen, Zahlungsempfänger und Tags durchsuchen"
+      },
+      "tags": {
+        "allTags": "Alle Tags",
+        "tagSingular": "Tag",
+        "tagPlural": "Tags",
+        "selected": "ausgewählt",
+        "searchPlaceholder": "Tags suchen...",
+        "blankOption": "Keine Tags"
+      },
+      "payees": {
+        "label": "Zahlungsempfänger",
+        "selectedOne": "1 Zahlungsempfänger ausgewählt",
+        "selectedMany": "{n} Zahlungsempfänger ausgewählt"
+      },
+      "removeFilter": "Filter entfernen",
+      "menu": {
+        "type": "Typ",
+        "tags": "Tags",
+        "budgets": "Tracker",
+        "amount": "Betragsbereich"
+      },
+      "transferNature": {
+        "label": "Alle Umbuchungsarten",
+        "disabledTooltip": "Umbuchungen sind durch den obigen Filter ausgeschlossen, daher haben Umbuchungsarten keine Auswirkung.",
+        "commonTransfer": "Zwischen Konten",
+        "outOfWallet": "Extern",
+        "toPortfolio": "Portfolio",
+        "toVenture": "Beteiligung",
+        "selectedCount": "{n} ausgewählt"
+      }
+    },
+    "list": {
+      "noMoreData": "Keine weiteren Transaktionen",
+      "loadingMore": "Mehr laden...",
+      "detailsTitle": "Transaktionsdetails",
+      "detailsDescription": "Transaktion anzeigen und bearbeiten"
+    },
+    "bulkEdit": {
+      "selectAll": "Alle auswählen",
+      "selectAllShort": "Alle",
+      "cancelSelection": "Auswahl aufheben",
+      "editButton": "Bearbeiten",
+      "selectedCount": "{count} ausgewählt",
+      "matchingCount": "Gesamt: {count}",
+      "dialogTitle": "{count} Transaktionen bearbeiten",
+      "dialogDescription": "Änderungen werden auf alle ausgewählten Transaktionen angewendet. Nur ausgefüllte Felder werden aktualisiert.",
+      "categoryLabel": "Kategorie",
+      "categoryPlaceholder": "Kategorie auswählen...",
+      "payeeLabel": "Zahlungsempfänger",
+      "payeePlaceholder": "Zahlungsempfänger auswählen...",
+      "tagsLabel": "Tags",
+      "tagsPlaceholder": "Tags auswählen...",
+      "noteLabel": "Notiz",
+      "notePlaceholder": "Notiz eingeben...",
+      "applyButton": "Änderungen anwenden",
+      "applyingButton": "Wird angewendet...",
+      "confirmTitle": "Änderungen bestätigen",
+      "confirmDescription": "Du bist dabei, {count} Transaktionen zu aktualisieren:",
+      "confirmCategoryLabel": "Kategorie",
+      "confirmPayeeLabel": "Zahlungsempfänger",
+      "confirmTagsLabel": "Tags",
+      "confirmNoteLabel": "Notiz",
+      "cancelButton": "Abbrechen",
+      "confirmApplyButton": "Anwenden",
+      "successMessage": "{count} Transaktionen erfolgreich aktualisiert",
+      "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten",
+      "tagModeLabel": "Tag-Aktion",
+      "tagModeAdd": "Zu bestehenden Tags hinzufügen",
+      "tagModeReplace": "Alle Tags ersetzen",
+      "tagModeRemove": "Diese Tags entfernen",
+      "tagModeAddShort": "Hinzufügen",
+      "tagModeReplaceShort": "Ersetzen",
+      "tagModeRemoveShort": "Entfernen",
+      "tagModeAddHint": "Behält die aktuellen Tags bei und fügt diese hinzu.",
+      "tagModeReplaceHint": "Entfernt alle aktuellen Tags und fügt dann diese hinzu.",
+      "tagModeRemoveHint": "Entfernt nur diese Tags. Andere Tags bleiben erhalten.",
+      "excludeFromStatsHint": "\"Ein\" schließt die ausgewählten Transaktionen aus Berichten, Dashboard-Widgets, Budgets und Trackern aus. \"Aus\" bezieht sie wieder ein. Kontostände sind davon nicht betroffen.",
+      "excludeFromStatsDontChange": "Statistiken nicht ändern",
+      "confirmExcludeFromStats": "Aus Statistiken ausschließen",
+      "confirmIncludeInStats": "In Statistiken einbeziehen",
+      "totals": {
+        "income": "Einnahmen",
+        "expense": "Ausgaben",
+        "net": "Netto",
+        "transfers": "Umbuchungen"
+      }
+    },
+    "transactionGroups": {
+      "bulkActions": {
+        "createNewGroup": "Neue Gruppe erstellen",
+        "addToExistingGroup": "Zu bestehender Gruppe hinzufügen",
+        "groupButton": "Gruppieren"
+      },
+      "addToGroupDialog": {
+        "title": "Zu bestehender Gruppe hinzufügen",
+        "searchPlaceholder": "Gruppen suchen...",
+        "noGroupsMessage": "Noch keine Gruppen. Erstelle zuerst eine.",
+        "noSearchResultsMessage": "Keine Gruppen entsprechen deiner Suche.",
+        "addingText": "Wird hinzugefügt...",
+        "buttonLabel": "Zu Gruppe hinzufügen",
+        "cancelButton": "Abbrechen",
+        "transactionCountLabel": "Transaktionen"
+      },
+      "createGroupDialog": {
+        "title": "Transaktionsgruppe erstellen",
+        "descriptionPrefix": "Gruppe",
+        "groupNameLabel": "Name",
+        "groupNamePlaceholder": "z.B. Gehaltsumbuchung Mai",
+        "noteLabel": "Notiz (optional)",
+        "notePlaceholder": "Optionale Beschreibung...",
+        "creatingText": "Wird erstellt...",
+        "buttonLabel": "Gruppe erstellen",
+        "cancelButton": "Abbrechen"
+      },
+      "groupsPage": {
+        "title": "Transaktionsgruppen",
+        "searchPlaceholder": "Gruppen suchen...",
+        "noGroupsMessage": "Noch keine Transaktionsgruppen.",
+        "emptyStateHint": "Wähle Transaktionen auf der Transaktionsseite aus und klicke auf \"Gruppe erstellen\", um zu starten.",
+        "transactionCountLabel": "Transaktionen",
+        "deleteError": "Gruppe konnte nicht gelöscht werden. Bitte versuche es erneut.",
+        "loadError": "Transaktionsgruppen konnten nicht geladen werden",
+        "description": "Bündele zusammengehörige Transaktionen, wie eine Reise oder eine Umbuchungskette, und sieh sie dir gemeinsam an.",
+        "noMatchTitle": "Keine Gruppen entsprechen deiner Suche",
+        "moreActions": "Weitere Aktionen für {name}",
+        "columns": {
+          "name": "Name",
+          "transactions": "Transaktionen",
+          "date": "Datum",
+          "net": "Netto"
+        },
+        "sort": {
+          "label": "Gruppen sortieren",
+          "dateDesc": "Neueste zuerst",
+          "dateAsc": "Älteste zuerst",
+          "nameAsc": "Name A–Z",
+          "nameDesc": "Name Z–A",
+          "amountDesc": "Netto: hoch zu niedrig",
+          "amountAsc": "Netto: niedrig zu hoch"
+        }
+      },
+      "errors": {
+        "nameRequired": "Gruppenname ist erforderlich",
+        "minTransactions": "Wähle mindestens {min} Transaktionen aus",
+        "alreadyInGroup": "Einige ausgewählte Transaktionen gehören bereits zu einer Gruppe",
+        "tooManyTransactions": "Eine Gruppe kann bis zu {max} Transaktionen enthalten, hiermit wären es {count}. Bei Umbuchungen zählen beide Seiten. Hebe die Auswahl einiger Transaktionen auf oder teile sie auf mehrere Gruppen auf.",
+        "alreadyInNamedGroup": "Einige ausgewählte Transaktionen befinden sich bereits in: {name}. Eine Transaktion kann nur in einer Gruppe sein – entferne sie zuerst dort.",
+        "createFailed": "Gruppe konnte nicht erstellt werden",
+        "addFailed": "Transaktionen konnten nicht zur Gruppe hinzugefügt werden"
+      }
+    },
+    "excludeFromStats": {
+      "label": "Von Statistiken ausgeschlossen",
+      "tooltip": "Wird aus Berichten, Dashboard-Widgets, Budgetplänen und Trackern herausgehalten. Zählt weiterhin zu deinem Saldo und bleibt in der Transaktionsliste."
+    },
+    "planned": {
+      "label": "Geplant",
+      "confirmedLabel": "Bestätigt",
+      "plannedTooltip": "Geplante Transaktion",
+      "expiredTooltip": "Vor {days} Tagen erwartet, keine passende Banktransaktion",
+      "mergedTooltip": "Bestätigt aus geplantem Eintrag am {date}"
+    },
+    "pending": {
+      "label": "Ausstehend",
+      "tooltip": "Die Bank hat diese Transaktion noch nicht gebucht. Sie hat keinen Einfluss auf den Kontostand."
+    },
+    "table": {
+      "columns": {
+        "date": "Datum",
+        "account": "Konto",
+        "category": "Kategorie",
+        "payee": "Zahlungsempfänger",
+        "amount": "Betrag",
+        "refAmount": "Basisbetrag",
+        "originalAmount": "Ursprünglicher Betrag",
+        "note": "Notiz",
+        "tags": "Tags",
+        "categorizationSource": "Kategorisiert durch",
+        "group": "Gruppe",
+        "refund": "Erstattung",
+        "split": "Aufteilung"
+      },
+      "outOfWallet": "Extern",
+      "hint": "Klicke auf eine Zelle, um sie zu bearbeiten, oder auf ↗, um die vollständige Transaktion zu öffnen. Wähle Zeilen aus, um sie gesammelt zu bearbeiten.",
+      "plannedRows": "{count} geplante Transaktionen",
+      "emptyTitle": "Keine Transaktionen entsprechen diesen Filtern",
+      "emptyDescription": "Versuche, die Filter anzupassen oder zurückzusetzen.",
+      "columnConfig": {
+        "title": "Tabelleneinstellungen",
+        "columns": "Spalten",
+        "visibleCount": "{count} sichtbar",
+        "resetDefaults": "Auf Standardwerte zurücksetzen",
+        "alwaysShowLockedCells": {
+          "label": "Gesperrte Felder immer anzeigen",
+          "description": "Zellen, die du hier nicht bearbeiten kannst, in jeder Zeile schattieren, nicht nur beim Drüberfahren."
+        }
+      },
+      "categorizationSourceValues": {
+        "manual": "Manuell",
+        "ai": "KI",
+        "user_rule": "Benutzerregel",
+        "subscription_rule": "Abo-Regel",
+        "payee_rule": "Zahlungsempfänger-Regel"
+      },
+      "viewToggle": {
+        "list": "Listenansicht",
+        "table": "Tabellenansicht"
+      },
+      "fullscreen": {
+        "enter": "Fokusmodus",
+        "exit": "Fokusmodus verlassen"
+      }
+    },
+    "bulkDelete": {
+      "button": "Löschen",
+      "externalTooltip": "Die Auswahl enthält mit deiner Bank synchronisierte Transaktionen oder Transaktionen, die auf oder nach dem Tag der Kontoverknüpfung datiert sind, und kann nicht gelöscht werden.",
+      "confirmButton": "Löschen",
+      "confirmTitle": "{count} Transaktionen löschen?",
+      "confirmDescription": "Sie bleiben 30 Tage im Papierkorb und du kannst sie bis dahin wiederherstellen. Umbuchungen verschieben beide Seiten.",
+      "successMessage": "1 Transaktion in den Papierkorb verschoben | {count} Transaktionen in den Papierkorb verschoben",
+      "skippedMessage": "1 wurde übersprungen, da es mit einer Zahlung, einem Portfolio oder einem Venture verknüpft ist. | {count} wurden übersprungen, da sie mit einer Zahlung, einem Portfolio oder einem Venture verknüpft sind.",
+      "noneDeletedMessage": "Nichts in den Papierkorb verschoben: 1 Transaktion ist mit einer Zahlung, einem Portfolio oder einem Venture verknüpft. | Nichts in den Papierkorb verschoben: {count} Transaktionen sind mit einer Zahlung, einem Portfolio oder einem Venture verknüpft.",
+      "unexpectedError": "Transaktionen konnten nicht gelöscht werden. Bitte versuche es erneut."
+    },
+    "bankSeamDateError": "Dieses Konto wird seit {date} mit deiner Bank synchronisiert. Wähle ein früheres Datum.",
+    "inlineEdit": {
+      "saveFailed": "{field} konnte nicht gespeichert werden. Versuche es erneut.",
+      "bankTitle": "Von deiner Bank festgelegt",
+      "bankDescription": "Datum, Konto und Betrag werden von deiner Bankverbindung synchronisiert. Alles andere an dieser Transaktion kannst du ändern.",
+      "bankAccountTitle": "Mit einer Bank verbunden",
+      "bankAccountDescription": "Dieses Konto ist mit einer Bank verbunden, daher kann die Transaktion nicht auf ein anderes Konto verschoben werden. Alles andere daran kannst du beliebig ändern.",
+      "manualAfterLinkTitle": "Seit der Bankverknüpfung gesperrt",
+      "manualAfterLinkDescription": "Dieses Konto wird seit {date} mit deiner Bank synchronisiert, daher kann diese Transaktion nicht gelöscht werden und ihr Datum sowie ihr Betrag können nicht mehr geändert werden.",
+      "managedTitle": "An anderer Stelle verwaltet",
+      "managedDescription": "Diese Transaktion gehört zu einem Portfolio, einer Investition, einem Fahrzeug oder einem Kredit. Ändere sie auf der jeweiligen Seite, damit die Salden korrekt bleiben.",
+      "gotIt": "Verstanden",
+      "openDetails": "Details öffnen",
+      "tooManyTags": "Bis zu {max} Tags pro Transaktion"
+    },
+    "savedViews": {
+      "trigger": "Ansichten",
+      "empty": "Noch keine gespeicherten Ansichten. Richte Filter ein und speichere sie dann als Ansicht.",
+      "modified": "Filter geändert",
+      "update": "\"{name}\" mit aktuellen Filtern aktualisieren",
+      "updateShort": "Ansicht aktualisieren",
+      "revert": "Zurücksetzen",
+      "saveNew": "Als neue Ansicht speichern",
+      "actions": "Aktionen für Ansicht",
+      "rename": "Umbenennen",
+      "moveUp": "Nach oben verschieben",
+      "moveDown": "Nach unten verschieben",
+      "saveTitle": "Ansicht speichern",
+      "renameTitle": "Ansicht umbenennen",
+      "dialogDescription": "Eine Ansicht speichert die aktuellen Filter und die Sortierung, damit du sie mit einem Klick wieder anwenden kannst.",
+      "nameLabel": "Name",
+      "namePlaceholder": "z.B. Lebensmittel, letzte 3 Monate",
+      "savedToast": "Ansicht gespeichert",
+      "updatedToast": "Ansicht aktualisiert",
+      "deletedToast": "Ansicht gelöscht",
+      "saveError": "Deine Ansichten konnten nicht gespeichert werden. Versuche es erneut.",
+      "deleteTitle": "Ansicht \"{name}\" löschen?",
+      "deleteDescription": "Deine Transaktionen sind davon nicht betroffen. Dies kann nicht rückgängig gemacht werden.",
+      "filtersCount": "{count} Filter | {count} Filter"
+    },
+    "trashPage": {
+      "title": "Papierkorb",
+      "description": "Neueste Löschungen zuerst. Jeder Eintrag wird nach {days} Tagen endgültig entfernt. Wähle einen aus, um zu sehen, was damit wiederhergestellt wird.",
+      "expiringBanner": "{count} wird innerhalb von {days} endgültig gelöscht.",
+      "expiringCount": "1 Transaktion | {count} Transaktionen",
+      "expiringDays": "1 Tag | {count} Tagen",
+      "loadError": "Papierkorb konnte nicht geladen werden",
+      "emptyTitle": "Papierkorb ist leer",
+      "emptyDescription": "Gelöschte Transaktionen bleiben {days} Tage hier, bevor sie endgültig entfernt werden.",
+      "daysLeft": "Noch 1 Tag | Noch {count} Tage",
+      "deletedOn": "gelöscht am {date}",
+      "transferTitle": "Umbuchung von {from} zu {to}",
+      "unknownAccount": "Unbekanntes Konto",
+      "restore": "Wiederherstellen",
+      "deletePermanently": "Endgültig löschen",
+      "deleteConfirmTitle": "Endgültig löschen?",
+      "deleteConfirmDescription": "Diese Transaktion wird endgültig entfernt. Dies kann nicht rückgängig gemacht werden.",
+      "notifications": {
+        "restored": "Transaktion wiederhergestellt",
+        "restoreError": "Transaktion konnte nicht wiederhergestellt werden",
+        "deleted": "Transaktion endgültig gelöscht",
+        "deleteError": "Transaktion konnte nicht gelöscht werden",
+        "restoredWithDroppedRefundLinks": "Wiederhergestellt. 1 Erstattungsverknüpfung konnte nicht wiederhergestellt werden, da sie nicht mehr passt. | Wiederhergestellt. {count} Erstattungsverknüpfungen konnten nicht wiederhergestellt werden, da sie nicht mehr passen."
+      },
+      "comesBack": {
+        "title": "Wird wiederhergestellt mit",
+        "basics": "Kategorie, Notiz und Zahlungsempfänger",
+        "splits": "1 Aufteilung | {n} Aufteilungen",
+        "tags": "1 Tag | {n} Tags",
+        "attachments": "1 Anhang | {n} Anhänge",
+        "otherLeg": "Gegenbuchung: {accountName} · {amountText}",
+        "balance": "Kontosaldo wird neu berechnet",
+        "balances": "Beide Salden werden neu berechnet",
+        "counterpartInTrash": "Wird wiederhergestellt, wenn die verknüpfte Transaktion ebenfalls wiederhergestellt wird.",
+        "links": {
+          "refund": "Erstattungsverknüpfung mit \"{name}\"",
+          "tracker": "Tracker \"{name}\"",
+          "group": "Gruppe \"{name}\"",
+          "subscription": "Abonnement \"{name}\"",
+          "subscriptionPeriod": "Abonnementzahlung fällig am {name}",
+          "unnamed": "Ohne Titel"
+        }
+      }
+    }
+  },
+  "records": {
+    "upcomingSection": {
+      "title": "Anstehend",
+      "overdueBadge": "Überfällig",
+      "scheduledBadge": "Geplant",
+      "payAction": "Bezahlt",
+      "hideToggle": "Anstehende Zahlungen ausblenden",
+      "expectedBadge": "Erwartet",
+      "unconfirmedBadge": "Unbestätigt",
+      "morePlans": "+{count} weitere geplant",
+      "morePlansAtLeast": "+{count}+ weitere geplant",
+      "deletePlanTitle": "Geplante Transaktion löschen?",
+      "deletePlanDescription": "Es bleibt 30 Tage im Papierkorb und du kannst es bis dahin wiederherstellen.",
+      "plansLoadFailed": "Geplante Transaktionen konnten nicht geladen werden",
+      "confirmAction": "Bestätigen",
+      "confirmTooltip": "Das Geld wurde bewegt — erfasse es und aktualisiere den Kontostand",
+      "confirmPlanSuccess": "Planung erfasst — Kontostand aktualisiert",
+      "confirmPlanError": "Planung konnte nicht erfasst werden"
+    }
+  }
+}
