@@ -31,9 +31,9 @@ Fontes oficiais consultadas:
 2. **Concluído em 27/11/2026:** branch Neon `preview` criada como clone isolado da branch `main`; o banco de Preview está separado.
 3. **Concluído em 27/11/2026:** bucket privado `monetra-attachments` criado na branch principal e herdado pela branch `preview`; credencial com escopos `storage:read` e `storage:write` emitida.
 4. **Concluído em 27/11/2026:** variáveis criptografadas de PostgreSQL e Object Storage cadastradas no Vercel somente para Preview da branch `infra/production-readiness`.
-5. Criar um banco Redis exclusivo no Upstash Free e cadastrar `APPLICATION_REDIS_URL` no Preview.
-6. Validar migrações, filas, anexos, autenticação e health checks. Só então configurar Production e publicar.
-7. Confirmar que nenhum serviço exige cartão, upgrade, plano pago ou faturamento por excedente. Se exigir, interromper e escolher outra opção gratuita.
+5. **Concluído temporariamente em 27/11/2026:** Upstash Redis Free sem cadastro foi provisionado para Preview; `APPLICATION_REDIS_URL` está criptografada no Vercel. A base expira em 30/11/2026 se não for reivindicada pelo proprietário no console da Upstash.
+6. Validar migrações, filas, anexos, autenticação e health checks. O banco Redis só pode ser usado para testes até ser reivindicado.
+7. Só então configurar Production e publicar. Confirmar que nenhum serviço exige cartão, upgrade, plano pago ou faturamento por excedente. Se exigir, interromper e escolher outra opção gratuita.
 
 ## Estado real em 27/11/2026
 
@@ -41,5 +41,5 @@ Fontes oficiais consultadas:
 - O build pronto não comprova conexão com PostgreSQL, Redis, armazenamento, autenticação nem fluxos financeiros.
 - `APPLICATION_DB_URL` aponta para a branch Neon isolada `preview` e está cadastrada como variável criptografada no Vercel, restrita ao Preview da branch `infra/production-readiness`. Nenhuma variável de banco foi adicionada a Production.
 - Bucket privado `monetra-attachments` e credencial de escopo mínimo criados no Neon Object Storage; variáveis S3 compatíveis também estão cadastradas somente no Preview. O cliente AWS SDK foi ajustado para path-style addressing, obrigatório no Neon.
-- Redis ainda não foi provisionado; sem Redis, a inicialização atual do backend não está pronta para smoke test. Nenhuma migração foi aplicada e nenhum teste de ponta a ponta foi executado.
+- Redis Upstash Free temporário foi provisionado e ligado somente ao Preview; precisa ser reivindicado até 30/11/2026 para não expirar. Nenhuma migração foi aplicada e nenhum teste ponta a ponta foi executado.
 - A publicação em Production permanece bloqueada até a validação ponta a ponta.
