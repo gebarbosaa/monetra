@@ -462,7 +462,18 @@ describe('Planned transactions – merge on sync', () => {
       });
 
       await syncAccount({ connectionId, accountId, transactions: [incoming] });
+      const balanceAfterFirstSync = Number(
+        (await helpers.getAccount({ id: accountId, raw: true })).currentBalance,
+      );
+
+      // A provider retry must be idempotent financially as well as by originalId:
+      // the same booked charge must not be applied to the account balance twice.
       await syncAccount({ connectionId, accountId, transactions: [incoming] });
+      const balanceAfterRetry = Number(
+        (await helpers.getAccount({ id: accountId, raw: true })).currentBalance,
+      );
+
+      expect(balanceAfterRetry).toBe(balanceAfterFirstSync);
 
       const rows = await listAccountTransactions({ accountId });
       expect(rows).toHaveLength(2);
