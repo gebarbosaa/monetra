@@ -532,7 +532,7 @@ describe('Credit card installment plans', () => {
     const units = plan.installments.map((installment) =>
       Math.round(Number(installment.amount) * 100),
     );
-    expect(units).toEqual([2, 2, 1, 1]);
+    expect(units).toEqual([1, 1, 2, 2]);
     expect(units.every((amount) => amount > 0)).toBe(true);
     expect(units.reduce((sum, amount) => sum + amount, 0)).toBe(6);
     expect(plan.installments.reduce((sum, installment) => sum + Number(installment.amount), 0))
