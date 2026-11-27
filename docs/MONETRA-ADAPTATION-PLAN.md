@@ -68,11 +68,18 @@ A família é uma única unidade econômica consolidada, com caixa comum e visã
 
 A base upstream usa Vue 3/Vite/TypeScript/Tailwind, Node/Express, Sequelize, PostgreSQL e Redis/BullMQ.
 
+A arquitetura gratuita selecionada está documentada em [FREE-INFRASTRUCTURE.md](FREE-INFRASTRUCTURE.md):
+- PostgreSQL: Neon Free.
+- Redis/BullMQ: Upstash Redis Free.
+- Arquivos: Cloudflare R2 Standard dentro da franquia gratuita.
+- Aplicação: Vercel, somente se os recursos necessários estiverem disponíveis no plano gratuito da conta.
+
+**Não ativar faturamento, upgrades automáticos ou planos pagos.** Se qualquer componente exigir pagamento ou ultrapassar a franquia gratuita, interromper e reavaliar antes de prosseguir.
+
 Antes de qualquer implantação:
 - Confirmar versões e scripts de build/teste.
 - Mapear todos os serviços persistentes e workers.
-- Provisionar PostgreSQL e Redis compatíveis.
-- Definir armazenamento de anexos.
+- Criar e configurar serviços exclusivos para MONETRA.
 - Configurar variáveis de ambiente e segredos no servidor.
 - Validar migrações, backups e restauração.
 - Separar frontend, API e workers conforme as limitações reais da plataforma de hospedagem.
@@ -108,9 +115,11 @@ Antes de qualquer implantação:
 - [ ] Build de produção e verificação de acessibilidade/responsividade.
 
 ### Etapa E — Infraestrutura e publicação
-- [ ] Selecionar provedores para PostgreSQL, Redis e armazenamento.
+- [x] Definir arquitetura-alvo com provedores e franquias gratuitas.
+- [ ] Criar/configurar banco PostgreSQL, Redis e armazenamento de arquivos.
 - [ ] Configurar ambientes de desenvolvimento, preview e produção.
-- [ ] Executar migrações e validar backups.
+- [ ] Executar migrações e validar backups/restauração.
+- [ ] Validar cadastro, login, operações financeiras, filas e anexos em Preview.
 - [ ] Publicar somente após testes de ponta a ponta.
 
 ## 9. Critério de conclusão
