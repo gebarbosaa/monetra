@@ -67,14 +67,24 @@ describe('POST /transactions/bulk-delete', () => {
       },
       raw: true,
     });
+    const accountABeforeDelete = Number((await helpers.getAccount({ id: accountA.id, raw: true })).currentBalance);
+    const accountBBeforeDelete = Number((await helpers.getAccount({ id: accountB.id, raw: true })).currentBalance);
 
     const result = await helpers.bulkDeleteTransactions({
       payload: { transactionIds: [transferBase.id, transferOpposite!.id] },
       raw: true,
     });
 
-    // The twin is removed by the transfer-pair cleanup, not counted twice
+    // The twin is removed by the transfer-pair cleanup, not counted twice.
     expect(result.deletedCount).toBe(1);
+
+    // Removing both legs must reverse each side exactly once, restoring both balances.
+    expect(Number((await helpers.getAccount({ id: accountA.id, raw: true })).currentBalance)).toBe(
+      accountABeforeDelete + 500,
+    );
+    expect(Number((await helpers.getAccount({ id: accountB.id, raw: true })).currentBalance)).toBe(
+      accountBBeforeDelete - 500,
+    );
 
     const remaining = await helpers.getTransactions({ raw: true });
     const remainingIds = remaining.map((tx) => tx.id);
