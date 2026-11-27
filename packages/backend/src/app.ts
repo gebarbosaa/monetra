@@ -51,7 +51,7 @@ logger.info('Attempting to start server...');
 
 let serverInstance: https.Server | ReturnType<typeof app.listen> | undefined;
 
-const isVercelFunction = process.env.VERCEL === '1';
+const isVercelFunction = process.env.VERCEL === '1' && process.env.MONETRA_ROLE !== 'api-service';
 const isProduction = process.env.NODE_ENV === 'production';
 const isTest = process.env.NODE_ENV === 'test';
 
@@ -60,7 +60,9 @@ const onServerReady = ({ protocol }: { protocol: 'http' | 'https' }) => {
   logger.info(`[OK] ${protocol.toUpperCase()} Server is running on ${protocol}://localhost:${port}`);
   logger.info(`API Prefix: ${API_PREFIX}`);
   // Persistent workers and cron jobs run outside request-scoped serverless functions.
-  void import('./background-jobs').then(({ initializeBackgroundJobs }) => initializeBackgroundJobs());
+  if (process.env.MONETRA_ROLE !== 'api-service') {
+    void import('./background-jobs').then(({ initializeBackgroundJobs }) => initializeBackgroundJobs());
+  }
 };
 
 if (isVercelFunction) {

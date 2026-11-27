@@ -1,0 +1,24 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "backend": {
+      "runtime": "container",
+      "root": ".",
+      "entrypoint": "self-hosting/backend/Dockerfile"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": { "service": "backend" }
+    }
+  ],
+  "daemons": {
+    "monetra-worker": {
+      "root": ".",
+      "entrypoint": "self-hosting/backend/Dockerfile",
+      "command": ["node", "--enable-source-maps", "packages/backend/dist/worker.js"],
+      "instances": { "iad1": 1 }
+    }
+  }
+}
