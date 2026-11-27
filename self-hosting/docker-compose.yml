@@ -31,7 +31,7 @@ x-logging: &default-logging
 
 services:
   backend:
-    image: letehaha/budget-tracker-be:${IMAGE_TAG:-latest}
+    image: monetra-backend:${IMAGE_TAG:-local}
     restart: unless-stopped
     networks: [budget-tracker]
     # Internal-only: the frontend container reaches it over the `budget-tracker`
@@ -83,7 +83,7 @@ services:
     logging: *default-logging
 
   frontend:
-    image: letehaha/budget-tracker-fe:${IMAGE_TAG:-latest}
+    image: monetra-frontend:${IMAGE_TAG:-local}
     restart: unless-stopped
     networks:
       budget-tracker:
