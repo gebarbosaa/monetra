@@ -3,6 +3,12 @@
 import { initPostHog } from '@js/utils/posthog';
 import { initSentry } from '@js/utils/sentry';
 import dotenv from 'dotenv';
+import path from 'path';
+
+// Load environment variables first
+const envPath = path.join(__dirname, `../../../.env.${process.env.NODE_ENV}`);
+dotenv.config({ path: envPath });
+
 // Normalize the managed Redis URL once so every BullMQ connection can use
 // the same host, credentials and TLS settings without changing queue payloads.
 const managedRedisUrl = process.env.APPLICATION_REDIS_URL;
@@ -14,12 +20,6 @@ if (managedRedisUrl) {
   process.env.APPLICATION_REDIS_PASSWORD = decodeURIComponent(redisUrl.password);
   process.env.APPLICATION_REDIS_TLS = redisUrl.protocol === 'rediss:' ? 'true' : 'false';
 }
-
-import path from 'path';
-
-// Load environment variables first
-const envPath = path.join(__dirname, `../../../.env.${process.env.NODE_ENV}`);
-dotenv.config({ path: envPath });
 
 // Initialize monitoring services early (after env vars are loaded)
 // Note: imports are hoisted, but these function calls execute after dotenv.config()

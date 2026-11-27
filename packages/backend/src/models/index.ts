@@ -212,7 +212,10 @@ const sequelize = new Sequelize({
   // TCP keepalive stops idle pooled connections from being silently dropped by
   // intermediate networking (Docker NAT/proxy) — a dead connection is only
   // discovered at checkout, forcing a slow reconnect inside a request.
-  dialectOptions: { keepAlive: true },
+  dialectOptions: {
+    keepAlive: true,
+    ...(databaseUrl?.searchParams.get('sslmode') === 'require' ? { ssl: { require: true, rejectUnauthorized: true } } : {}),
+  },
   logging: process.env.DB_QUERY_LOGGING === 'true',
 });
 

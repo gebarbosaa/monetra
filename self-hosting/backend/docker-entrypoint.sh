@@ -17,13 +17,17 @@ for var in APPLICATION_JWT_SECRET APP_SESSION_ID_SECRET BETTER_AUTH_SECRET APPLI
     esac
 done
 
-# Run migrations
-echo "Running migrations..."
-if npm run migrate; then
-    echo "Migrations completed successfully"
+# Serialize migrations across concurrent Vercel Service / Daemon instances.
+if [ "${RUN_MIGRATIONS_ON_START:-true}" = "true" ]; then
+    echo "Running migrations under a PostgreSQL advisory lock..."
+    if node /app/scripts/run-migrations-locked.mjs; then
+        echo "Migrations completed successfully"
+    else
+        echo "Migration failed. Exiting..."
+        exit 1
+    fi
 else
-    echo "Migration failed. Exiting..."
-    exit 1
+    echo "Skipping startup migrations (RUN_MIGRATIONS_ON_START=false)"
 fi
 
 # If we get here, migrations were successful
