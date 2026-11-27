@@ -57,7 +57,7 @@ COPY --chown=nodejs:nodejs packages/backend/package*.json ./packages/backend/
 COPY --chown=nodejs:nodejs packages/frontend/package*.json ./packages/frontend/
 COPY --chown=nodejs:nodejs packages/landing/package*.json ./packages/landing/
 COPY --chown=nodejs:nodejs packages/shared/package*.json ./packages/shared/
-RUN npm ci
+RUN npm ci --omit=dev
 
 # Remove build dependencies to reduce image size
 RUN apk del python3 make g++
