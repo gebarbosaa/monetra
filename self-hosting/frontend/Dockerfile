@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1.10
+
 # 🏗️ Stage 1️⃣: Build
 # --platform=$BUILDPLATFORM: this stage emits only static files (Vite SPA +
 # Astro landing), nothing arch-specific — so multi-arch builds run the heavy
@@ -15,7 +17,6 @@ WORKDIR /app
 # auth secrets that must not leak into pushed image layers).
 ARG VITE_SENTRY_RELEASE=
 ARG VITE_APP_COMMIT_HASH=
-ARG SENTRY_AUTH_TOKEN=
 ARG SENTRY_ORG=
 ARG SENTRY_PROJECT=
 
@@ -44,7 +45,6 @@ RUN npm ci
 RUN printf '%s\n' \
     "VITE_SENTRY_RELEASE=$VITE_SENTRY_RELEASE" \
     "VITE_APP_COMMIT_HASH=$VITE_APP_COMMIT_HASH" \
-    "SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN" \
     "SENTRY_ORG=$SENTRY_ORG" \
     "SENTRY_PROJECT=$SENTRY_PROJECT" \
     > /app/.env.production
@@ -61,7 +61,8 @@ ARG NODE_BUILD_HEAP_MB=6144
 
 # Build frontend SPA
 WORKDIR /app/packages/frontend
-RUN NODE_OPTIONS="--max-old-space-size=$NODE_BUILD_HEAP_MB" npm run build
+RUN --mount=type=secret,id=sentry_auth_token,env=SENTRY_AUTH_TOKEN,required=false \
+    NODE_OPTIONS="--max-old-space-size=$NODE_BUILD_HEAP_MB" npm run build
 
 # Build Astro landing
 WORKDIR /app/packages/landing
