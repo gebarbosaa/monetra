@@ -26,7 +26,15 @@ try {
   await new Promise((resolve, reject) => {
     const child = spawn('npm', ['run', 'migrate', '--workspace=packages/backend'], {
       cwd: '/app',
-      env: process.env,
+      // Sequelize must use the direct connection for migrations. Neon pooled
+      // connections use transaction pooling and are not suitable for session-level
+      // migration behavior; the app runtime keeps using APPLICATION_DB_URL.
+      env: {
+        ...process.env,
+        ...(process.env.APPLICATION_DB_DIRECT_URL
+          ? { APPLICATION_DB_URL: process.env.APPLICATION_DB_DIRECT_URL }
+          : {}),
+      },
       stdio: 'inherit',
     });
     child.once('error', reject);
