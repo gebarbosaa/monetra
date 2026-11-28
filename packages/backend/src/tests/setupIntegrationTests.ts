@@ -469,15 +469,9 @@ beforeEach(async () => {
       global.BASE_CURRENCY = currencies.find((item: any) => item.code === global.BASE_CURRENCY_CODE);
     }
 
-    const baseCurrencyRes = await makeRequest({
-      method: 'post',
-      url: '/user/currencies/base',
-      payload: { currencyCode: global.BASE_CURRENCY.code },
-    });
-
-    if (baseCurrencyRes.statusCode !== 200) {
-      throw new Error(`Failed to set base currency: ${JSON.stringify(baseCurrencyRes.body)}`);
-    }
+    // seedUserDefaults() already calls ensureUserBaseCurrency() for this user.
+    // Posting the same base currency again is rejected as a duplicate and
+    // causes every e2e suite to fail during setup, so only cache the model here.
   } catch (err) {
     console.error('Setup failed:', err);
     throw err;
