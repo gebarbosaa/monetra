@@ -1,4 +1,5 @@
 import commonEn from '@/i18n/locales/chunks/en/common.json';
+import { i18n as appI18n } from '@/i18n';
 import currenciesEn from '@/i18n/locales/chunks/en/settings/currencies.json';
 import type { CurrencyRateHistoryItem, CurrencyRateSource } from '@bt/shared/types';
 import { type VueWrapper, mount } from '@vue/test-utils';
@@ -81,6 +82,10 @@ const mountList = ({
 const rows = (wrapper: VueWrapper) => wrapper.findAll('[data-testid="rate-history-row"]');
 const texts = (wrapper: VueWrapper, testId: string) =>
   rows(wrapper).map((row) => row.find(`[data-testid="${testId}"]`).text());
+
+beforeEach(() => {
+  appI18n.global.locale.value = 'en';
+});
 
 describe('RateList', () => {
   it('lists each rate in the given order with the days it is used for and its rate', () => {
