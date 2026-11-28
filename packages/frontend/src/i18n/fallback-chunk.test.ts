@@ -11,6 +11,10 @@ type MessageTree = { [key: string]: MessageTree };
 
 const messages = (locale: string) => i18n.global.getLocaleMessage(locale) as MessageTree;
 
+beforeEach(() => {
+  i18n.global.locale.value = 'en';
+});
+
 describe('English chunk pairing', () => {
   it('loads the English copy alongside a translated chunk', async () => {
     expect(messages('en').navigation).toBeUndefined();
