@@ -34,7 +34,7 @@ export function setupMiddleware(app: Express) {
     app.use(perfDebugMiddleware);
   }
 
-  app.set('port', Number(process.env.PORT || process.env.APPLICATION_PORT || 8081));
+  app.set('port', Number(process.env.PORT || process.env.APPLICATION_PORT || (process.env.VERCEL ? 80 : 8081)));
 
   // HSTS on the API host. Only emitted in production where TLS is terminated
   // by the reverse proxy; sending it over plain HTTP in dev would be a no-op
