@@ -8,8 +8,11 @@ import { clearAllSyncStatuses } from './services/bank-data-providers/sync/sync-s
 
 logger.info('Initializing Redis client...');
 
-// Key prefix for test isolation - each Jest worker gets its own namespace
-export const REDIS_KEY_PREFIX = process.env.JEST_WORKER_ID ? `${process.env.JEST_WORKER_ID}:` : undefined;
+// Keep local, preview, production, and parallel test workers isolated when they share Redis.
+const redisEnvironment = process.env.VERCEL_ENV ?? 'local';
+export const REDIS_KEY_PREFIX = process.env.JEST_WORKER_ID
+  ? `monetra:${redisEnvironment}:${process.env.JEST_WORKER_ID}:`
+  : `monetra:${redisEnvironment}:`;
 
 const redisOptions = {
   ...getRedisConnectionOptions(),
