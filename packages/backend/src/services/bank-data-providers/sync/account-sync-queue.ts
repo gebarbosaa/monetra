@@ -30,6 +30,8 @@ const connectionOptions = {
 };
 
 // Namespace by Jest worker ID so parallel test workers don't share a queue.
+const queuePrefix = `monetra:${process.env.VERCEL_ENV ?? 'local'}`;
+
 const queueName =
   process.env.NODE_ENV === 'test' && process.env.JEST_WORKER_ID
     ? `account-sync-${process.env.JEST_WORKER_ID}`
@@ -42,6 +44,7 @@ const queueName =
  */
 export const accountSyncQueue = new Queue<AccountSyncJobData>(queueName, {
   connection: connectionOptions,
+  prefix: queuePrefix,
   defaultJobOptions: {
     attempts: 1,
     // Job ids are deterministic, so a finished job must not linger: it would
@@ -145,6 +148,7 @@ export const accountSyncWorker = new Worker<AccountSyncJobData>(
     ),
   {
     connection: connectionOptions,
+    prefix: queuePrefix,
     concurrency: 5,
     maxStalledCount: 2,
     // Keep persisted jobs dormant unless bank integrations are explicitly enabled.
