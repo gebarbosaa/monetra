@@ -11,7 +11,7 @@ export const CREDIT_CARD_INSTALLMENT_STATUSES = {
   posted: 'posted',
   cancelled: 'cancelled',
 } as const;
-export type CreditCardInstallmentStatus =
+type CreditCardInstallmentStatus =
   (typeof CREDIT_CARD_INSTALLMENT_STATUSES)[keyof typeof CREDIT_CARD_INSTALLMENT_STATUSES];
 
 @Table({ tableName: 'CreditCardInstallments', timestamps: true, freezeTableName: true })
