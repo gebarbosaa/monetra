@@ -1,23 +1,28 @@
 interface RedisConnectionEnv {
-  url?: string;
-  host?: string;
-  port?: string;
-  username?: string;
-  password?: string;
-  tls?: string;
+  APPLICATION_REDIS_URL?: string;
+  REDIS_URL?: string;
+  APPLICATION_REDIS_HOST?: string;
+  APPLICATION_REDIS_PORT?: string;
+  APPLICATION_REDIS_USERNAME?: string;
+  APPLICATION_REDIS_PASSWORD?: string;
+  APPLICATION_REDIS_TLS?: string;
 }
 
 /**
- * Resolve Redis connection settings for both local/self-hosted Redis and hosted
+ * Resolve Redis connection settings for local/self-hosted Redis and hosted
  * TLS URLs such as Upstash's rediss:// connection string.
  */
 export function getRedisConnectionOptions(env: RedisConnectionEnv = process.env) {
-  if (env.url) {
-    const url = new URL(env.url);
+  // Upstash's Vercel integration provides REDIS_URL; existing deployments may
+  // use the explicit APPLICATION_REDIS_URL name.
+  const connectionUrl = env.APPLICATION_REDIS_URL ?? env.REDIS_URL;
+
+  if (connectionUrl) {
+    const url = new URL(connectionUrl);
     if (url.protocol !== 'redis:' && url.protocol !== 'rediss:') {
-      throw new Error('APPLICATION_REDIS_URL must use redis:// or rediss://');
+      throw new Error('Redis URL must use redis:// or rediss://');
     }
-    if (!url.hostname) throw new Error('APPLICATION_REDIS_URL must include a hostname');
+    if (!url.hostname) throw new Error('Redis URL must include a hostname');
 
     return {
       host: url.hostname,
@@ -30,10 +35,10 @@ export function getRedisConnectionOptions(env: RedisConnectionEnv = process.env)
   }
 
   return {
-    host: env.host,
-    port: env.port ? Number(env.port) : undefined,
-    username: env.username,
-    password: env.password,
-    tls: env.tls === 'true' ? {} : undefined,
+    host: env.APPLICATION_REDIS_HOST,
+    port: env.APPLICATION_REDIS_PORT ? Number(env.APPLICATION_REDIS_PORT) : undefined,
+    username: env.APPLICATION_REDIS_USERNAME,
+    password: env.APPLICATION_REDIS_PASSWORD,
+    tls: env.APPLICATION_REDIS_TLS === 'true' ? {} : undefined,
   };
 }
