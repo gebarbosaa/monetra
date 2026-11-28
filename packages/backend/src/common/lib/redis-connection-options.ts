@@ -15,7 +15,7 @@ interface RedisConnectionEnv {
 export function getRedisConnectionOptions(env: RedisConnectionEnv = process.env) {
   // Upstash's Vercel integration provides REDIS_URL; existing deployments may
   // use the explicit APPLICATION_REDIS_URL name.
-  const connectionUrl = env.APPLICATION_REDIS_URL ?? env.REDIS_URL;
+  const connectionUrl = env.APPLICATION_REDIS_URL?.trim() || env.REDIS_URL?.trim();
 
   if (connectionUrl) {
     const url = new URL(connectionUrl);
