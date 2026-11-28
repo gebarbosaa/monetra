@@ -13,7 +13,7 @@ export const CREDIT_CARD_INSTALLMENT_PLAN_STATUSES = {
   active: 'active',
   cancelled: 'cancelled',
 } as const;
-export type CreditCardInstallmentPlanStatus =
+type CreditCardInstallmentPlanStatus =
   (typeof CREDIT_CARD_INSTALLMENT_PLAN_STATUSES)[keyof typeof CREDIT_CARD_INSTALLMENT_PLAN_STATUSES];
 
 @Table({ tableName: 'CreditCardInstallmentPlans', timestamps: true, freezeTableName: true })
