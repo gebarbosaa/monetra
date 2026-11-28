@@ -10,6 +10,10 @@ import { RATE_HISTORY_PAGE_LIMIT } from '../rate-source/use-rate-history';
 import type { CurrencyWithExchangeRate } from '../types';
 import RateHistoryView from './rate-history-view.vue';
 
+vi.mock('@/composable/use-date-locale', () => ({
+  getDateFnsLocale: () => ({ code: 'en-US' }),
+}));
+
 const { mockLoad } = vi.hoisted(() => ({ mockLoad: vi.fn() }));
 
 vi.mock('@/api/currencies', () => ({ loadCurrencyRateHistory: mockLoad }));
