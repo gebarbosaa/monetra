@@ -1,10 +1,10 @@
 import { BANK_PROVIDER_TYPE, type RecordId } from '@bt/shared/types';
+import { getRedisConnectionOptions } from '@common/lib/redis-connection-options';
 import { type PsuContext, requestContext } from '@common/request-context';
 import { LockedError, ServiceUnavailableError } from '@js/errors';
 import { logger } from '@js/utils/logger';
 import { SentryTraceData, withQueueProcessSpan, withQueuePublishSpan } from '@js/utils/sentry';
 import { Job, Queue, Worker } from 'bullmq';
-import { getRedisConnectionOptions } from '@common/lib/redis-connection-options';
 
 import { AccountUnlinkedDuringSyncError } from '../base-provider';
 import { syncTransactionsForAccount, withAccountSyncLock } from '../connection/sync-transactions-for-account';
@@ -27,7 +27,6 @@ const connectionOptions = {
   connectTimeout: 20000,
   keepAlive: 10000,
   retryStrategy: (times: number) => Math.min(times * 100, 3000),
-
 };
 
 // Namespace by Jest worker ID so parallel test workers don't share a queue.
