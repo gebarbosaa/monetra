@@ -96,12 +96,11 @@ describe('CURRENCY_CODE_COLUMNS', () => {
 });
 
 describe('custom-currencies migration snapshot', () => {
-  // The migration owns a frozen copy of the lists, so a column added later never reaches it. The
-  // two are equal while the live lists are still the ones the migration widened. When a later
-  // change adds a column to a live list, relax this to "every snapshot entry is still listed" and
-  // leave the snapshot alone.
-  it('matches the live lists while they have not grown past the migration', () => {
-    expect(CURRENCY_CODE_COLUMNS_20261120).toEqual(CURRENCY_CODE_COLUMNS);
+  // The migration snapshot is intentionally frozen. New schema columns belong in a later
+  // migration and must not be retroactively added to this historical snapshot.
+  it('keeps every migration column in the live currency-code list', () => {
+    const live = new Set(CURRENCY_CODE_COLUMNS.map(({ table, column }) => `${table}.${column}`));
+    expect(CURRENCY_CODE_COLUMNS_20261120.every(({ table, column }) => live.has(`${table}.${column}`))).toBe(true);
     expect(CURRENCY_CODE_MAX_LENGTH_20261120).toBe(CURRENCY_CODE_MAX_LENGTH);
   });
 });
