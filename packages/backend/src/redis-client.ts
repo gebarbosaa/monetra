@@ -2,6 +2,7 @@ import './bootstrap';
 
 import { logger } from '@js/utils/logger';
 import Redis from 'ioredis';
+import { getRedisConnectionOptions } from '@common/lib/redis-connection-options';
 
 import { clearAllSyncStatuses } from './services/bank-data-providers/sync/sync-status-tracker';
 
@@ -11,6 +12,7 @@ logger.info('Initializing Redis client...');
 export const REDIS_KEY_PREFIX = process.env.JEST_WORKER_ID ? `${process.env.JEST_WORKER_ID}:` : undefined;
 
 const redisOptions = {
+  ...getRedisConnectionOptions(),
   keyPrefix: REDIS_KEY_PREFIX,
   lazyConnect: true,
   maxRetriesPerRequest: 3,
@@ -19,14 +21,7 @@ const redisOptions = {
   retryStrategy: (times: number) => Math.min(times * 100, 3000),
 };
 
-// Vercel Marketplace Redis providers expose a TLS URL; local/self-hosted installs
-// can continue using APPLICATION_REDIS_HOST.
-export const redisClient = process.env.APPLICATION_REDIS_URL
-  ? new Redis(process.env.APPLICATION_REDIS_URL, redisOptions)
-  : new Redis({
-  host: process.env.APPLICATION_REDIS_HOST,
-  ...redisOptions,
-});
+export const redisClient = new Redis(redisOptions);
 
 // ioredis emits error events that need handling to prevent crashes
 redisClient.on('error', (error: Error) => {
