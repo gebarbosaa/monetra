@@ -1,5 +1,7 @@
 import { spawn } from 'node:child_process';
-import { Pool } from 'pg';
+import pg from 'pg';
+
+const { Pool } = pg;
 
 const migrationLockUrl = process.env.APPLICATION_DB_DIRECT_URL || process.env.APPLICATION_DB_URL;
 
