@@ -23,6 +23,7 @@ import { extractCookies, makeAuthRequest, makeRequest } from './common';
 export interface SecondUserHandle {
   cookies: string;
   email: string;
+  userId: number;
 }
 
 /**
@@ -50,8 +51,14 @@ export async function signUpSecondUser({
   // Match the suite's default user: legacy entitlements, not a fresh trial. A trial
   // would strip backup/export features from every second-user test that isn't about plans.
   await Users.update({ trialEndsAt: null }, { where: { authUserId: signupRes.body.user.id } });
+  const appUser = await Users.findOne({
+    where: { authUserId: signupRes.body.user.id },
+    attributes: ['id'],
+    raw: true,
+  });
+  if (!appUser) throw new Error('Second user signup did not create an app user row');
 
-  return { cookies: extractCookies(signupRes), email: userEmail };
+  return { cookies: extractCookies(signupRes), email: userEmail, userId: appUser.id };
 }
 
 /**
