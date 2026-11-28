@@ -4,6 +4,7 @@ import { LockedError, ServiceUnavailableError } from '@js/errors';
 import { logger } from '@js/utils/logger';
 import { SentryTraceData, withQueueProcessSpan, withQueuePublishSpan } from '@js/utils/sentry';
 import { Job, Queue, Worker } from 'bullmq';
+import { getRedisConnectionOptions } from '@common/lib/redis-connection-options';
 
 import { AccountUnlinkedDuringSyncError } from '../base-provider';
 import { syncTransactionsForAccount, withAccountSyncLock } from '../connection/sync-transactions-for-account';
@@ -21,15 +22,12 @@ interface AccountSyncJobData extends SentryTraceData {
 // Mirrors the resilient settings of the main redisClient. BullMQ requires
 // `maxRetriesPerRequest: null`.
 const connectionOptions = {
-  host: process.env.APPLICATION_REDIS_HOST,
-  port: process.env.APPLICATION_REDIS_PORT ? Number(process.env.APPLICATION_REDIS_PORT) : undefined,
-  username: process.env.APPLICATION_REDIS_USERNAME,
-  password: process.env.APPLICATION_REDIS_PASSWORD,
-  tls: process.env.APPLICATION_REDIS_TLS === 'true' ? {} : undefined,
+  ...getRedisConnectionOptions(),
   maxRetriesPerRequest: null,
   connectTimeout: 20000,
   keepAlive: 10000,
   retryStrategy: (times: number) => Math.min(times * 100, 3000),
+
 };
 
 // Namespace by Jest worker ID so parallel test workers don't share a queue.
