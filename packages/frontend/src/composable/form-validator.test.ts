@@ -175,6 +175,10 @@ describe('useFormValidation', () => {
       expect(getFieldErrorMessage('form.email')).toBe(randomRuleMessage);
     });
     describe('generic messages', () => {
+      beforeEach(() => {
+        i18n.global.locale.value = 'en';
+      });
+
       afterEach(() => {
         i18n.global.locale.value = 'en';
       });

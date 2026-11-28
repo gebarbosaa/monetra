@@ -190,7 +190,7 @@ global.mswMockServer = mswMockServer;
 
 global.BASE_CURRENCY = null;
 // Should be non-USD so that some tests make sense
-global.BASE_CURRENCY_CODE = 'AED';
+global.BASE_CURRENCY_CODE = 'BRL';
 global.MODELS_CURRENCIES = null;
 global.APP_AUTH_COOKIES = null;
 
@@ -469,15 +469,8 @@ beforeEach(async () => {
       global.BASE_CURRENCY = currencies.find((item: any) => item.code === global.BASE_CURRENCY_CODE);
     }
 
-    const baseCurrencyRes = await makeRequest({
-      method: 'post',
-      url: '/user/currencies/base',
-      payload: { currencyCode: global.BASE_CURRENCY.code },
-    });
-
-    if (baseCurrencyRes.statusCode !== 200) {
-      throw new Error(`Failed to set base currency: ${JSON.stringify(baseCurrencyRes.body)}`);
-    }
+    // seedUserDefaults() already establishes the user's base currency (BRL).
+    // Do not POST it again: the endpoint correctly rejects a duplicate base currency.
   } catch (err) {
     console.error('Setup failed:', err);
     throw err;

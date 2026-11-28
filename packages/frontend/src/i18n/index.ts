@@ -15,6 +15,7 @@ import enCommon from './locales/chunks/en/common.json';
 import type { ChunkRegistry, I18nChunkName, LoadedChunksMap } from './types';
 
 const SUPPORTED_LOCALES = Object.values(LOCALES);
+const ENGLISH_LOCALE = LOCALES.ENGLISH;
 
 export const FLAG_SRCS: Record<SupportedLocale, string> = {
   [LOCALES.ENGLISH]: '/img/flags/gb.svg',
@@ -81,7 +82,7 @@ const SLAVIC_LOCALES = [LOCALES.UKRAINIAN, LOCALES.RUSSIAN, LOCALES.SLOVAK];
 export const i18n: I18n<any, {}, {}, string, false> = createI18n<{}, string, false>({
   legacy: false,
   locale: DEFAULT_LOCALE,
-  fallbackLocale: DEFAULT_LOCALE,
+  fallbackLocale: ENGLISH_LOCALE,
   messages: {
     en: enCommon,
   },
@@ -123,7 +124,7 @@ async function loadChunk({ locale, chunk }: { locale: string; chunk: I18nChunkNa
     // A translated locale has no file for a chunk until Crowdin exports one, and the
     // paired English copy covers that on screen. Only a missing English source file
     // is an actual defect.
-    if (locale === DEFAULT_LOCALE) {
+    if (locale === ENGLISH_LOCALE) {
       captureException({
         error: new Error(`i18n chunk "${chunk}" missing for locale "${locale}"`),
         context: { chunk, locale },
@@ -172,7 +173,7 @@ export async function loadChunks({ locale, chunks }: { locale: string; chunks: I
   // chunk file may not exist for the locale at all). `fallbackLocale` can only
   // resolve those keys if the English messages for that same chunk are in the
   // store, and nothing else ever loads them — only `en/common` is preloaded.
-  const locales = locale === DEFAULT_LOCALE ? [locale] : [locale, DEFAULT_LOCALE];
+  const locales = locale === ENGLISH_LOCALE ? [locale] : [locale, ENGLISH_LOCALE];
 
   await Promise.all(locales.flatMap((each) => chunks.map((chunk) => loadChunk({ locale: each, chunk }))));
 }
