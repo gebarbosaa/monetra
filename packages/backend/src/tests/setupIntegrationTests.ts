@@ -191,6 +191,8 @@ global.mswMockServer = mswMockServer;
 global.BASE_CURRENCY = null;
 // Should be non-USD so that some tests make sense
 global.BASE_CURRENCY_CODE = 'AED';
+// New test users must be seeded in the same reference currency the fixtures expect.
+process.env.DEFAULT_BASE_CURRENCY_CODE = global.BASE_CURRENCY_CODE;
 global.MODELS_CURRENCIES = null;
 global.APP_AUTH_COOKIES = null;
 

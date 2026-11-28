@@ -340,19 +340,19 @@ export async function provisionSecondUserWithBaseCurrency({
   email,
   currencyCode,
 }: { email?: string; currencyCode?: string } = {}): Promise<SecondUserHandle> {
-  const handle = await signUpSecondUser({ email });
-  await asUser({
-    cookies: handle.cookies,
-    fn: async () => {
-      const res = await setBaseCurrencyForActiveUser({
-        currencyCode: currencyCode ?? global.BASE_CURRENCY.code,
-      });
-      if (res.statusCode !== 200) {
-        throw new Error(`Failed to set base currency for second user: ${res.statusCode} ${JSON.stringify(res.body)}`);
-      }
-    },
-  });
-  return handle;
+  // Signup seeds the base currency. Choose it before signup instead of calling the
+  // add-base endpoint afterwards, which correctly rejects duplicate base rows.
+  const previousBaseCurrencyCode = process.env.DEFAULT_BASE_CURRENCY_CODE;
+  process.env.DEFAULT_BASE_CURRENCY_CODE = currencyCode ?? global.BASE_CURRENCY.code;
+  try {
+    return await signUpSecondUser({ email });
+  } finally {
+    if (previousBaseCurrencyCode === undefined) {
+      delete process.env.DEFAULT_BASE_CURRENCY_CODE;
+    } else {
+      process.env.DEFAULT_BASE_CURRENCY_CODE = previousBaseCurrencyCode;
+    }
+  }
 }
 
 export async function asNewUserWithBaseCurrency<T>({
