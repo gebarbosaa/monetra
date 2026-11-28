@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { DEFAULT_LOCALE } from '@bt/shared/i18n/locales';
 
 // Crowdin exports every chunk for every locale, so a missing translation has to be simulated.
 vi.mock('./locales/chunks/id/pages/import-ofx.json', () => ({ default: {} }));
@@ -11,13 +12,13 @@ type MessageTree = { [key: string]: MessageTree };
 
 const messages = (locale: string) => i18n.global.getLocaleMessage(locale) as MessageTree;
 
-describe('English chunk pairing', () => {
+describe('default-locale chunk pairing', () => {
   it('loads the English copy alongside a translated chunk', async () => {
-    expect(messages('en').navigation).toBeUndefined();
+    expect(messages(DEFAULT_LOCALE).navigation).toBeUndefined();
 
     await loadChunks({ locale: 'uk', chunks: ['layout'] });
 
-    // Without this, `fallbackLocale` has no English messages for the chunk in memory
+    // Without this, `fallbackLocale` has no default-locale messages for the chunk in memory
     // and every key the translation is missing renders as its raw dotted path.
     expect(messages('uk').navigation).toBeDefined();
     expect(messages('en').navigation).toBeDefined();
@@ -27,6 +28,6 @@ describe('English chunk pairing', () => {
     await loadChunks({ locale: 'id', chunks: ['pages/import-ofx'] });
 
     expect(messages('id').pages?.importExport?.ofxImport).toBeUndefined();
-    expect(messages('en').pages?.importExport?.ofxImport).toBeDefined();
+    expect(messages(DEFAULT_LOCALE).pages?.importExport?.ofxImport).toBeDefined();
   });
 });
