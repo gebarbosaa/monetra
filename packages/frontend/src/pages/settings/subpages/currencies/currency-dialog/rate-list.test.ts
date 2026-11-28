@@ -7,6 +7,10 @@ import { createI18n } from 'vue-i18n';
 import type { CurrencyWithExchangeRate } from '../types';
 import RateList from './rate-list.vue';
 
+vi.mock('@/composable/use-date-locale', () => ({
+  getDateFnsLocale: () => ({ code: 'en-US' }),
+}));
+
 vi.mock('@/components/lib/ui/tooltip', async () => {
   const { defineComponent } = await import('vue');
   return {
