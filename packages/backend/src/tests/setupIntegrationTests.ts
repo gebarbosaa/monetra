@@ -191,6 +191,8 @@ global.mswMockServer = mswMockServer;
 global.BASE_CURRENCY = null;
 // Should be non-USD so that some tests make sense
 global.BASE_CURRENCY_CODE = 'AED';
+// New test users must be seeded in the same reference currency the fixtures expect.
+process.env.DEFAULT_BASE_CURRENCY_CODE = global.BASE_CURRENCY_CODE;
 global.MODELS_CURRENCIES = null;
 global.APP_AUTH_COOKIES = null;
 
@@ -469,15 +471,9 @@ beforeEach(async () => {
       global.BASE_CURRENCY = currencies.find((item: any) => item.code === global.BASE_CURRENCY_CODE);
     }
 
-    const baseCurrencyRes = await makeRequest({
-      method: 'post',
-      url: '/user/currencies/base',
-      payload: { currencyCode: global.BASE_CURRENCY.code },
-    });
-
-    if (baseCurrencyRes.statusCode !== 200) {
-      throw new Error(`Failed to set base currency: ${JSON.stringify(baseCurrencyRes.body)}`);
-    }
+    // seedUserDefaults() already calls ensureUserBaseCurrency() for this user.
+    // Posting the same base currency again is rejected as a duplicate and
+    // causes every e2e suite to fail during setup, so only cache the model here.
   } catch (err) {
     console.error('Setup failed:', err);
     throw err;
@@ -525,7 +521,7 @@ async function closeAllE2eResources() {
 
     // Now safe to close Redis client
     await redisClient.quit();
-    serverInstance.close();
+    serverInstance?.close();
     loadCurrencyRatesJob.stop();
   } catch (err) {
     console.log('afterAll', err);

@@ -1,101 +1,90 @@
-# Vercel deployment boundary
+# Vercel-first deployment boundary
 
-## Current deployment
+## Decision
 
-The Vercel project is configured to build the Vue/Vite frontend from the
-repository root:
+MONETRA's selected hosting platform is **Vercel**. A VPS is not required and
+must not be purchased for this deployment. The Docker Compose setup remains an
+optional self-hosting alternative only.
 
-- Install: `npm install --include=dev`
-- Build: `npm run build --workspace=packages/frontend`
-- Output: `packages/frontend/dist`
-- Node.js: 24.x
+## Current state
 
-This produces a **frontend-only preview**. It does not deploy the Express API,
-PostgreSQL, Redis/BullMQ workers, currency-rates sidecar, or persistent
-attachment storage.
+The existing Vercel project builds the Vue/Vite frontend from the repository
+root. The current branch is a preview/infrastructure migration; production has
+not been promoted.
 
-The frontend's runtime config reads `window.__APP_CONFIG__.API_HTTP` first,
-then `VITE_APP_API_HTTP`. When both are empty, the browser uses same-origin
-`/api/v1`. A static Vercel deployment has no API at that path, so login and
-data operations are not functional until a backend is deployed and connected.
+## Target Vercel topology
 
-## Required production topology
+- Frontend: Vercel static deployment.
+- HTTP API: Vercel Service running the existing Express backend container.
+- Background jobs: Vercel Daemon running the existing BullMQ workers and
+  recurring jobs in a separate process.
+- PostgreSQL: managed PostgreSQL using `APPLICATION_DB_URL`.
+- Redis: managed Redis using a TLS `APPLICATION_REDIS_URL`.
+- Attachments: S3-compatible object storage (the existing adapter supports
+  Cloudflare R2). Local filesystem fallback is rejected on Vercel to prevent
+  loss of financial documents when containers are recycled.
 
-Use Vercel for the static frontend and a persistent container host for the
-backend stack. The supported self-host Compose topology is documented in
-`self-hosting/docker-compose.yml` and includes:
+The frontend calls same-origin `/api/v1`; Vercel rewrites `/api/*` to the
+backend Service.
 
-- Express backend
-- PostgreSQL 16
-- Redis 7 (BullMQ and background jobs)
-- currency-rates API sidecar
-- frontend runtime proxy and persistent attachment volume
+## Runtime roles
 
-Do not deploy the backend as a simple Vercel Function without first redesigning
-the persistent workers, cron jobs, Redis connections, migrations, and storage.
+- `MONETRA_ROLE=api-service`: starts Express on Vercel's `PORT`; does not
+  start persistent workers or recurring jobs.
+- `MONETRA_ROLE=worker`: does not bind an HTTP port; starts BullMQ workers
+  and recurring jobs through the dedicated worker entrypoint.
+- Local development retains the existing combined behavior.
 
-## Values to configure after choosing the backend host
+The API and worker use the same Docker image. Startup migrations are serialized
+with a PostgreSQL advisory lock so concurrent containers cannot race the
+Sequelize migration table.
 
-### Vercel project
+## Vercel plan and cost gate
 
-Set these for Preview and Production only after the backend HTTPS origin is
-available:
+The current project is on the Hobby tier; a Pro-only project-setting operation
+was rejected by Vercel. Vercel's Daemon configuration requires at least
+`1Gi` of memory per instance. One continuously running 1Gi daemon represents
+about 720 GB-hours in a 30-day month, above Hobby's 420 GB-hour Daemon allowance.
+Hobby also includes 5 Daemon active-CPU hours and cannot purchase additional
+usage.
 
-| Variable | Value |
-| --- | --- |
-| `VITE_APP_API_HTTP` | Public HTTPS origin of the backend, e.g. `https://api.example.com` |
-| `VITE_APP_API_VER` | `/api/v1` |
+Vercel Pro is listed at US$20/month and includes US$20 in usage credit. At the
+published Daemon rate of US$0.0212/GB-hour, 720 GB-hours is about US$15.26,
+before active CPU and other project usage. This is an estimate, not a guaranteed
+bill. No plan upgrade has been made. Before production, either approve the Pro
+plan/usage budget or replace the always-on BullMQ Daemon with a request-driven
+Vercel Queues/Workflows design.
 
-If the backend is exposed through the same origin using a supported reverse
-proxy, leave `VITE_APP_API_HTTP` empty and configure the proxy to forward
-`/api` to the backend. The current static Vercel project does not provide that
-proxy by itself.
+## External services and environment
 
-### Backend host
+The Vercel project currently has no managed PostgreSQL or Redis integration
+connected. Production and Preview need separate database/Redis resources and
+server-side variables:
 
-Generate independent random secrets (never reuse the example values) for:
+- `APPLICATION_DB_URL`: pooled PostgreSQL URL with SSL.
+- `APPLICATION_REDIS_URL`: TLS Redis URL.
+- `ATTACHMENTS_S3_BUCKET`, `ATTACHMENTS_S3_ENDPOINT`,
+  `ATTACHMENTS_S3_ACCESS_KEY_ID`, `ATTACHMENTS_S3_SECRET_ACCESS_KEY`.
+- `AUTH_ORIGIN`, `BETTER_AUTH_URL`, `ALLOWED_ORIGINS`.
+- `BETTER_AUTH_SECRET`, `APPLICATION_JWT_SECRET`,
+  `APP_SESSION_ID_SECRET`: independent generated secrets.
 
-- `APPLICATION_JWT_SECRET`
-- `APP_SESSION_ID_SECRET`
-- `BETTER_AUTH_SECRET`
+Never commit secrets or put server credentials in browser-exposed `VITE_*`
+variables.
 
-Set these required database and runtime values from the selected host:
+## Remaining release gates
 
-- `NODE_ENV=production`
-- `APPLICATION_HOST=0.0.0.0`
-- `APPLICATION_PORT=8081`
-- `APPLICATION_DB_HOST`, `APPLICATION_DB_PORT`,
-  `APPLICATION_DB_USERNAME`, `APPLICATION_DB_PASSWORD`,
-  `APPLICATION_DB_DATABASE`, `APPLICATION_DB_DIALECT=postgres`
-- `APPLICATION_REDIS_HOST`
-- `BETTER_AUTH_URL` and `AUTH_ORIGIN` to the public frontend origin
-- `ALLOWED_ORIGINS` to the exact frontend origin(s)
+1. Connect managed PostgreSQL and Redis providers; confirm pooled connection
+   limits, TLS and region.
+2. Configure an S3-compatible bucket and verify attachment upload/download,
+   authorization and orphan cleanup.
+3. Configure Better Auth origins, secure cookies, OAuth callbacks and secrets.
+4. Confirm Vercel Service and Daemon builds, startup and runtime behavior.
+5. Run migrations, backup/restore, authentication, queue, recurring-job and
+   financial end-to-end tests against the managed services.
+6. Triage dependency audit findings and require green CI.
+7. Confirm the Vercel plan and usage budget before enabling the production
+   Daemon.
 
-Keep database and Redis private to the application network. Persist PostgreSQL,
-Redis data where required, and transaction attachments; use the documented S3
-compatible attachment configuration when local persistent volumes are not
-available.
-
-Optional integrations (Google/GitHub OAuth, Resend, AI providers, market-data
-providers, Stripe, observability) must only be enabled after their credentials
-and callback URLs are configured. Never put server secrets in `VITE_*`
-variables or commit them to Git.
-
-## Release gates
-
-Do not promote this frontend preview to Production until all of the following
-are true:
-
-1. A persistent backend host and public HTTPS API origin exist.
-2. PostgreSQL migrations have run and a backup/restore test has passed.
-3. Redis, background workers, cron jobs, and attachment persistence are healthy.
-4. Better Auth callback/origin, CORS, and cookie behavior have been tested over
-   HTTPS on the real domain.
-5. Frontend API calls, sign-in, financial writes, and logout have passed smoke
-   tests against the deployed backend.
-6. Financial E2E, frontend tests, typechecks, lint, and production build have
-   passed in CI.
-7. Dependency audit findings have been triaged and accepted or fixed.
-
-The Vercel frontend build alone is not evidence that the complete application
-is production-ready.
+A successful frontend or container build alone is not evidence that the full
+finance system is production-ready.

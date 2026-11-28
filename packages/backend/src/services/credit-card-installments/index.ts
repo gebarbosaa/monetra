@@ -1,5 +1,6 @@
 import { ACCOUNT_CATEGORIES, ACCOUNT_STATUSES, ACCOUNT_TYPES, PAYMENT_TYPES, TRANSACTION_TRANSFER_NATURE, TRANSACTION_TYPES } from '@bt/shared/types';
 import { roundToCurrency } from '@common/lib/currency-precision';
+import type { CreationAttributes } from 'sequelize';
 import { Money } from '@common/types/money';
 import { calculateRefAmount } from '@services/calculate-ref-amount.service';
 import { NotFoundError, ValidationError } from '@js/errors';
@@ -9,6 +10,7 @@ import CreditCardInstallmentPlans, {
   CREDIT_CARD_INSTALLMENT_PLAN_STATUSES,
 } from '@models/credit-card-installment-plans.model';
 import Transactions from '@models/transactions.model';
+import { destroyTransactions, findOneTransaction } from '@models/transactions-query';
 import * as TransactionModel from '@models/transactions.model';
 import * as UsersCurrencies from '@models/users-currencies.model';
 import { getUserSettings } from '@services/user-settings/get-user-settings';
@@ -138,7 +140,7 @@ export async function createInstallmentPlan(input: {
       { transaction },
     );
 
-    const rows = [];
+    const rows: CreationAttributes<CreditCardInstallments>[] = [];
     for (let index = 1; index <= input.installmentCount; index += 1) {
       const amountUnits = baseAmountUnits + (index > input.installmentCount - extraAmountUnits ? 1 : 0);
       const refAmountUnits = baseRefUnits + (index > input.installmentCount - extraRefUnits ? 1 : 0);
@@ -177,6 +179,9 @@ export async function createInstallmentPlan(input: {
         isPlanned: true,
         excludeFromStats: false,
       });
+      if (!plannedTransaction) {
+        throw new Error(`Failed to create the planned transaction for installment ${installment.installmentNumber}.`);
+      }
       await installment.update({ transactionId: plannedTransaction.id }, { transaction });
     }
 
@@ -242,12 +247,15 @@ export async function updateInstallmentPlan(input: {
       });
     }
 
-    const plannedTransactions = [];
+    const plannedTransactions: Transactions[] = [];
     for (const installment of installments) {
       if (!installment.transactionId) {
         throw new ValidationError({ message: 'An installment has no linked planned transaction and cannot be edited.' });
       }
-      const linked = await Transactions.findOne({
+      const linked = await findOneTransaction({
+        planned: 'include',
+        access: 'unscoped-internal',
+        balanceAdjustments: 'include',
         where: { id: installment.transactionId, userId: input.userId, accountId: plan.accountId },
         transaction,
         lock: transaction.LOCK.UPDATE,
@@ -317,7 +325,10 @@ export async function linkInstallmentTransaction({
       throw new ValidationError({ message: 'This installment is already settled or cancelled.' });
     }
 
-    const tx = await Transactions.findOne({
+    const tx = await findOneTransaction({
+      planned: 'include',
+      access: 'unscoped-internal',
+      balanceAdjustments: 'include',
       where: { id: transactionId, userId, accountId: plan.accountId },
       transaction,
       lock: transaction.LOCK.UPDATE,
@@ -347,7 +358,10 @@ export async function linkInstallmentTransaction({
     // allow an owner to replace that reservation with an already-imported real transaction.
     // Never delete a linked real transaction or silently detach it.
     if (installment.transactionId && installment.transactionId !== tx.id) {
-      const previousPlanned = await Transactions.findOne({
+      const previousPlanned = await findOneTransaction({
+        planned: 'include',
+        access: 'unscoped-internal',
+        balanceAdjustments: 'include',
         where: {
           id: installment.transactionId,
           userId,
@@ -362,7 +376,10 @@ export async function linkInstallmentTransaction({
           message: 'This installment is already linked to a real transaction and cannot be replaced.',
         });
       }
-      await Transactions.destroy({
+      await destroyTransactions({
+        planned: 'include',
+        access: 'unscoped-internal',
+        balanceAdjustments: 'include',
         where: { id: previousPlanned.id, userId, isPlanned: true },
         transaction,
         individualHooks: true,
@@ -413,7 +430,10 @@ export async function cancelInstallmentPlan({ userId, id }: { userId: number; id
         });
       }
 
-      const linkedTransaction = await Transactions.findOne({
+      const linkedTransaction = await findOneTransaction({
+        planned: 'include',
+        access: 'unscoped-internal',
+        balanceAdjustments: 'include',
         where: { id: installment.transactionId, userId },
         transaction,
         lock: transaction.LOCK.UPDATE,
@@ -429,7 +449,10 @@ export async function cancelInstallmentPlan({ userId, id }: { userId: number; id
         });
       }
 
-      await Transactions.destroy({
+      await destroyTransactions({
+        planned: 'include',
+        access: 'unscoped-internal',
+        balanceAdjustments: 'include',
         where: { id: linkedTransaction.id, userId, isPlanned: true },
         transaction,
         individualHooks: true,

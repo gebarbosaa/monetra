@@ -3,6 +3,10 @@ import type { KnipConfig } from 'knip';
 const config: KnipConfig = {
   entry: [
     'src/app.ts',
+    // Runtime entrypoints launched by the Vercel container/daemon configuration.
+    'src/worker.ts',
+    // Cron handlers are registered by the background-job bootstrap at runtime.
+    'src/crons/*.ts',
     // Test files as entry points so exports used only in tests are not flagged
     'src/**/*.e2e.ts',
     'src/**/*.unit.ts',

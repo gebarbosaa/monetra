@@ -11,14 +11,19 @@ COPY package*.json ./
 COPY post-install.sh ./
 RUN chmod +x ./post-install.sh
 
-# Copy backend package files
+# Copy every declared npm workspace manifest before npm ci. npm validates
+# the root workspaces list even when this image only builds the backend.
 COPY packages/backend/package*.json ./packages/backend/
+COPY packages/frontend/package*.json ./packages/frontend/
+COPY packages/landing/package*.json ./packages/landing/
+COPY packages/shared/package*.json ./packages/shared/
 
 # Install all dependencies (including dev dependencies for build)
 RUN npm ci
 
 # Copy the rest of the code needed for build
 COPY tsconfig.json ./
+COPY scripts ./scripts
 COPY packages/shared ./packages/shared
 COPY packages/backend ./packages/backend
 COPY self-hosting ./self-hosting
@@ -49,12 +54,16 @@ COPY --chown=nodejs:nodejs post-install.sh ./
 RUN chmod +x ./post-install.sh
 
 COPY --chown=nodejs:nodejs packages/backend/package*.json ./packages/backend/
-RUN npm ci
+COPY --chown=nodejs:nodejs packages/frontend/package*.json ./packages/frontend/
+COPY --chown=nodejs:nodejs packages/landing/package*.json ./packages/landing/
+COPY --chown=nodejs:nodejs packages/shared/package*.json ./packages/shared/
+RUN npm ci --omit=dev
 
 # Remove build dependencies to reduce image size
 RUN apk del python3 make g++
 
 COPY --from=build-stage --chown=nodejs:nodejs /app/tsconfig.json ./
+COPY --from=build-stage --chown=nodejs:nodejs /app/scripts/run-migrations-locked.mjs ./scripts/run-migrations-locked.mjs
 
 # Copy built backend code and shared files
 COPY --from=build-stage --chown=nodejs:nodejs /app/packages/backend/dist ./packages/backend/dist
@@ -69,7 +78,8 @@ COPY --from=build-stage --chown=nodejs:nodejs /app/packages/backend/src/resource
 
 # Copy and prepare entrypoint script
 COPY self-hosting/backend/docker-entrypoint.sh /
-RUN chmod +x /docker-entrypoint.sh
+COPY self-hosting/backend/worker-entrypoint.sh /
+RUN chmod +x /docker-entrypoint.sh /worker-entrypoint.sh
 
 # Set working directory to backend
 WORKDIR /app/packages/backend
@@ -83,6 +93,7 @@ USER nodejs
 
 # Set environment to production
 ENV NODE_ENV=production
+ENV MONETRA_ROLE=api-service
 
 # Sentry release tracking (passed as build arg)
 ARG SENTRY_RELEASE

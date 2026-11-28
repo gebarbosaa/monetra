@@ -1,4 +1,5 @@
 import { BANK_PROVIDER_TYPE, type RecordId } from '@bt/shared/types';
+import { getRedisConnectionOptions } from '@common/lib/redis-connection-options';
 import { type PsuContext, requestContext } from '@common/request-context';
 import { LockedError, ServiceUnavailableError } from '@js/errors';
 import { logger } from '@js/utils/logger';
@@ -21,7 +22,7 @@ interface AccountSyncJobData extends SentryTraceData {
 // Mirrors the resilient settings of the main redisClient. BullMQ requires
 // `maxRetriesPerRequest: null`.
 const connectionOptions = {
-  host: process.env.APPLICATION_REDIS_HOST,
+  ...getRedisConnectionOptions(),
   maxRetriesPerRequest: null,
   connectTimeout: 20000,
   keepAlive: 10000,
@@ -29,6 +30,8 @@ const connectionOptions = {
 };
 
 // Namespace by Jest worker ID so parallel test workers don't share a queue.
+const queuePrefix = `monetra:${process.env.VERCEL_ENV ?? 'local'}`;
+
 const queueName =
   process.env.NODE_ENV === 'test' && process.env.JEST_WORKER_ID
     ? `account-sync-${process.env.JEST_WORKER_ID}`
@@ -41,6 +44,7 @@ const queueName =
  */
 export const accountSyncQueue = new Queue<AccountSyncJobData>(queueName, {
   connection: connectionOptions,
+  prefix: queuePrefix,
   defaultJobOptions: {
     attempts: 1,
     // Job ids are deterministic, so a finished job must not linger: it would
@@ -144,10 +148,11 @@ export const accountSyncWorker = new Worker<AccountSyncJobData>(
     ),
   {
     connection: connectionOptions,
+    prefix: queuePrefix,
     concurrency: 5,
     maxStalledCount: 2,
     // Keep persisted jobs dormant unless bank integrations are explicitly enabled.
-    autorun: process.env.BANK_PROVIDERS_ENABLED === 'true',
+    autorun: process.env.MONETRA_ROLE !== 'api-service' && process.env.BANK_PROVIDERS_ENABLED === 'true',
   },
 );
 

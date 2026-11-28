@@ -27,6 +27,8 @@ const EXPECTED_GUARDED_COLUMNS: Record<string, string[]> = {
   categories: ['parentId'],
   'goal-accounts': ['accountId', 'goalId'],
   'category-tags': ['categoryId', 'tagId'],
+  'credit-card-installment-plans': ['accountId', 'categoryId'],
+  'credit-card-installments': ['planId', 'transactionId'],
   holdings: ['portfolioId'],
   'import-batch-account-effects': ['accountId', 'importBatchId'],
   'investment-transactions': ['portfolioId'],

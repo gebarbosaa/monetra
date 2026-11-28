@@ -95,13 +95,15 @@ import VenturePlatformsModel from './venture/venture-platforms.model';
 // don't need a null branch.
 pgTypes.setTypeParser(pgTypes.builtins.INT8, (val) => Number(val));
 
+const databaseUrl = process.env.APPLICATION_DB_URL ? new URL(process.env.APPLICATION_DB_URL) : undefined;
+
 const DBConfig: Record<string, unknown> = {
-  host: process.env.APPLICATION_DB_HOST,
-  username: process.env.APPLICATION_DB_USERNAME,
-  password: process.env.APPLICATION_DB_PASSWORD,
-  database: process.env.APPLICATION_DB_DATABASE,
-  port: process.env.APPLICATION_DB_PORT,
-  dialect: process.env.APPLICATION_DB_DIALECT,
+  host: databaseUrl?.hostname || process.env.APPLICATION_DB_HOST,
+  username: databaseUrl ? decodeURIComponent(databaseUrl.username) : process.env.APPLICATION_DB_USERNAME,
+  password: databaseUrl ? decodeURIComponent(databaseUrl.password) : process.env.APPLICATION_DB_PASSWORD,
+  database: databaseUrl ? decodeURIComponent(databaseUrl.pathname.slice(1)) : process.env.APPLICATION_DB_DATABASE,
+  port: databaseUrl?.port ? Number(databaseUrl.port) : process.env.APPLICATION_DB_PORT,
+  dialect: process.env.APPLICATION_DB_DIALECT || 'postgres',
 };
 
 const models = [
@@ -204,11 +206,16 @@ const sequelize = new Sequelize({
   pool:
     process.env.NODE_ENV === 'test'
       ? { max: 50, min: 0, evict: 10_000 }
-      : { max: 50, min: 10, idle: 30_000, evict: 60_000 },
+      : process.env.VERCEL === '1'
+        ? { max: 3, min: 0, idle: 10_000, evict: 10_000, acquire: 10_000 }
+        : { max: 50, min: 10, idle: 30_000, evict: 60_000 },
   // TCP keepalive stops idle pooled connections from being silently dropped by
   // intermediate networking (Docker NAT/proxy) — a dead connection is only
   // discovered at checkout, forcing a slow reconnect inside a request.
-  dialectOptions: { keepAlive: true },
+  dialectOptions: {
+    keepAlive: true,
+    ...(databaseUrl?.searchParams.get('sslmode') === 'require' ? { ssl: { require: true, rejectUnauthorized: true } } : {}),
+  },
   logging: process.env.DB_QUERY_LOGGING === 'true',
 });
 

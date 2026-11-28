@@ -1551,6 +1551,7 @@ export const getTransactionById = ({
   id,
   userId,
   include = [],
+  transaction,
 }: {
   id: string;
   userId: number;

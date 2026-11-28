@@ -1,4 +1,5 @@
 import commonEn from '@/i18n/locales/chunks/en/common.json';
+import { i18n as appI18n } from '@/i18n';
 import currenciesEn from '@/i18n/locales/chunks/en/settings/currencies.json';
 import { ApiErrorResponseError } from '@/js/errors';
 import { API_ERROR_CODES, type CurrencyRateHistoryItem, type CurrencyRateSource } from '@bt/shared/types';
@@ -100,6 +101,10 @@ const mountWith = async ({
 
 const rows = (wrapper: VueWrapper) => wrapper.findAll('[data-testid="rate-history-row"]');
 const viewAll = (wrapper: VueWrapper) => wrapper.find('[data-testid="recent-rates-view-all"]');
+
+beforeEach(() => {
+  appI18n.global.locale.value = 'en';
+});
 
 describe('RecentRates', () => {
   beforeEach(() => {

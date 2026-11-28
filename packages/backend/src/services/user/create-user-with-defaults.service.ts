@@ -248,7 +248,8 @@ export async function seedUserDefaults({ userId, locale: providedLocale }: { use
     await patchUserSettings({ userId, patch: { incomeCategoryIds: [incomeCategory.id] } });
   }
 
-  // MONETRA is Brazil-first: new users with no existing account/currency context
-  // start with BRL. Legacy users without a base keep their oldest account currency.
-  await ensureUserBaseCurrency({ userId, fallbackCurrencyCode: 'BRL' });
+  // MONETRA is Brazil-first: production defaults to BRL. Tests and explicit
+  // deployments may override the fallback without changing existing user currencies.
+  const fallbackCurrencyCode = process.env.DEFAULT_BASE_CURRENCY_CODE?.trim() || 'BRL';
+  await ensureUserBaseCurrency({ userId, fallbackCurrencyCode });
 }

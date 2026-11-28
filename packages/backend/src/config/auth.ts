@@ -40,15 +40,21 @@ if (process.env.NODE_ENV === 'production' && !process.env.AUTH_ORIGIN) {
 // Create a separate pg Pool for better-auth
 // This is required because better-auth uses raw SQL queries
 const pool = new Pool({
-  host: process.env.APPLICATION_DB_HOST,
-  port: parseInt(process.env.APPLICATION_DB_PORT as string, 10),
-  user: process.env.APPLICATION_DB_USERNAME,
-  password: process.env.APPLICATION_DB_PASSWORD,
-  // In test environment, use per-worker database (same as Sequelize)
-  database:
-    process.env.NODE_ENV === 'test' && process.env.JEST_WORKER_ID
-      ? `${process.env.APPLICATION_DB_DATABASE}-${process.env.JEST_WORKER_ID}`
-      : process.env.APPLICATION_DB_DATABASE,
+  ...(process.env.APPLICATION_DB_URL
+    ? { connectionString: process.env.APPLICATION_DB_URL }
+    : {
+        host: process.env.APPLICATION_DB_HOST,
+        port: process.env.APPLICATION_DB_PORT ? Number(process.env.APPLICATION_DB_PORT) : undefined,
+        user: process.env.APPLICATION_DB_USERNAME,
+        password: process.env.APPLICATION_DB_PASSWORD,
+        database:
+          process.env.NODE_ENV === 'test' && process.env.JEST_WORKER_ID
+            ? `${process.env.APPLICATION_DB_DATABASE}-${process.env.JEST_WORKER_ID}`
+            : process.env.APPLICATION_DB_DATABASE,
+      }),
+  max: process.env.VERCEL === '1' ? 3 : 10,
+  idleTimeoutMillis: 10000,
+  connectionTimeoutMillis: 10000,
 });
 
 // Without a listener, an idle client killed by Postgres (e.g. DB restart) crashes the process.

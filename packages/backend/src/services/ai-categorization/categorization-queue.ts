@@ -23,6 +23,10 @@ interface CategorizationJobData extends SentryTraceData {
 // Uses same resilient settings as main redisClient to prevent "Connection is closed" errors in CI
 const connection = {
   host: process.env.APPLICATION_REDIS_HOST,
+  port: process.env.APPLICATION_REDIS_PORT ? Number(process.env.APPLICATION_REDIS_PORT) : undefined,
+  username: process.env.APPLICATION_REDIS_USERNAME,
+  password: process.env.APPLICATION_REDIS_PASSWORD,
+  tls: process.env.APPLICATION_REDIS_TLS === 'true' ? {} : undefined,
   maxRetriesPerRequest: null, // Required for BullMQ
   connectTimeout: 20000, // 20s connection timeout for slower CI environments
   keepAlive: 10000, // Send TCP keepalive to prevent idle disconnection
@@ -109,6 +113,7 @@ export const categorizationWorker = new Worker<CategorizationJobData>(
   },
   {
     connection,
+    autorun: process.env.MONETRA_ROLE !== 'api-service',
     // magic value. No reason to make it less, yet better keep it conservative at this level
     concurrency: 5,
   },

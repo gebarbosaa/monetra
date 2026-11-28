@@ -30,6 +30,10 @@ interface BaseCurrencyChangeJobData {
 // `maxRetriesPerRequest: null`.
 const connection = {
   host: process.env.APPLICATION_REDIS_HOST,
+  port: process.env.APPLICATION_REDIS_PORT ? Number(process.env.APPLICATION_REDIS_PORT) : undefined,
+  username: process.env.APPLICATION_REDIS_USERNAME,
+  password: process.env.APPLICATION_REDIS_PASSWORD,
+  tls: process.env.APPLICATION_REDIS_TLS === 'true' ? {} : undefined,
   maxRetriesPerRequest: null,
   connectTimeout: 20000,
   keepAlive: 10000,
@@ -137,6 +141,7 @@ export const baseCurrencyChangeWorker = new Worker<BaseCurrencyChangeJobData, Re
   },
   {
     connection,
+    autorun: process.env.MONETRA_ROLE !== 'api-service',
     concurrency: 1,
   },
 );

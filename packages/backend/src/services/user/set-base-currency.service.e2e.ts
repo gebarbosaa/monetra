@@ -2,6 +2,7 @@ import { EXCHANGE_RATE_PROVIDER_TYPE } from '@bt/shared/types';
 import { afterAll, afterEach, beforeEach, describe, expect, it } from '@jest/globals';
 import { ERROR_CODES } from '@js/errors';
 import ExchangeRates from '@models/exchange-rates.model';
+import UsersCurrenciesModel from '@models/users-currencies.model';
 import * as helpers from '@tests/helpers';
 import { Sequelize } from 'sequelize';
 
@@ -63,6 +64,10 @@ describe('POST /user/currencies/base – issue #305 regression', () => {
 
   it('lets a fresh user set their base currency once, with no self-pair rate row, and rejects bad follow-ups', async () => {
     const handle = await helpers.signUpSecondUser();
+
+    // New signups now receive a default currency during seeding. Remove that
+    // association to model a legacy user whose first base currency is not set yet.
+    await UsersCurrenciesModel.destroy({ where: { userId: handle.userId } });
 
     const unknownCode = await helpers.asUser({
       cookies: handle.cookies,

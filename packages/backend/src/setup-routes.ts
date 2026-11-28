@@ -82,6 +82,9 @@ export function setupRoutes(app: Express) {
   // We wrap the handler to preserve AsyncLocalStorage context for locale-aware category creation
   const authHandler = toNodeHandler(auth);
 
+  // This compatibility proxy requires a persistent localhost HTTP listener.
+  // Serverless functions have no listener; let Better Auth handle registration there.
+  if (process.env.VERCEL !== '1' || process.env.MONETRA_ROLE === 'api-service') {
   // Patch unauthenticated OAuth2 dynamic client registrations so they always register
   // as public clients. better-auth keeps whatever token_endpoint_auth_method the request
   // carries, and MCP clients (e.g. Claude.ai) often omit it.
@@ -144,6 +147,8 @@ export function setupRoutes(app: Express) {
       next();
     });
   });
+
+  }
 
   // Public endpoint for the consent page to resolve a client_id to a display name.
   // Must be registered before the app.all catch-all so better-auth doesn't swallow it.

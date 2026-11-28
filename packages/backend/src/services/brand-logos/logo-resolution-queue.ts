@@ -14,6 +14,10 @@ interface LogoResolutionJobData {
 // closed" errors in CI. BullMQ requires `maxRetriesPerRequest: null`.
 const connection = {
   host: process.env.APPLICATION_REDIS_HOST,
+  port: process.env.APPLICATION_REDIS_PORT ? Number(process.env.APPLICATION_REDIS_PORT) : undefined,
+  username: process.env.APPLICATION_REDIS_USERNAME,
+  password: process.env.APPLICATION_REDIS_PASSWORD,
+  tls: process.env.APPLICATION_REDIS_TLS === 'true' ? {} : undefined,
   maxRetriesPerRequest: null,
   connectTimeout: 20000, // 20s connection timeout for slower CI environments
   keepAlive: 10000, // Send TCP keepalive to prevent idle disconnection
@@ -68,6 +72,7 @@ export const logoResolutionWorker = new Worker<LogoResolutionJobData>(
   },
   {
     connection,
+    autorun: process.env.MONETRA_ROLE !== 'api-service',
     concurrency: 5,
     // Bound logo.dev QPS regardless of concurrency / pending backlog.
     limiter: {

@@ -23,6 +23,7 @@ import { extractCookies, makeAuthRequest, makeRequest } from './common';
 export interface SecondUserHandle {
   cookies: string;
   email: string;
+  userId: number;
 }
 
 /**
@@ -50,8 +51,14 @@ export async function signUpSecondUser({
   // Match the suite's default user: legacy entitlements, not a fresh trial. A trial
   // would strip backup/export features from every second-user test that isn't about plans.
   await Users.update({ trialEndsAt: null }, { where: { authUserId: signupRes.body.user.id } });
+  const appUser = await Users.findOne({
+    where: { authUserId: signupRes.body.user.id },
+    attributes: ['id'],
+    raw: true,
+  });
+  if (!appUser) throw new Error('Second user signup did not create an app user row');
 
-  return { cookies: extractCookies(signupRes), email: userEmail };
+  return { cookies: extractCookies(signupRes), email: userEmail, userId: appUser.id };
 }
 
 /**
@@ -340,19 +347,19 @@ export async function provisionSecondUserWithBaseCurrency({
   email,
   currencyCode,
 }: { email?: string; currencyCode?: string } = {}): Promise<SecondUserHandle> {
-  const handle = await signUpSecondUser({ email });
-  await asUser({
-    cookies: handle.cookies,
-    fn: async () => {
-      const res = await setBaseCurrencyForActiveUser({
-        currencyCode: currencyCode ?? global.BASE_CURRENCY.code,
-      });
-      if (res.statusCode !== 200) {
-        throw new Error(`Failed to set base currency for second user: ${res.statusCode} ${JSON.stringify(res.body)}`);
-      }
-    },
-  });
-  return handle;
+  // Signup seeds the base currency. Choose it before signup instead of calling the
+  // add-base endpoint afterwards, which correctly rejects duplicate base rows.
+  const previousBaseCurrencyCode = process.env.DEFAULT_BASE_CURRENCY_CODE;
+  process.env.DEFAULT_BASE_CURRENCY_CODE = currencyCode ?? global.BASE_CURRENCY.code;
+  try {
+    return await signUpSecondUser({ email });
+  } finally {
+    if (previousBaseCurrencyCode === undefined) {
+      delete process.env.DEFAULT_BASE_CURRENCY_CODE;
+    } else {
+      process.env.DEFAULT_BASE_CURRENCY_CODE = previousBaseCurrencyCode;
+    }
+  }
 }
 
 export async function asNewUserWithBaseCurrency<T>({

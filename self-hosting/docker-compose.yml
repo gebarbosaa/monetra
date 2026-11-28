@@ -1,6 +1,6 @@
 # MONETRA self-host base stack — reverse-proxy-agnostic; use the source-build overlay.
 #
-# Pulls the published images and exposes the whole app on ONE host port
+# Uses the source-build overlay to build MONETRA app images and exposes the whole app on ONE host port
 # (${HTTP_PORT:-8080}). The frontend container serves the SPA and reverse-proxies
 # /api to the backend on the internal network, so the browser talks to a single
 # origin. Point whatever reverse proxy you already run (Nginx Proxy Manager,
@@ -15,7 +15,7 @@
 # Optional overlays (compose merges them left-to-right):
 #   • Bundled Traefik + Let's Encrypt TLS:
 #       docker compose -f docker-compose.yml -f docker-compose.traefik.yml up -d
-#   • Build the images from source instead of pulling:
+#   • Required for MONETRA: build app images from this repository's source:
 #       docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 
 # Pin the compose project name so resources are namespaced consistently

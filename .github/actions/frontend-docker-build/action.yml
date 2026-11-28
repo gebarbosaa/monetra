@@ -96,9 +96,9 @@ runs:
         load: ${{ inputs.push != 'true' }}
         platforms: ${{ inputs.platforms }}
         tags: ${{ steps.tags.outputs.refs }}
+        secrets: ${{ inputs.sentry-auth-token != '' && format('sentry_auth_token={0}', inputs.sentry-auth-token) || '' }}
         build-args: |
           VITE_SENTRY_RELEASE=${{ inputs.sentry-release }}
           VITE_APP_COMMIT_HASH=${{ inputs.app-commit-hash }}
-          SENTRY_AUTH_TOKEN=${{ inputs.sentry-auth-token }}
           SENTRY_ORG=${{ inputs.sentry-org }}
           SENTRY_PROJECT=${{ inputs.sentry-project }}

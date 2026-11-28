@@ -8,7 +8,6 @@ import fs from 'fs';
 import https from 'https';
 import path from 'path';
 
-import { initializeBackgroundJobs, shutdownBackgroundJobs } from './background-jobs';
 import { API_PREFIX } from './config';
 import { registerAiCategorizationListeners } from './services/ai-categorization';
 import { initializeBankProviders } from './services/bank-data-providers/initialize-providers';
@@ -50,8 +49,11 @@ setupRoutes(app);
 
 logger.info('Attempting to start server...');
 
-let serverInstance: https.Server | ReturnType<typeof app.listen>;
+let serverInstance: https.Server | ReturnType<typeof app.listen> | undefined;
 
+const isVercelFunction =
+  process.env.MONETRA_ROLE === 'worker' ||
+  (process.env.VERCEL === '1' && process.env.MONETRA_ROLE !== 'api-service');
 const isProduction = process.env.NODE_ENV === 'production';
 const isTest = process.env.NODE_ENV === 'test';
 
@@ -59,14 +61,21 @@ const onServerReady = ({ protocol }: { protocol: 'http' | 'https' }) => {
   const port = app.get('port') as number;
   logger.info(`[OK] ${protocol.toUpperCase()} Server is running on ${protocol}://localhost:${port}`);
   logger.info(`API Prefix: ${API_PREFIX}`);
-  initializeBackgroundJobs();
+  // The Vercel API Service serves requests only; the Vercel Daemon owns persistent workers and cron jobs.
+  if (process.env.MONETRA_ROLE !== 'api-service') {
+    void import('./background-jobs').then(({ initializeBackgroundJobs }) => initializeBackgroundJobs());
+  }
 };
 
-if (isTest) {
+if (isVercelFunction) {
+  // Vercel Daemons run background work without an HTTP listener. The API Service
+  // sets MONETRA_ROLE=api-service and follows the normal Express server path.
+  logger.info('Running as a Vercel worker runtime; HTTP listener is disabled.');
+} else if (isTest) {
   // Test mode: HTTP on a random port to avoid conflicts with parallel runs
   serverInstance = app.listen(0, () => {
     // Store the actual OS-assigned port so self-proxy (e.g. registration patch) can reach it
-    const addr = serverInstance.address();
+    const addr = serverInstance?.address();
     if (typeof addr === 'object' && addr) {
       app.set('port', addr.port);
     }
@@ -99,9 +108,11 @@ if (isTest) {
 
 export { serverInstance };
 
-serverInstance.on('error', (error) => {
-  logger.error(error);
-});
+if (serverInstance) {
+  serverInstance.on('error', (error) => {
+    logger.error(error);
+  });
+}
 
 process.on('uncaughtException', (error) => {
   logger.error(error);
@@ -138,13 +149,19 @@ const gracefulShutdown = ({ signal, onDone }: { signal: string; onDone: () => vo
   // force-exit timer.
   const closeServer = () => {
     console.log(`Closing HTTP server for ${signal}...`);
+    if (!serverInstance) {
+      clearTimeout(forceExitTimer);
+      onDone();
+      return;
+    }
     serverInstance.close(() => {
       clearTimeout(forceExitTimer);
       onDone();
     });
   };
 
-  shutdownBackgroundJobs()
+  import('./background-jobs')
+    .then(({ shutdownBackgroundJobs }) => shutdownBackgroundJobs())
     .then(closeServer)
     .catch((error) => {
       logger.error({ message: `Failed to stop background jobs during ${signal} shutdown`, error });
@@ -152,21 +169,25 @@ const gracefulShutdown = ({ signal, onDone }: { signal: string; onDone: () => vo
     });
 };
 
-process.on('SIGINT', () => {
-  gracefulShutdown({ signal: 'SIGINT', onDone: () => process.exit(0) });
-});
+if (!isVercelFunction && serverInstance) {
+  process.on('SIGINT', () => {
+    gracefulShutdown({ signal: 'SIGINT', onDone: () => process.exit(0) });
+  });
 
-process.on('SIGTERM', () => {
-  gracefulShutdown({ signal: 'SIGTERM', onDone: () => process.exit(0) });
-});
+  process.on('SIGTERM', () => {
+    gracefulShutdown({ signal: 'SIGTERM', onDone: () => process.exit(0) });
+  });
+}
 
 // nodemon sends SIGUSR2 on file-watch restarts (not a real shutdown). After
 // draining in-flight requests, re-emit SIGUSR2 to ourselves so nodemon can
 // proceed with its restart, per nodemon's documented convention:
 // https://github.com/remy/nodemon#gracefully-reloading-down-your-script
-process.once('SIGUSR2', () => {
-  gracefulShutdown({
-    signal: 'SIGUSR2',
-    onDone: () => process.kill(process.pid, 'SIGUSR2'),
+if (!isVercelFunction && serverInstance) {
+  process.once('SIGUSR2', () => {
+    gracefulShutdown({
+      signal: 'SIGUSR2',
+      onDone: () => process.kill(process.pid, 'SIGUSR2'),
+    });
   });
-});
+}

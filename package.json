@@ -4,6 +4,19 @@
   "description": "MONETRA — Family Finance OS. Gestão financeira familiar consolidada, em português do Brasil.",
   "license": "AGPL-3.0-only",
   "author": "Based on MoneyMatter by letehaha; see upstream notices",
+  "allowScripts": {
+    "vue-demi@0.14.10": true,
+    "vue-demi@0.13.11": true,
+    "esbuild@0.28.2": true,
+    "@sentry/cli@2.58.6": true,
+    "core-js@3.49.0": true,
+    "protobufjs@7.6.6": true,
+    "msgpackr-extract@3.0.3": true,
+    "utf-8-validate@5.0.10": true,
+    "bufferutil@4.1.0": true,
+    "es5-ext@0.10.64": true,
+    "msw@2.6.6": true
+  },
   "workspaces": [
     "packages/backend",
     "packages/frontend",
