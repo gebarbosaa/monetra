@@ -40,6 +40,11 @@ const snapshot =
     object[key];
 
 const accountCurrency = via({ fileName: 'accounts', key: 'accountId', pick: own('currencyCode') });
+const installmentPlanCurrency = via({
+  fileName: 'credit-card-installment-plans',
+  key: 'planId',
+  pick: own('currencyCode'),
+});
 const planCurrency = via({
   fileName: 'budget-lines',
   key: 'lineId',
@@ -50,6 +55,7 @@ const transaction = ({ key, attrName }: { key: string; attrName: string }) =>
 
 const OWN: CurrencySource = { currency: own('currencyCode') };
 const OWN_REF: CurrencySource = { currency: base, convertedFrom: own('currencyCode') };
+const INSTALLMENT_PLAN_REF: CurrencySource = { currency: base, convertedFrom: installmentPlanCurrency };
 const ACCOUNT: CurrencySource = { currency: accountCurrency };
 const ACCOUNT_REF: CurrencySource = { currency: base, convertedFrom: accountCurrency };
 const PLAN: CurrencySource = { currency: planCurrency };
@@ -66,6 +72,10 @@ const COLUMN_CURRENCIES: Record<string, CurrencySource> = {
   'accounts.refCreditLimit': OWN_REF,
   'accounts.seamBalance': OWN,
   'balances.amount': ACCOUNT_REF,
+  'credit-card-installment-plans.totalAmount': OWN,
+  'credit-card-installment-plans.refTotalAmount': OWN_REF,
+  'credit-card-installments.amount': { currency: installmentPlanCurrency },
+  'credit-card-installments.refAmount': INSTALLMENT_PLAN_REF,
   'budget-assignments.baselineAmount': PLAN,
   'budget-assignments.overrideAmount': PLAN,
   'budget-line-goals.amount': { ...PLAN, positive: true },
