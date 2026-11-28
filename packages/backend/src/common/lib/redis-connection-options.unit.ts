@@ -28,6 +28,21 @@ describe('getRedisConnectionOptions', () => {
     });
   });
 
+  it('falls back to REDIS_URL when the app-specific variable is blank', () => {
+    expect(
+      getRedisConnectionOptions({
+        APPLICATION_REDIS_URL: ' ',
+        REDIS_URL: 'rediss://default:token@redis.example.com:6379',
+      }),
+    ).toMatchObject({
+      host: 'redis.example.com',
+      port: 6379,
+      username: 'default',
+      password: 'token',
+      tls: {},
+    });
+  });
+
   it('keeps local host settings for self-hosted Redis', () => {
     expect(
       getRedisConnectionOptions({
